@@ -1,0 +1,39 @@
+{
+  "name": "audit-tool",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "init-sheet": "npx tsx scripts/init-sheet.ts",
+    "seed": "npx tsx scripts/seed.ts",
+    "fetch-youtube": "npx tsx scripts/fetch-youtube.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5",
+    "@supabase/supabase-js": "^2",
+    "cheerio": "^1.0.0",
+    "clsx": "^2",
+    "googleapis": "^144",
+    "groq-sdk": "^0.7",
+    "next": "^14.2.35",
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwind-merge": "^2"
+  },
+  "devDependencies": {
+    "@types/cheerio": "^0.22.35",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10",
+    "eslint": "^8",
+    "eslint-config-next": "^14.2.35",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}
