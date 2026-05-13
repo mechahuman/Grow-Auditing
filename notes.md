@@ -78,6 +78,53 @@ Read all 11 spec files in order (`docs/README.md` through `docs/10-open-decision
 
 ---
 
+## 2026-05-13 — Week 2 engineering: YouTube pipeline + vitest
+
+**What we did:**
+- Built the full `lib/youtube/` module (8 files):
+  - `types.ts` — shared interfaces (ParsedYouTubeUrl, ChannelData, VideoData, AboutData, YouTubeEnrichmentResult)
+  - `parseUrl.ts` — URL parser handling @handle, /channel/UC…, /c/ and /user/ legacy formats
+  - `client.ts` — thin fetch wrapper with retry-once, quota/key error classification (YouTubeApiError with httpStatus)
+  - `channels.ts` — fetchChannelByHandle, fetchChannelById, resolveChannelFromLegacy (logs 100-unit warning)
+  - `videos.ts` — fetchRecentVideoIds (playlistItems.list, 1 unit) + fetchVideoStats (videos.list, 1 unit)
+  - `aboutScraper.ts` — fetches /@handle/about, extracts ytInitialData via brace-counter (resilient to nested braces), finds businessEmail + external links recursively; always fails gracefully
+  - `orchestrator.ts` — fetchAllYouTubeData() wires steps 1–8; computes avgViewsLast10, s2vRatioPct, lastUploadAt, postingFrequency30d (videos in last 30 days)
+  - `index.ts` — public API re-exports
+- Installed vitest + created `vitest.config.ts` (globals: true for Jest-style test syntax)
+- All 6 scoring unit tests now pass: `npm test`
+- Created `scripts/fetch-youtube.ts` — full pipeline CLI: fetch → compute score → insert draft lead in Supabase
+- Updated package.json: added `test`, `test:watch` scripts; added `--env-file=.env.local` to all script commands
+
+**Week 2 milestone hit:**
+`npm run fetch-youtube -- https://www.youtube.com/@RyanTolmia` completed successfully:
+- Channel: Ryan Tolmia, 464 subs, 103 videos, last upload 2026-05-08
+- Engagement: avg 194 views/video, S2V ratio 41.8%, 4 posts last 30 days
+- Website scraped: https://adhd-creator-toolkit.carrd.co/ (no email — normal, often auth-gated)
+- Score: 3.5 "Solid fit" (sub range 0 because <1k; S2V factor 1 because 41.8% >> 10%)
+- Saved to Supabase as draft lead: ID 6715900b-1517-422a-9664-dca557158ce1
+
+**What worked:**
+- brace-counter extraction of ytInitialData is much more reliable than greedy regex
+- playlistItems.list approach confirmed: 3 API calls total (channel + playlist + videoStats = 3 quota units)
+- Graceful scraper failure: pipeline completes even if About page returns nothing
+
+**What didn't / things to watch:**
+- About page scraper successfully parsed ytInitialData and found the website link but no email — this is expected for channels without a public business email, not a bug
+- `vitest.config.ts` needed `globals: true` because the test file uses `test()`/`expect()` without explicit imports
+- Legacy /c/ and /user/ URL formats cost 100 quota units (search.list) — warn is logged, still works
+
+**What's next (Week 3):**
+- Design AI provider abstraction (`lib/ai/`) before writing any AI code
+  - Groq: OpenAI-compatible, use JSON mode (response_format: { type: 'json_object' })
+  - Anthropic: tool_use approach for structured output
+  - Both behind `AI_PROVIDER` env var switch
+- Confirm Groq model: llama-3.3-70b-versatile (already in .env.local)
+- Build `lib/ai/analyze.ts` — takes YouTubeEnrichmentResult, returns AI fields
+- Wire AI output into the pipeline (orchestrator or separate step)
+- Pre-condition: Manav must complete `docs/calibration-baseline.md` before Week 3 prompt engineering
+
+---
+
 ## 2026-05-13 — Sub Range Factor tiers updated
 
 **Decision:** Changed Sub Range Factor thresholds.
