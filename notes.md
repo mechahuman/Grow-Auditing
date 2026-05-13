@@ -42,6 +42,42 @@ Read all 11 spec files in order (`docs/README.md` through `docs/10-open-decision
 
 ---
 
+## 2026-05-13 — Week 1 engineering: scaffold, env setup, API smoke tests
+
+**What we did:**
+- Initialized Next.js 14.2.35 manually (create-next-app failed due to capital letters in directory name — built config files by hand instead)
+- Upgraded from 14.2.29 (security vulnerability) to 14.2.35 (patched)
+- Created .env.local with all credentials: Supabase, YouTube API, Google Sheets service account, Groq
+- Created full folder structure: app/, lib/scoring, lib/supabase, lib/ai, lib/youtube, lib/sheets, lib/scoring, supabase/migrations/, scripts/
+- Wrote three Supabase migration files: 0001 (full schema with all confirmed fields), 0002 (status options seed), 0003 (RLS policies — apply in Week 5)
+- Implemented lib/scoring/ module completely: config.ts (thresholds), factors.ts (pure functions), total.ts (formula), index.ts (public API)
+- Wrote unit tests in total.test.ts using both spec worked examples as source of truth
+- Created lib/supabase/client.ts, server.ts, service.ts
+- Created smoke test scripts for all three APIs — all passed:
+  - YouTube: fetched Ryan Tolmia (464 subs, 103 videos) ✓
+  - Google Sheets: authenticated, sheet "GROW Lead Intel — Master" found ✓
+  - Groq: llama-3.3-70b-versatile responded correctly ✓
+- Git initialized, first commit: 42 files
+
+**What worked:**
+- All three APIs verified on first successful run
+- Base64 service account issue resolved: PowerShell Out-File produces UTF-16, stripped whitespace to get clean base64
+- next.config.ts → next.config.mjs: Next.js 14 doesn't support TypeScript config files
+
+**What didn't / things to watch:**
+- Google Sheet currently has tab named "Sheet1" not "Leads" — init-sheet.ts will need to create/rename the tab when we build it
+- Scoring unit tests are written but can't run yet (no test runner installed — vitest/jest not in package.json). Add vitest in Week 2 when we build lib/youtube and need proper test infrastructure.
+- CRON_SECRET in .env.local is currently empty — generate a random string before deploying to Vercel
+
+**What's next:**
+- Manav: push this repo to GitHub, connect to Vercel, deploy the hello-world, confirm it shows in browser
+- Manav: fill in real team member names/initials in supabase/seed.sql
+- Manav: run the Supabase migrations (npx supabase db push OR paste SQL in Supabase dashboard)
+- Manav: begin manually scoring 15 leads → calibration-baseline.md
+- When Manav gives the go-ahead: start Week 2 (YouTube pipeline)
+
+---
+
 ## 2026-05-13 — Sub Range Factor tiers updated
 
 **Decision:** Changed Sub Range Factor thresholds.

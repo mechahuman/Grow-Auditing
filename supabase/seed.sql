@@ -7,9 +7,13 @@
 -- This file is only for team_members.
 
 insert into team_members (initials, full_name, email, active) values
-  ('M', 'Manav',        null, true),   -- EDIT: replace with real full name and email
-  ('T2', 'Teammate 2',  null, true),   -- EDIT: replace with real initials, name, email
-  ('T3', 'Teammate 3',  null, true);   -- EDIT: replace or delete if team is smaller
+  ('PS', 'Parth Shah',        null, true),   -- EDIT: replace with real full name and email
+  ('JS', 'Jnanam Shah',  null, true), 
+  ('D', 'Deep',  null, true),
+  ('MR', 'Maanit Rathod',  null, true),
+  ('MS', 'Meet Sanghavi',  null, true),
+  ('PD', 'Pratik Dhotre',  null, true),  -- EDIT: replace with real initials, name, email
+  ('OR', 'Om Rane',  null, true);   -- EDIT: replace or delete if team is smaller
 
 -- Add more rows as needed. Delete rows for team members who haven't joined yet.
 -- After editing, run: npm run seed
