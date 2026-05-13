@@ -138,3 +138,69 @@ New tiers: 0–999 → 0 | 1k–4,999 → 0.5 | 5k+ → 1 (no upper cap)
 **Code impact (when building):** Update `SUB_RANGE_TIERS` constants in `lib/scoring/config.ts`.
 
 ---
+
+## 2026-05-13 — Week 3 engineering: AI analysis layer
+
+**What we did:**
+- Built the full `lib/ai/` module (6 files):
+  - `types.ts` — ChannelAnalysis, AnalysisResult interfaces
+  - `systemPrompt.ts` — static system prompt constant (neutral tone, JSON schema embedded, strict rules)
+  - `promptBuilder.ts` — buildUserPrompt() converts YouTubeEnrichmentResult to text prompt (computes channelAgeMonths, lastUploadDaysAgo, formats video list, handles nulls)
+  - `client.ts` — callAI() with AI_PROVIDER abstraction (groq implemented, anthropic throws useful error). Lazy-initializes Groq client. Uses `response_format: { type: 'json_object' }` for guaranteed JSON output.
+  - `analyzer.ts` — analyzeChannel() orchestrates prompt → AI call → JSON parse → validation → AnalysisResult. Retries once on network error, once on invalid JSON. Returns enrichment_partial=true on full failure.
+  - `index.ts` — public API re-exports
+- Added `scripts/analyze-youtube.ts` CLI: fetch YouTube data + run AI analysis + print structured result
+- Added `analyze-youtube` script to package.json
+
+**Week 3 milestone hit:**
+Ran `npm run analyze-youtube` against two calibration leads:
+- Tom's AI Insights (28 subs, 11-day-old channel): correctly returned ai_confidence=low, category="AI insights creator", no monetization visible, data gaps flagged correctly
+- JZ Helps Florida law firm (16k subs, 1.7% S2V): correctly returned ai_confidence=medium, surfaced low S2V as a concern, monetization="Legal services"
+
+**What worked:**
+- Groq JSON mode (`response_format: { type: 'json_object' }`) returns valid JSON reliably
+- Embedding the schema in the system prompt + JSON mode = clean structured output without Anthropic tool_use
+- ai_confidence=low correctly triggered for the 11-day-old channel with sparse data
+- Provider abstraction is clean — swapping AI_PROVIDER=anthropic is the only change needed later
+
+**What didn't / things to watch:**
+- Top-level await in the CLI script caused esbuild error — wrapped in async main() to match fetch-youtube.ts pattern
+- Calibration loop (comparing AI output to human remarks) is deferred — no human remarks in calibration-baseline.md yet. Team will fill these in and we'll run a prompt iteration pass then.
+- G-Factor is a human input on the review screen (Week 4), not an AI output — confirmed clean separation.
+
+---
+
+## 2026-05-13 — Week 4 engineering: UI + API routes + Google Sheets
+
+**What we did:**
+- middleware.ts — auth guard redirecting unauthenticated users to /login, logged-in users away from /login
+- lib/sheets/ (5 files): format.ts (SHEET_TAB, SHEET_COLUMNS, formatDate), client.ts (getSheetsClient, lazy singleton), append.ts (appendLeadRow), init.ts (initSheet), index.ts
+- API routes: /api/enrich (POST: YouTube + AI + Supabase insert), /api/save (POST: score recompute + Supabase update + Sheets append), /api/leads (GET: list non-draft leads), /api/leads/[id] (GET + DELETE)
+- UI pages: /login (email/password), /(authenticated)/layout (auth guard + navbar), /leads (list), /enrich (form), /enrich/progress (simulated status messages + fetch to /api/enrich), /leads/[id]/review (review + edit)
+- Components: SignOutButton.tsx, LeadsTable.tsx (filters + search), ReviewForm.tsx (live score update on G-Factor change, score breakdown, AI observations, editable fields, discard modal, remarks with AI draft toggle)
+- scripts/init-sheet.ts — wraps initSheet()
+- app/page.tsx — root redirect to /leads
+- tsconfig.json — exclude *.test.ts to prevent vitest globals from breaking tsc
+
+**Build verified:**
+- `npx tsc --noEmit` → clean
+- `npm run build` → clean, all 11 routes compile
+- `npm run init-sheet` → created "Leads" tab, 24 columns, row 1 frozen + bolded
+
+**Key decisions made in build:**
+- G-Factor live score: computed client-side in ReviewForm via simple formula (no API call). Score updates instantly as employee adjusts G-Factor 1–5.
+- Sheets write is best-effort: /api/save always saves to Supabase first, then tries Sheets. If Sheets fails, sets sheets_sync_attempts=1 for the cron retry. User never sees a failure for a Sheets hiccup.
+- Recent videos stored in raw_youtube_data JSONB ({ recentVideos, channel }) — ReviewForm extracts and displays top 5.
+- Progress page uses sessionStorage to pass form data from the enrich form — avoids URL length limits.
+- Discard: requires confirmation modal, only deletes draft leads.
+
+**What's next (Week 5):**
+- Error handling: YouTube quota, channel-not-found, Sheets auth failure — all need user-facing messages
+- Loading states everywhere
+- Toast notifications (already built in ReviewForm, needs to propagate to other pages)
+- Score breakdown modal ("What is this?") — already built in ReviewForm
+- Discard confirmation already built
+- Structured logging on API routes
+- README with setup/deploy instructions
+
+---

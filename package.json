@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "init-sheet": "npx tsx --env-file=.env.local scripts/init-sheet.ts",
     "seed": "npx tsx --env-file=.env.local scripts/seed.ts",
-    "fetch-youtube": "npx tsx --env-file=.env.local scripts/fetch-youtube.ts"
+    "fetch-youtube": "npx tsx --env-file=.env.local scripts/fetch-youtube.ts",
+    "analyze-youtube": "npx tsx --env-file=.env.local scripts/analyze-youtube.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5",
