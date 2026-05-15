@@ -1,4 +1,6 @@
 export { appendLeadRow } from './append'
 export type { LeadForSheet } from './append'
+export { updateLeadRow } from './update'
+export { deleteLeadRow } from './deleteRow'
 export { initSheet } from './init'
 export { SHEET_TAB, SHEET_COLUMNS, formatDate } from './format'

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
 import { computeLeadScore } from '../../../lib/scoring'
-import { appendLeadRow } from '../../../lib/sheets'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -70,51 +69,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 })
   }
 
-  // Write to Google Sheets (best-effort — Supabase is already saved)
-  try {
-    const rowRef = await appendLeadRow({
-      id: lead_id,
-      created_at: existing.created_at,
-      lead_name,
-      found_by,
-      youtube_url: existing.youtube_url,
-      youtube_handle: existing.youtube_handle,
-      email: email || null,
-      website: website || null,
-      category,
-      content_style,
-      subscriber_count: existing.subscriber_count,
-      avg_views_last_10: existing.avg_views_last_10,
-      s2v_ratio_pct: existing.s2v_ratio_pct,
-      last_upload_at: existing.last_upload_at,
-      monetization,
-      remarks_ai_draft: existing.remarks_ai_draft,
-      remarks_final,
-      yt_score_factor: existing.yt_score_factor,
-      sub_range_factor: existing.sub_range_factor,
-      s2v_factor: existing.s2v_factor,
-      g_factor: gFactorNum,
-      lead_score_total: score.leadScoreTotal,
-      status,
-      status_notes: status_notes || null,
-    })
-
-    if (rowRef) {
-      await supabase
-        .from('leads')
-        .update({ sheets_synced: true, google_sheet_row_ref: rowRef })
-        .eq('id', lead_id)
-    }
-  } catch (sheetsErr) {
-    console.error('Google Sheets write failed (non-blocking):', sheetsErr)
-    await supabase
-      .from('leads')
-      .update({
-        sheets_sync_attempts: 1,
-        sheets_sync_last_attempted_at: new Date().toISOString(),
-      })
-      .eq('id', lead_id)
-  }
-
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, leadId: lead_id })
 }

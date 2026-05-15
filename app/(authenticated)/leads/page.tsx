@@ -6,11 +6,21 @@ export default async function LeadsPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: leads } = await supabase
-    .from('leads')
-    .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle')
-    .eq('draft', false)
-    .order('created_at', { ascending: false })
+  const [
+    { data: leads },
+    { data: teamMembers },
+  ] = await Promise.all([
+    supabase
+      .from('leads')
+      .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle')
+      .eq('draft', false)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('team_members')
+      .select('initials, full_name')
+      .eq('active', true)
+      .order('full_name'),
+  ])
 
   return (
     <div>
@@ -27,7 +37,7 @@ export default async function LeadsPage() {
         </Link>
       </div>
 
-      <LeadsTable leads={leads ?? []} currentUserEmail={user?.email ?? ''} />
+      <LeadsTable leads={leads ?? []} teamMembers={teamMembers ?? []} currentUserEmail={user?.email ?? ''} />
     </div>
   )
 }

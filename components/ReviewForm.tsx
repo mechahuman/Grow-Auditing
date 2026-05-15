@@ -166,8 +166,8 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
     if (data.error) {
       showToast(`Error: ${data.error}`)
     } else {
-      showToast('Lead saved to sheet!')
-      setTimeout(() => router.push('/leads'), 1000)
+      showToast('Lead saved!')
+      setTimeout(() => router.push(`/leads/${lead.id}`), 1000)
     }
   }
 
