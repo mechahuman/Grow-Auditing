@@ -3,10 +3,19 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/client'
+import { User, Link2, Zap, Mail, Globe, ChevronRight, TrendingUp } from 'lucide-react'
 
 interface TeamMember {
   initials: string
   full_name: string
+}
+
+const G_FACTOR_LABELS: Record<number, string> = {
+  1: 'Low',
+  2: 'Below Avg',
+  3: 'Average',
+  4: 'High',
+  5: 'Very High',
 }
 
 export default function EnrichPage() {
@@ -52,99 +61,204 @@ export default function EnrichPage() {
     router.push('/enrich/progress')
   }
 
-  function field(name: keyof typeof form, label: string, type = 'text', required = true, hint?: string) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-        <input
-          type={type}
-          value={form[name]}
-          onChange={(e) => setForm((f) => ({ ...f, [name]: e.target.value }))}
-          className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 ${
-            errors[name] ? 'border-red-400' : 'border-gray-300'
-          }`}
-        />
-        {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
-        {errors[name] && <p className="text-xs text-red-600 mt-1">{errors[name]}</p>}
-      </div>
-    )
-  }
-
   return (
-    <div className="max-w-xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Enrich a Lead</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Takes ~30–60 seconds — we'll fetch YouTube data and run AI analysis.</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
-        {field('lead_name', 'Lead Name')}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Found By <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={form.found_by}
-            onChange={(e) => setForm((f) => ({ ...f, found_by: e.target.value }))}
-            className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 ${
-              errors.found_by ? 'border-red-400' : 'border-gray-300'
-            }`}
+    <div className="min-h-[calc(100vh-3.5rem)] flex items-start justify-center py-10 px-4">
+      <div className="w-full max-w-xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div
+            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
+            style={{ background: 'linear-gradient(135deg, #A4F4C9 0%, #6EB498 100%)' }}
           >
-            <option value="">Select team member…</option>
-            {teamMembers.map((m) => (
-              <option key={m.initials} value={m.initials}>{m.full_name} ({m.initials})</option>
-            ))}
-          </select>
-          {errors.found_by && <p className="text-xs text-red-600 mt-1">{errors.found_by}</p>}
-        </div>
-
-        {field('youtube_url', 'YouTube URL', 'url')}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            G-Factor <span className="text-red-500">*</span>
-          </label>
-          <p className="text-xs text-gray-500 mb-2">Your gut feeling for this lead's growth potential</p>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <label key={n} className="flex-1">
-                <input
-                  type="radio"
-                  name="g_factor"
-                  value={String(n)}
-                  checked={form.g_factor === String(n)}
-                  onChange={(e) => setForm((f) => ({ ...f, g_factor: e.target.value }))}
-                  className="sr-only"
-                />
-                <span className={`block text-center py-2 rounded-md border text-sm font-medium cursor-pointer transition-colors ${
-                  form.g_factor === String(n)
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
-                }`}>
-                  {n}
-                </span>
-              </label>
-            ))}
+            <TrendingUp size={22} color="#0D3B66" strokeWidth={2.5} />
           </div>
-          {errors.g_factor && <p className="text-xs text-red-600 mt-1">{errors.g_factor}</p>}
+          <h1 className="text-2xl font-bold text-gradient mb-1">Enrich a Lead</h1>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Takes ~30–60 seconds — we'll fetch YouTube data and run AI analysis.
+          </p>
         </div>
 
-        <div className="border-t border-gray-100 pt-4 space-y-4">
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Optional — auto-fetched if blank</p>
-          {field('email', 'Email', 'email', false)}
-          {field('website', 'Website', 'url', false)}
-        </div>
+        {/* Form card */}
+        <form onSubmit={handleSubmit} className="glass-card p-7 space-y-5">
 
-        <button
-          type="submit"
-          className="w-full bg-gray-900 text-white rounded-md py-2.5 text-sm font-medium hover:bg-gray-800 transition-colors"
-        >
-          Enrich Lead →
-        </button>
-      </form>
+          {/* Lead Name */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                   style={{ color: 'var(--text-secondary)' }}>
+              Lead Name <span style={{ color: 'var(--error)' }}>*</span>
+            </label>
+            <div className="relative">
+              <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ color: 'var(--text-muted)' }} />
+              <input
+                id="enrich-lead-name"
+                type="text"
+                value={form.lead_name}
+                onChange={(e) => setForm((f) => ({ ...f, lead_name: e.target.value }))}
+                placeholder="e.g. TechReviewHub"
+                className="input-field pl-9"
+                style={errors.lead_name ? { borderColor: 'var(--error)' } : {}}
+              />
+            </div>
+            {errors.lead_name && (
+              <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.lead_name}</p>
+            )}
+          </div>
+
+          {/* Found By */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                   style={{ color: 'var(--text-secondary)' }}>
+              Found By <span style={{ color: 'var(--error)' }}>*</span>
+            </label>
+            <select
+              id="enrich-found-by"
+              value={form.found_by}
+              onChange={(e) => setForm((f) => ({ ...f, found_by: e.target.value }))}
+              className="input-field appearance-none"
+              style={{
+                ...(errors.found_by ? { borderColor: 'var(--error)' } : {}),
+                background: 'rgba(13, 59, 102, 0.4)',
+                color: form.found_by ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
+            >
+              <option value="" style={{ background: '#0D3B66' }}>Select team member…</option>
+              {teamMembers.map((m) => (
+                <option key={m.initials} value={m.initials} style={{ background: '#0D3B66' }}>
+                  {m.full_name} ({m.initials})
+                </option>
+              ))}
+            </select>
+            {errors.found_by && (
+              <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.found_by}</p>
+            )}
+          </div>
+
+          {/* YouTube URL */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                   style={{ color: 'var(--text-secondary)' }}>
+              YouTube URL <span style={{ color: 'var(--error)' }}>*</span>
+            </label>
+            <div className="relative">
+              <Link2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                     style={{ color: 'var(--text-muted)' }} />
+              <input
+                id="enrich-youtube-url"
+                type="url"
+                value={form.youtube_url}
+                onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
+                placeholder="https://youtube.com/@channel"
+                className="input-field pl-9"
+                style={errors.youtube_url ? { borderColor: 'var(--error)' } : {}}
+              />
+            </div>
+            {errors.youtube_url && (
+              <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.youtube_url}</p>
+            )}
+          </div>
+
+          {/* G-Factor */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider mb-0.5"
+                   style={{ color: 'var(--text-secondary)' }}>
+              G-Factor <span style={{ color: 'var(--error)' }}>*</span>
+            </label>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+              Your gut feeling for this lead's growth potential
+            </p>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((n) => {
+                const isSelected = form.g_factor === String(n)
+                return (
+                  <label key={n} className="flex-1 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="g_factor"
+                      value={String(n)}
+                      checked={isSelected}
+                      onChange={(e) => setForm((f) => ({ ...f, g_factor: e.target.value }))}
+                      className="sr-only"
+                    />
+                    <span
+                      className="flex flex-col items-center py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200"
+                      style={isSelected ? {
+                        background: 'linear-gradient(135deg, rgba(164,244,201,0.2) 0%, rgba(110,180,152,0.2) 100%)',
+                        borderColor: '#A4F4C9',
+                        color: '#A4F4C9',
+                        boxShadow: '0 0 12px rgba(164,244,201,0.25)',
+                      } : {
+                        background: 'transparent',
+                        borderColor: 'var(--border)',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <span className="text-base font-bold">{n}</span>
+                      <span className="text-[10px] mt-0.5 hidden sm:block">{G_FACTOR_LABELS[n]}</span>
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            {errors.g_factor && (
+              <p className="text-xs mt-1" style={{ color: 'var(--error)' }}>{errors.g_factor}</p>
+            )}
+          </div>
+
+          {/* Divider — Optional fields */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-3"
+               style={{ color: 'var(--text-muted)' }}>
+              Optional — auto-fetched if blank
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                       style={{ color: 'var(--text-secondary)' }}>Email</label>
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    id="enrich-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="contact@channel.com"
+                    className="input-field pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
+                       style={{ color: 'var(--text-secondary)' }}>Website</label>
+                <div className="relative">
+                  <Globe size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                         style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    id="enrich-website"
+                    type="url"
+                    value={form.website}
+                    onChange={(e) => setForm((f) => ({ ...f, website: e.target.value }))}
+                    placeholder="https://their-site.com"
+                    className="input-field pl-9"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            id="enrich-submit"
+            type="submit"
+            className="btn-primary w-full py-3 text-sm mt-2"
+          >
+            <Zap size={16} />
+            Start Audit
+            <ChevronRight size={16} />
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
