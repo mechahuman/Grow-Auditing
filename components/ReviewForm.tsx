@@ -2,112 +2,80 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { Copy, Check, Youtube, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Instagram, Twitter, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star } from 'lucide-react'
 
 interface Lead {
-  id: string
-  lead_name: string
-  found_by: string
-  youtube_url: string
-  youtube_handle: string | null
-  subscriber_count: number | null
-  total_views: number | null
-  video_count: number | null
-  channel_created_at: string | null
-  last_upload_at: string | null
-  avg_views_last_10: number | null
-  s2v_ratio_pct: number | null
-  posting_frequency_30d: number | null
-  email: string | null
-  website: string | null
-  instagram: string | null
-  twitter: string | null
-  category: string | null
-  content_style: string | null
-  posting_pattern: string | null
-  monetization: string | null
-  strengths: string[] | null
-  concerns: string[] | null
-  data_gaps: string[] | null
-  remarks_ai_draft: string | null
-  remarks_final: string | null
-  g_factor: number
-  yt_score_factor: number | null
-  sub_range_factor: number | null
-  s2v_factor: number | null
-  lead_score_total: number | null
-  ai_confidence: string | null
-  status: string
-  status_notes: string | null
-  draft: boolean
-  raw_youtube_data: { recentVideos?: RecentVideo[] } | null
+  id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
+  subscriber_count: number | null; total_views: number | null; video_count: number | null
+  channel_created_at: string | null; last_upload_at: string | null; avg_views_last_10: number | null
+  s2v_ratio_pct: number | null; posting_frequency_30d: number | null
+  email: string | null; website: string | null; instagram: string | null; twitter: string | null
+  category: string | null; content_style: string | null; posting_pattern: string | null; monetization: string | null
+  strengths: string[] | null; concerns: string[] | null; data_gaps: string[] | null
+  remarks_ai_draft: string | null; remarks_final: string | null
+  g_factor: number; yt_score_factor: number | null; sub_range_factor: number | null; s2v_factor: number | null
+  lead_score_total: number | null; ai_confidence: string | null; status: string; status_notes: string | null
+  draft: boolean; raw_youtube_data: { recentVideos?: { title: string; publishedAt: string; viewCount: number }[] } | null
 }
-
-interface RecentVideo {
-  title: string
-  publishedAt: string
-  viewCount: number
-}
-
 interface TeamMember { initials: string; full_name: string }
 interface StatusOption { value: string; label: string }
-
-interface Props {
-  lead: Lead
-  teamMembers: TeamMember[]
-  statusOptions: StatusOption[]
-}
-
-const CONFIDENCE_COLORS: Record<string, string> = {
-  high:   'bg-green-50 text-green-700 border-green-200',
-  medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  low:    'bg-red-50 text-red-700 border-red-200',
-}
-
-const SCORE_COLORS: Record<string, string> = {
-  green:  'text-green-700',
-  blue:   'text-blue-700',
-  yellow: 'text-yellow-700',
-  red:    'text-red-700',
-}
-
-const SCORE_BG: Record<string, string> = {
-  green:  'bg-green-50 border-green-200',
-  blue:   'bg-blue-50 border-blue-200',
-  yellow: 'bg-yellow-50 border-yellow-200',
-  red:    'bg-red-50 border-red-200',
-}
+interface Props { lead: Lead; teamMembers: TeamMember[]; statusOptions: StatusOption[] }
 
 function computeScore(yt: number, sub: number, s2v: number, g: number) {
   const gNorm = parseFloat(((g - 1) / 4).toFixed(2))
-  const total = parseFloat((1 + yt + sub + s2v + gNorm).toFixed(2))
-  return { gNorm, total }
+  return { gNorm, total: parseFloat((1 + yt + sub + s2v + gNorm).toFixed(2)) }
 }
-
-function getLabel(score: number): { label: string; color: string } {
-  if (score >= 4.0) return { label: 'Strong fit', color: 'green' }
-  if (score >= 3.0) return { label: 'Solid fit', color: 'blue' }
-  if (score >= 2.0) return { label: 'Weak fit', color: 'yellow' }
-  return { label: 'Poor fit', color: 'red' }
+function getLabel(score: number) {
+  if (score >= 4.0) return { label: 'Strong fit', color: '#A4F4C9' }
+  if (score >= 3.0) return { label: 'Solid fit', color: '#6EB498' }
+  if (score >= 2.0) return { label: 'Weak fit', color: '#FFB347' }
+  return { label: 'Poor fit', color: '#FF6B6B' }
 }
-
-function fmt(n: number | null | undefined, decimals = 0): string {
+function fmt(n: number | null | undefined, d = 0) {
   if (n == null) return '—'
-  return n.toLocaleString('en-US', { maximumFractionDigits: decimals })
+  return n.toLocaleString('en-US', { maximumFractionDigits: d })
+}
+function daysAgo(iso: string | null) {
+  if (!iso) return '—'
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`
+}
+function monthsAgo(iso: string | null) {
+  if (!iso) return '—'
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / (86_400_000 * 30.44))
+  return m < 1 ? '<1 month' : `${m} month${m > 1 ? 's' : ''}`
 }
 
-function daysAgo(iso: string | null): string {
-  if (!iso) return '—'
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
-  if (days === 0) return 'Today'
-  if (days === 1) return 'Yesterday'
-  return `${days}d ago`
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-secondary)' }}>
+      {children}
+    </h2>
+  )
 }
 
-function monthsAgo(iso: string | null): string {
-  if (!iso) return '—'
-  const months = Math.floor((Date.now() - new Date(iso).getTime()) / (86_400_000 * 30.44))
-  if (months < 1) return '<1 month'
-  return `${months} month${months > 1 ? 's' : ''}`
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{value}</span>
+    </div>
+  )
+}
+
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+  function handle() {
+    navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1800)
+  }
+  return (
+    <button onClick={handle} title="Copy" className="p-1.5 rounded-lg transition-all hover:scale-110 flex-shrink-0"
+      style={{ background: copied ? 'rgba(164,244,201,0.2)' : 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: copied ? '#A4F4C9' : 'var(--text-muted)' }}>
+      {copied ? <Check size={13} /> : <Copy size={13} />}
+    </button>
+  )
 }
 
 export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
@@ -117,120 +85,87 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   const [showDiscard, setShowDiscard] = useState(false)
   const [showAIDraft, setShowAIDraft] = useState(false)
   const [showScoreModal, setShowScoreModal] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
-
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [gFactor, setGFactor] = useState(lead.g_factor)
   const [fields, setFields] = useState({
-    lead_name:      lead.lead_name,
-    found_by:       lead.found_by,
-    email:          lead.email ?? '',
-    website:        lead.website ?? '',
-    instagram:      lead.instagram ?? '',
-    twitter:        lead.twitter ?? '',
-    category:       lead.category ?? '',
-    content_style:  lead.content_style ?? '',
-    monetization:   lead.monetization ?? '',
-    posting_pattern: lead.posting_pattern ?? '',
-    remarks_final:  lead.remarks_final ?? '',
-    status:         lead.status,
-    status_notes:   lead.status_notes ?? '',
+    lead_name: lead.lead_name, found_by: lead.found_by,
+    email: lead.email ?? '', website: lead.website ?? '',
+    instagram: lead.instagram ?? '', twitter: lead.twitter ?? '',
+    category: lead.category ?? '', content_style: lead.content_style ?? '',
+    monetization: lead.monetization ?? '', posting_pattern: lead.posting_pattern ?? '',
+    remarks_final: lead.remarks_final ?? '', status: lead.status, status_notes: lead.status_notes ?? '',
   })
 
-  const ytFactor  = lead.yt_score_factor  ?? 1
+  const ytFactor = lead.yt_score_factor ?? 1
   const subFactor = lead.sub_range_factor ?? 0
-  const s2vFactor = lead.s2v_factor       ?? 0
-
-  const { gNorm, total } = useMemo(
-    () => computeScore(ytFactor, subFactor, s2vFactor, gFactor),
-    [ytFactor, subFactor, s2vFactor, gFactor]
-  )
+  const s2vFactor = lead.s2v_factor ?? 0
+  const { gNorm, total } = useMemo(() => computeScore(ytFactor, subFactor, s2vFactor, gFactor), [ytFactor, subFactor, s2vFactor, gFactor])
   const { label: scoreLabel, color: scoreColor } = getLabel(total)
-
   const recentVideos = lead.raw_youtube_data?.recentVideos?.slice(0, 5) ?? []
 
   function set(name: keyof typeof fields) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setFields((f) => ({ ...f, [name]: e.target.value }))
+      setFields(f => ({ ...f, [name]: e.target.value }))
   }
-
-  function showToast(msg: string) {
-    setToast(msg)
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok })
     setTimeout(() => setToast(null), 3000)
   }
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text)
-    showToast('Copied!')
-  }
-
   async function handleSave() {
     setSaving(true)
-    const res = await fetch('/api/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lead_id: lead.id, g_factor: String(gFactor), ...fields }),
-    })
+    const res = await fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, g_factor: String(gFactor), ...fields }) })
     const data = await res.json()
     setSaving(false)
-    if (data.error) {
-      showToast(`Error: ${data.error}`)
-    } else {
-      showToast('Lead saved!')
-      setTimeout(() => router.push(`/leads/${lead.id}`), 1000)
-    }
+    if (data.error) { showToast(`Error: ${data.error}`, false) }
+    else { showToast('Lead saved!'); setTimeout(() => router.push(`/leads/${lead.id}`), 1000) }
   }
-
   async function handleDiscard() {
     setDiscarding(true)
     await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' })
     router.push('/leads')
   }
 
+  const inputCls = 'input-field text-sm'
+  const labelCls = 'block text-xs font-semibold uppercase tracking-wider mb-1.5'
+
   return (
     <div className="relative">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
-          {toast}
+        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all"
+          style={{ background: toast.ok ? 'rgba(164,244,201,0.15)' : 'rgba(255,107,107,0.15)', border: `1px solid ${toast.ok ? 'rgba(164,244,201,0.4)' : 'rgba(255,107,107,0.4)'}`, color: toast.ok ? '#A4F4C9' : '#FF6B6B', backdropFilter: 'blur(12px)' }}>
+          {toast.ok ? <Check size={15} /> : null}{toast.msg}
         </div>
       )}
 
       {/* Score info modal */}
       {showScoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowScoreModal(false)}>
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-semibold text-gray-900 mb-3">How the score works</h3>
-            <p className="text-sm text-gray-600 mb-3">Score = 1 + (YT + Sub Range + S2V + G-Factor normalized)</p>
-            <ul className="text-sm text-gray-600 space-y-1.5">
-              <li><strong>YT Factor:</strong> 1 if channel exists, 0 if not</li>
-              <li><strong>Sub Range:</strong> 0 (&lt;1k) · 0.5 (1k–4.9k) · 1 (5k+)</li>
-              <li><strong>S2V:</strong> 1 if avg views / subs ≥ 10%, else 0</li>
-              <li><strong>G-Factor:</strong> (G − 1) / 4 → maps 1–5 to 0–1</li>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowScoreModal(false)}>
+          <div className="glass-card p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold mb-3 text-gradient">How the Score Works</h3>
+            <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>Score = 1 + (YT + Sub Range + S2V + G-Factor normalized)</p>
+            <ul className="text-sm space-y-2" style={{ color: 'var(--text-primary)' }}>
+              <li><span style={{ color: 'var(--text-secondary)' }}>YT Factor:</span> 1 if channel exists, 0 if not</li>
+              <li><span style={{ color: 'var(--text-secondary)' }}>Sub Range:</span> 0 (&lt;1k) · 0.5 (1k–4.9k) · 1 (5k+)</li>
+              <li><span style={{ color: 'var(--text-secondary)' }}>S2V:</span> 1 if avg views / subs ≥ 10%, else 0</li>
+              <li><span style={{ color: 'var(--text-secondary)' }}>G-Factor:</span> (G − 1) / 4 → maps 1–5 to 0–1</li>
             </ul>
-            <p className="text-xs text-gray-400 mt-4">Range: 1.0 (min) — 5.0 (max)</p>
-            <button onClick={() => setShowScoreModal(false)} className="mt-4 text-sm text-gray-900 font-medium hover:underline">Close</button>
+            <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>Range: 1.0 (min) — 5.0 (max)</p>
+            <button onClick={() => setShowScoreModal(false)} className="btn-ghost w-full mt-4 text-sm">Close</button>
           </div>
         </div>
       )}
 
       {/* Discard modal */}
       {showDiscard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="font-semibold text-gray-900 mb-2">Discard this lead?</h3>
-            <p className="text-sm text-gray-600 mb-5">This will permanently delete the enrichment. You'll need to re-enrich this channel if you want it back.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Discard this lead?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>This will permanently delete the enrichment. You'll need to re-enrich this channel if you want it back.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowDiscard(false)}
-                className="flex-1 border border-gray-300 rounded-md py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDiscard}
-                disabled={discarding}
-                className="flex-1 bg-red-600 text-white rounded-md py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-              >
+              <button onClick={() => setShowDiscard(false)} className="btn-ghost flex-1">Cancel</button>
+              <button onClick={handleDiscard} disabled={discarding} className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                style={{ background: 'rgba(255,107,107,0.15)', border: '1px solid rgba(255,107,107,0.3)', color: '#FF6B6B' }}>
                 {discarding ? 'Discarding…' : 'Yes, discard'}
               </button>
             </div>
@@ -238,117 +173,100 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">{lead.lead_name}</h1>
+          <h1 className="text-2xl font-bold text-gradient mb-0.5">{lead.lead_name}</h1>
           <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:underline">
-            {lead.youtube_handle ?? lead.youtube_url}
+            className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
+            style={{ color: 'var(--text-secondary)' }}>
+            <Youtube size={14} /> {lead.youtube_handle ?? lead.youtube_url}
           </a>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 flex-wrap">
           {lead.draft && (
-            <button
-              onClick={() => setShowDiscard(true)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Discard
+            <button onClick={() => setShowDiscard(true)} className="btn-ghost flex items-center gap-1.5 text-sm"
+              style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
+              <Trash2 size={14} /> Discard
             </button>
           )}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : 'Save Lead'}
+          <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-1.5">
+            {saving ? <><Loader2 size={14} className="animate-spin" />Saving…</> : <><Save size={14} />Save Lead</>}
           </button>
         </div>
       </div>
 
+      {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT — Read-only channel context */}
-        <div className="space-y-4">
+
+        {/* ── LEFT COLUMN ── */}
+        <div className="space-y-5">
+
           {/* Channel stats */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Channel Stats</h2>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <dt className="text-gray-500">Subscribers</dt>
-              <dd className="font-medium">{fmt(lead.subscriber_count)}</dd>
-              <dt className="text-gray-500">Total views</dt>
-              <dd className="font-medium">{fmt(lead.total_views)}</dd>
-              <dt className="text-gray-500">Videos</dt>
-              <dd className="font-medium">{fmt(lead.video_count)}</dd>
-              <dt className="text-gray-500">Channel age</dt>
-              <dd className="font-medium">{monthsAgo(lead.channel_created_at)}</dd>
-              <dt className="text-gray-500">Last upload</dt>
-              <dd className="font-medium">{daysAgo(lead.last_upload_at)}</dd>
-              <dt className="text-gray-500">Avg views (last 10)</dt>
-              <dd className="font-medium">{fmt(lead.avg_views_last_10)}</dd>
-              <dt className="text-gray-500">S2V ratio</dt>
-              <dd className="font-medium">{lead.s2v_ratio_pct != null ? `${lead.s2v_ratio_pct}%` : '—'}</dd>
-              <dt className="text-gray-500">Posts (30d)</dt>
-              <dd className="font-medium">{lead.posting_frequency_30d ?? '—'}</dd>
-            </dl>
+          <div className="glass-card p-5">
+            <SectionTitle>Channel Stats</SectionTitle>
+            <StatRow label="Subscribers" value={fmt(lead.subscriber_count)} />
+            <StatRow label="Total views" value={fmt(lead.total_views)} />
+            <StatRow label="Videos" value={fmt(lead.video_count)} />
+            <StatRow label="Channel age" value={monthsAgo(lead.channel_created_at)} />
+            <StatRow label="Last upload" value={daysAgo(lead.last_upload_at)} />
+            <StatRow label="Avg views (last 10)" value={fmt(lead.avg_views_last_10)} />
+            <StatRow label="S2V ratio" value={lead.s2v_ratio_pct != null ? `${lead.s2v_ratio_pct}%` : '—'} />
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Posts (30d)</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.posting_frequency_30d ?? '—'}</span>
+            </div>
           </div>
 
           {/* Recent videos */}
           {recentVideos.length > 0 && (
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Recent Videos</h2>
+            <div className="glass-card p-5">
+              <SectionTitle>Recent Videos</SectionTitle>
               <ul className="space-y-2">
                 {recentVideos.map((v, i) => (
-                  <li key={i} className="text-sm flex justify-between gap-4">
-                    <span className="text-gray-800 truncate">{v.title}</span>
-                    <span className="text-gray-500 shrink-0">{fmt(v.viewCount)} views</span>
+                  <li key={i} className="flex items-start justify-between gap-3 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{v.title}</span>
+                    <span className="text-xs flex-shrink-0 font-medium" style={{ color: 'var(--text-secondary)' }}>{fmt(v.viewCount)}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* AI observations */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">AI Observations</h2>
-            <dl className="text-sm space-y-2 mb-4">
-              <div className="flex gap-2">
-                <dt className="text-gray-500 w-28 shrink-0">Category</dt>
-                <dd className="text-gray-900">{lead.category ?? '—'}</dd>
+          {/* AI Observations */}
+          <div className="glass-card p-5">
+            <SectionTitle>AI Observations</SectionTitle>
+            {[
+              ['Category', lead.category],
+              ['Content Style', lead.content_style],
+              ['Monetization', lead.monetization],
+              ['Posting', lead.posting_pattern],
+            ].map(([label, val]) => (
+              <div key={label as string} className="flex gap-3 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                <span className="text-xs w-28 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{label}</span>
+                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{val ?? '—'}</span>
               </div>
-              <div className="flex gap-2">
-                <dt className="text-gray-500 w-28 shrink-0">Content style</dt>
-                <dd className="text-gray-900">{lead.content_style ?? '—'}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-gray-500 w-28 shrink-0">Monetization</dt>
-                <dd className="text-gray-900">{lead.monetization ?? '—'}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-gray-500 w-28 shrink-0">Posting</dt>
-                <dd className="text-gray-900">{lead.posting_pattern ?? '—'}</dd>
-              </div>
-            </dl>
+            ))}
 
             {(lead.strengths ?? []).length > 0 && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Strengths</p>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-secondary)' }}>Strengths</p>
                 <ul className="space-y-1">
                   {(lead.strengths ?? []).map((s, i) => (
-                    <li key={i} className="text-sm text-gray-700 flex gap-1.5">
-                      <span className="text-green-600 shrink-0">+</span>{s}
+                    <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <span style={{ color: '#A4F4C9' }}>+</span>{s}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-
             {(lead.concerns ?? []).length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Concerns</p>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#FF6B6B' }}>Concerns</p>
                 <ul className="space-y-1">
                   {(lead.concerns ?? []).map((c, i) => (
-                    <li key={i} className="text-sm text-gray-700 flex gap-1.5">
-                      <span className="text-red-500 shrink-0">−</span>{c}
+                    <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <span style={{ color: '#FF6B6B' }}>−</span>{c}
                     </li>
                   ))}
                 </ul>
@@ -356,16 +274,19 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             )}
           </div>
 
-          {/* AI confidence + data gaps */}
+          {/* AI confidence */}
           {(lead.ai_confidence || (lead.data_gaps ?? []).length > 0) && (
-            <div className={`border rounded-lg p-4 text-sm ${CONFIDENCE_COLORS[lead.ai_confidence ?? 'low']}`}>
-              <p className="font-medium mb-1">
-                AI confidence: {lead.ai_confidence ?? 'unknown'}
-              </p>
+            <div className="glass-card p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info size={14} style={{ color: 'var(--text-secondary)' }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
+                  AI Confidence: {lead.ai_confidence ?? 'unknown'}
+                </span>
+              </div>
               {(lead.data_gaps ?? []).length > 0 && (
-                <ul className="space-y-0.5 mt-2">
+                <ul className="space-y-1">
                   {(lead.data_gaps ?? []).map((d, i) => (
-                    <li key={i} className="opacity-80">? {d}</li>
+                    <li key={i} className="text-xs" style={{ color: 'var(--text-muted)' }}>? {d}</li>
                   ))}
                 </ul>
               )}
@@ -373,184 +294,123 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
           )}
         </div>
 
-        {/* RIGHT — Editable fields */}
-        <div className="space-y-4">
-          {/* Live score */}
-          <div className={`border rounded-lg p-5 ${SCORE_BG[scoreColor]}`}>
-            <div className="flex items-baseline justify-between mb-1">
-              <span className={`text-3xl font-bold ${SCORE_COLORS[scoreColor]}`}>{total.toFixed(2)}</span>
-              <span className={`text-sm font-semibold ${SCORE_COLORS[scoreColor]}`}>{scoreLabel}</span>
+        {/* ── RIGHT COLUMN ── */}
+        <div className="space-y-5">
+
+          {/* Live score card */}
+          <div className="glass-card p-5" style={{ borderColor: `${scoreColor}40` }}>
+            <div className="flex items-end justify-between mb-3">
+              <div>
+                <div className="text-4xl font-black" style={{ color: scoreColor }}>{total.toFixed(2)}</div>
+                <div className="text-sm font-semibold mt-0.5" style={{ color: scoreColor }}>{scoreLabel}</div>
+              </div>
+              <button onClick={() => setShowScoreModal(true)} className="btn-ghost text-xs px-2 py-1 flex items-center gap-1">
+                <Info size={12} /> How it's scored
+              </button>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Score = 1 + (YT + Sub Range + S2V + G-norm) ·{' '}
-              <button onClick={() => setShowScoreModal(true)} className="underline hover:no-underline">What is this?</button>
-            </p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
-              <span>YT Factor</span>      <span className="font-medium">{ytFactor.toFixed(1)}</span>
-              <span>Sub Range Factor</span><span className="font-medium">{subFactor.toFixed(1)}</span>
-              <span>S2V Factor</span>      <span className="font-medium">{s2vFactor.toFixed(1)}</span>
-              <span>G-Factor ({gFactor}/5)</span><span className="font-medium">{gNorm.toFixed(2)} normalized</span>
+            <div className="w-full h-2 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${((total - 1) / 4) * 100}%`, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}99)` }} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[['YT Factor', ytFactor.toFixed(1)], ['Sub Range', subFactor.toFixed(1)], ['S2V Factor', s2vFactor.toFixed(1)], [`G-Factor (${gFactor}/5)`, gNorm.toFixed(2)]].map(([k, v]) => (
+                <div key={k} className="rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+                  <div className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>{k}</div>
+                  <div className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{v}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* G-Factor selector */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              G-Factor <span className="font-normal text-gray-500">(gut feeling: 1–5)</span>
-            </label>
-            <div className="flex gap-2 mt-2">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setGFactor(n)}
-                  className={`flex-1 py-2.5 rounded-md border text-sm font-medium transition-colors ${
-                    gFactor === n
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-600'
-                  }`}
-                >
+          {/* G-Factor */}
+          <div className="glass-card p-5">
+            <SectionTitle>G-Factor <span className="normal-case font-normal" style={{ color: 'var(--text-muted)' }}>(gut feeling 1–5)</span></SectionTitle>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button key={n} onClick={() => setGFactor(n)} className="flex-1 py-3 rounded-xl border text-sm font-bold transition-all"
+                  style={gFactor === n ? { background: 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))', borderColor: '#A4F4C9', color: '#A4F4C9', boxShadow: '0 0 14px rgba(164,244,201,0.25)' } : { background: 'transparent', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
                   {n}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Editable fields */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Edit Fields</h2>
-
-            {[
-              { key: 'lead_name', label: 'Lead Name' },
-            ].map(({ key, label }) => (
-              <div key={key}>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                <input
-                  value={fields[key as keyof typeof fields]}
-                  onChange={set(key as keyof typeof fields)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                />
-              </div>
-            ))}
+          {/* Edit fields */}
+          <div className="glass-card p-5 space-y-4">
+            <SectionTitle>Edit Fields</SectionTitle>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Found By</label>
-              <select
-                value={fields.found_by}
-                onChange={set('found_by')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-              >
-                {teamMembers.map((m) => (
-                  <option key={m.initials} value={m.initials}>{m.full_name} ({m.initials})</option>
-                ))}
+              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Lead Name</label>
+              <input value={fields.lead_name} onChange={set('lead_name')} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Found By</label>
+              <select value={fields.found_by} onChange={set('found_by')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
+                {teamMembers.map(m => <option key={m.initials} value={m.initials} style={{ background: '#0D3B66' }}>{m.full_name} ({m.initials})</option>)}
               </select>
             </div>
 
             {/* Contact Details */}
-            <div className="border-t border-gray-200 pt-3">
-              <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Contact Details</h3>
-              {([
-                ['email', 'Email'],
-                ['website', 'Website'],
-                ['instagram', 'Instagram'],
-                ['twitter', 'Twitter'],
-              ] as [keyof typeof fields, string][]).map(([key, label]) => (
+            <div className="pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+              <SectionTitle>Contact Details</SectionTitle>
+              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Instagram], ['twitter', 'Twitter / X', Twitter]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
                 <div key={key} className="mb-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>
+                    <Icon size={11} className="inline mr-1" />{label}
+                  </label>
                   <div className="flex gap-2">
-                    <input
-                      value={fields[key]}
-                      onChange={set(key)}
-                      className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                    />
-                    {fields[key] && (
-                      <button
-                        onClick={() => copyToClipboard(fields[key])}
-                        className="px-2.5 py-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Copy
-                      </button>
-                    )}
+                    <input value={fields[key]} onChange={set(key)} className={`${inputCls} flex-1`} placeholder={`Enter ${label.toLowerCase()}…`} />
+                    {fields[key] && <CopyButton value={fields[key]} />}
                   </div>
                 </div>
               ))}
             </div>
 
-            {([
-              ['category', 'Category'],
-              ['content_style', 'Content Style'],
-              ['monetization', 'Monetization'],
-              ['posting_pattern', 'Posting Pattern'],
-            ] as [keyof typeof fields, string][]).map(([key, label]) => (
+            {/* Metadata fields */}
+            {([['category', 'Category'], ['content_style', 'Content Style'], ['monetization', 'Monetization'], ['posting_pattern', 'Posting Pattern']] as [keyof typeof fields, string][]).map(([key, label]) => (
               <div key={key}>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                <input
-                  value={fields[key]}
-                  onChange={set(key)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-                />
+                <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>{label}</label>
+                <input value={fields[key]} onChange={set(key)} className={inputCls} />
               </div>
             ))}
 
+            {/* Status */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
-              <select
-                value={fields.status}
-                onChange={set('status')}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-              >
-                {statusOptions.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
+              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status</label>
+              <select value={fields.status} onChange={set('status')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
+                {statusOptions.map(s => <option key={s.value} value={s.value} style={{ background: '#0D3B66' }}>{s.label}</option>)}
               </select>
             </div>
-
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Status Notes</label>
-              <input
-                value={fields.status_notes}
-                onChange={set('status_notes')}
-                placeholder="Optional"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
-              />
+              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status Notes</label>
+              <input value={fields.status_notes} onChange={set('status_notes')} placeholder="Optional" className={inputCls} />
             </div>
           </div>
 
           {/* Remarks */}
-          <div className="bg-white border border-gray-200 rounded-lg p-5">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Remarks (Final)
-            </label>
-            <textarea
-              value={fields.remarks_final}
-              onChange={set('remarks_final')}
-              rows={5}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-y"
-            />
-
+          <div className="glass-card p-5">
+            <SectionTitle>Remarks (Final)</SectionTitle>
+            <textarea value={fields.remarks_final} onChange={set('remarks_final')} rows={5}
+              className="input-field text-sm resize-y"
+              placeholder="Write final remarks for this lead…" />
             {lead.remarks_ai_draft && (
               <div className="mt-3">
-                <button
-                  onClick={() => setShowAIDraft((v) => !v)}
-                  className="text-xs text-gray-500 hover:text-gray-900 underline"
-                >
+                <button onClick={() => setShowAIDraft(v => !v)} className="flex items-center gap-1.5 text-xs"
+                  style={{ color: 'var(--text-muted)' }}>
+                  {showAIDraft ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   {showAIDraft ? 'Hide' : 'Show'} original AI draft
                 </button>
                 {showAIDraft && (
-                  <p className="mt-2 text-sm text-gray-600 bg-gray-50 rounded p-3 border border-gray-200 italic">
+                  <div className="mt-2 text-sm italic rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                     {lead.remarks_ai_draft}
-                  </p>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
           {/* Save button */}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-gray-900 text-white rounded-md py-3 text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
-          >
-            {saving ? 'Saving…' : 'Save Lead →'}
+          <button onClick={handleSave} disabled={saving} className="btn-primary w-full py-3 text-sm">
+            {saving ? <><Loader2 size={15} className="animate-spin" />Saving…</> : <><Save size={15} />Save Lead →</>}
           </button>
         </div>
       </div>
