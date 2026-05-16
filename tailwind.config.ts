@@ -10,7 +10,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand palette – oceanic
+        // Premium Dark Palette – Vibrant Gradients
+        dark: {
+          bg: '#0f0f23',
+          bgAlt: '#1a1a2e',
+          surface: '#16213e',
+          surfaceLight: '#0f3460',
+        },
+        accent: {
+          pink: '#ff1493',
+          purple: '#9c27b0',
+          orange: '#ff8c00',
+          coral: '#ff6b6b',
+          cyan: '#00d9ff',
+          teal: '#00e5cc',
+        },
+        // Legacy oceanic palette (kept for compatibility)
         mint: {
           100: '#A4F4C9',
           200: '#7EEDB0',
@@ -34,8 +49,6 @@ const config: Config = {
         'text-primary': 'var(--text-primary)',
         'text-secondary': 'var(--text-secondary)',
         'text-muted': 'var(--text-muted)',
-        accent: 'var(--accent)',
-        'accent-secondary': 'var(--accent-secondary)',
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
@@ -43,12 +56,16 @@ const config: Config = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'brand-gradient': 'linear-gradient(135deg, #A4F4C9 0%, #6EB498 100%)',
+        'brand-gradient': 'linear-gradient(135deg, #ff1493 0%, #9c27b0 100%)',
+        'gradient-orange': 'linear-gradient(135deg, #ff8c00 0%, #ff6b6b 100%)',
+        'gradient-cyan': 'linear-gradient(135deg, #00d9ff 0%, #00e5cc 100%)',
+        'bg-premium': 'radial-gradient(circle at 50% 50%, #0f3460 0%, #0f0f23 100%)',
       },
       boxShadow: {
-        'glow-mint': '0 0 20px rgba(164, 244, 201, 0.3)',
-        'glow-mint-lg': '0 0 40px rgba(164, 244, 201, 0.4)',
-        'glow-teal': '0 0 20px rgba(110, 180, 152, 0.3)',
+        'glow-pink': '0 0 20px rgba(255, 20, 147, 0.4)',
+        'glow-pink-lg': '0 0 40px rgba(255, 20, 147, 0.5)',
+        'glow-purple': '0 0 20px rgba(156, 39, 176, 0.4)',
+        'glow-orange': '0 0 20px rgba(255, 140, 0, 0.4)',
         glass: '0 8px 32px rgba(0, 0, 0, 0.3)',
       },
       animation: {
