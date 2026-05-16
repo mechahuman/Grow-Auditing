@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { lead_name, found_by, youtube_url, g_factor, email, website } = body
+  const { lead_name, found_by, youtube_url, g_factor, email, website, instagram, twitter } = body
 
   if (!lead_name || !found_by || !youtube_url || !g_factor) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
   const aiResult = await analyzeChannel(ytData)
   const { analysis } = aiResult
 
+  // Extract instagram and twitter from socialLinks
+  const instagramLink = ytData.socialLinks?.find(l => l.platform === 'instagram')?.url ?? instagram ?? null
+  const twitterLink = ytData.socialLinks?.find(l => l.platform === 'twitter')?.url ?? twitter ?? null
+
   const score = computeLeadScore({
     hasYouTube: true,
     subscriberCount: ytData.subscriberCount,
@@ -72,6 +76,8 @@ export async function POST(request: NextRequest) {
       posting_frequency_30d: ytData.postingFrequency30d,
       email: email || ytData.email || null,
       website: website || ytData.website || null,
+      instagram: instagramLink,
+      twitter: twitterLink,
       category: analysis.category,
       content_style: analysis.content_style,
       posting_pattern: analysis.posting_pattern,

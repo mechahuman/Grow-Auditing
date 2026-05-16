@@ -20,6 +20,8 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
   const [foundBy, setFoundBy] = useState(lead.found_by || '')
   const [email, setEmail] = useState(lead.email || '')
   const [website, setWebsite] = useState(lead.website || '')
+  const [instagram, setInstagram] = useState(lead.instagram || '')
+  const [twitter, setTwitter] = useState(lead.twitter || '')
   const [category, setCategory] = useState(lead.category || '')
   const [contentStyle, setContentStyle] = useState(lead.content_style || '')
   const [monetization, setMonetization] = useState(lead.monetization || '')
@@ -59,6 +61,12 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
       ? 'Weak fit'
       : 'Poor fit'
 
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    setToast({ message: 'Copied!', type: 'success' })
+    setTimeout(() => setToast(null), 2000)
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setError(null)
@@ -73,6 +81,8 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
           found_by: foundBy,
           email: email || null,
           website: website || null,
+          instagram: instagram || null,
+          twitter: twitter || null,
           category,
           content_style: contentStyle,
           monetization,
@@ -158,25 +168,92 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Details */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <div className="flex gap-2">
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2"
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2"
                     />
+                    {email && (
+                      <button
+                        onClick={() => copyToClipboard(email)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                  <input
-                    type="url"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    {website && (
+                      <button
+                        onClick={() => copyToClipboard(website)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={instagram}
+                      onChange={(e) => setInstagram(e.target.value)}
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    {instagram && (
+                      <button
+                        onClick={() => copyToClipboard(instagram)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Twitter</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={twitter}
+                      onChange={(e) => setTwitter(e.target.value)}
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2"
+                    />
+                    {twitter && (
+                      <button
+                        onClick={() => copyToClipboard(twitter)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

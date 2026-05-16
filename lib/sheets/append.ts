@@ -10,6 +10,8 @@ export interface LeadForSheet {
   youtube_handle: string | null
   email: string | null
   website: string | null
+  instagram: string | null
+  twitter: string | null
   category: string | null
   content_style: string | null
   subscriber_count: number | null
@@ -40,6 +42,8 @@ export async function appendLeadRow(lead: LeadForSheet): Promise<string | null> 
     lead.youtube_handle ?? '',
     lead.email ?? '',
     lead.website ?? '',
+    lead.instagram ?? '',
+    lead.twitter ?? '',
     lead.category ?? '',
     lead.content_style ?? '',
     lead.subscriber_count ?? '',

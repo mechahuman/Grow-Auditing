@@ -8,6 +8,8 @@ export const SHEET_COLUMNS = [
   'Handle',
   'Email',
   'Website',
+  'Instagram',
+  'Twitter',
   'Category',
   'Content Style',
   'Subscribers',

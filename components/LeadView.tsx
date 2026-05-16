@@ -13,6 +13,7 @@ export function LeadView({ lead, statusLabel }: LeadViewProps) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -28,6 +29,12 @@ export function LeadView({ lead, statusLabel }: LeadViewProps) {
       alert('Error deleting lead')
       setDeleting(false)
     }
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    setToast('Copied!')
+    setTimeout(() => setToast(null), 2000)
   }
 
   const recentVideos = lead.raw_youtube_data?.recentVideos || []
@@ -49,6 +56,13 @@ export function LeadView({ lead, statusLabel }: LeadViewProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg">
+          {toast}
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
@@ -267,29 +281,87 @@ export function LeadView({ lead, statusLabel }: LeadViewProps) {
               </div>
             </div>
 
-            {/* Contact Info */}
+            {/* Contact Details */}
             <div className="rounded-lg border border-gray-200 bg-white p-6">
-              <h3 className="text-sm text-gray-600 mb-3">Contact & Web</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Details</h3>
               <div className="space-y-3">
                 {lead.email && (
                   <div>
-                    <p className="text-xs text-gray-600">Email</p>
-                    <a href={`mailto:${lead.email}`} className="text-sm text-blue-600 hover:underline">
-                      {lead.email}
-                    </a>
+                    <p className="text-xs text-gray-600 mb-1">Email</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <a href={`mailto:${lead.email}`} className="text-sm text-blue-600 hover:underline truncate">
+                        {lead.email}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(lead.email)}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-50 whitespace-nowrap"
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </div>
                 )}
                 {lead.website && (
                   <div>
-                    <p className="text-xs text-gray-600">Website</p>
-                    <a
-                      href={lead.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {lead.website}
-                    </a>
+                    <p className="text-xs text-gray-600 mb-1">Website</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <a
+                        href={lead.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline truncate"
+                      >
+                        {lead.website}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(lead.website)}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-50 whitespace-nowrap"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {lead.instagram && (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Instagram</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <a
+                        href={lead.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline truncate"
+                      >
+                        {lead.instagram}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(lead.instagram)}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-50 whitespace-nowrap"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {lead.twitter && (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Twitter</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <a
+                        href={lead.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline truncate"
+                      >
+                        {lead.twitter}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(lead.twitter)}
+                        className="px-2 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-50 whitespace-nowrap"
+                      >
+                        Copy
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

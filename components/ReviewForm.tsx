@@ -19,6 +19,8 @@ interface Lead {
   posting_frequency_30d: number | null
   email: string | null
   website: string | null
+  instagram: string | null
+  twitter: string | null
   category: string | null
   content_style: string | null
   posting_pattern: string | null
@@ -123,6 +125,8 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
     found_by:       lead.found_by,
     email:          lead.email ?? '',
     website:        lead.website ?? '',
+    instagram:      lead.instagram ?? '',
+    twitter:        lead.twitter ?? '',
     category:       lead.category ?? '',
     content_style:  lead.content_style ?? '',
     monetization:   lead.monetization ?? '',
@@ -152,6 +156,11 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
+  }
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    showToast('Copied!')
   }
 
   async function handleSave() {
@@ -436,9 +445,37 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
               </select>
             </div>
 
+            {/* Contact Details */}
+            <div className="border-t border-gray-200 pt-3">
+              <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Contact Details</h3>
+              {([
+                ['email', 'Email'],
+                ['website', 'Website'],
+                ['instagram', 'Instagram'],
+                ['twitter', 'Twitter'],
+              ] as [keyof typeof fields, string][]).map(([key, label]) => (
+                <div key={key} className="mb-3">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={fields[key]}
+                      onChange={set(key)}
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                    {fields[key] && (
+                      <button
+                        onClick={() => copyToClipboard(fields[key])}
+                        className="px-2.5 py-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {([
-              ['email', 'Email'],
-              ['website', 'Website'],
               ['category', 'Category'],
               ['content_style', 'Content Style'],
               ['monetization', 'Monetization'],

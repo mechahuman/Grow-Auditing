@@ -40,7 +40,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { g_factor, lead_name, found_by, email, website,
+  const { g_factor, lead_name, found_by, email, website, instagram, twitter,
     category, content_style, monetization, posting_pattern,
     remarks_final, status, status_notes } = body as Record<string, string>
 
@@ -77,6 +77,8 @@ export async function PATCH(
       g_factor: gFactorNum,
       email: email || null,
       website: website || null,
+      instagram: instagram || null,
+      twitter: twitter || null,
       category,
       content_style,
       monetization,
@@ -105,6 +107,8 @@ export async function PATCH(
       youtube_handle: existing.youtube_handle,
       email: email || null,
       website: website || null,
+      instagram: instagram || null,
+      twitter: twitter || null,
       category,
       content_style,
       subscriber_count: existing.subscriber_count,

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { lead_id, g_factor, lead_name, found_by, email, website,
+  const { lead_id, g_factor, lead_name, found_by, email, website, instagram, twitter,
     category, content_style, monetization, posting_pattern,
     remarks_final, status, status_notes } = body as Record<string, string>
 
@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
       g_factor: gFactorNum,
       email: email || null,
       website: website || null,
+      instagram: instagram || null,
+      twitter: twitter || null,
       category,
       content_style,
       monetization,
@@ -81,6 +83,8 @@ export async function POST(request: NextRequest) {
       youtube_handle: existing.youtube_handle,
       email: email || null,
       website: website || null,
+      instagram: instagram || null,
+      twitter: twitter || null,
       category,
       content_style,
       subscriber_count: existing.subscriber_count,
