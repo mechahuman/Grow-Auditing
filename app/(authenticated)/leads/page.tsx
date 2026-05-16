@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/server'
 import { LeadsTable } from '../../../components/LeadsTable'
+import { LayoutList } from 'lucide-react'
 
 export default async function LeadsPage() {
   const supabase = createClient()
@@ -24,20 +24,24 @@ export default async function LeadsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-7">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Leads</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{(leads ?? []).length} saved leads</p>
+          <div className="flex items-center gap-2 mb-1">
+            <LayoutList size={18} style={{ color: 'var(--text-secondary)' }} />
+            <h1 className="text-2xl font-bold text-gradient">Saved Leads</h1>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {(leads ?? []).length} leads in your pipeline
+          </p>
         </div>
-        <Link
-          href="/enrich"
-          className="bg-gray-900 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-800 transition-colors"
-        >
-          + New Lead
-        </Link>
       </div>
 
-      <LeadsTable leads={leads ?? []} teamMembers={teamMembers ?? []} currentUserEmail={user?.email ?? ''} />
+      <LeadsTable
+        leads={leads ?? []}
+        teamMembers={teamMembers ?? []}
+        currentUserEmail={user?.email ?? ''}
+      />
     </div>
   )
 }
