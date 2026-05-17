@@ -7,6 +7,17 @@
 - As the description of the videos and the about page is retrieved and the API is already accessing the data then i do not see why the above data should not be retrieved.
 
 
+### RE-ENRICH
+
+
+### Profile Photo as Name
+
+
+### Open Lead on clicking the lead and not the open button.
+
+### Getting Comment section details
+
+
 ### WE WILL MOVE FORWARD WITH AUTONOMOUS LEAD SEARCHING SYSTEM.
 - This comes very much in the later stage after our current product is working with full efficiency.
 - Refer: https://github.com/eracle/OpenOutreach
