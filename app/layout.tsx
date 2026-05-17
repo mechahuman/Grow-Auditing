@@ -16,7 +16,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="icon" href="/ui_inspirations/details/logo.png" type="image/png" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
       </head>
       <body className="antialiased font-sans" suppressHydrationWarning>
         {children}
