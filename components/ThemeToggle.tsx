@@ -1,43 +1,45 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Sun, Moon } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 
 export function ThemeToggle() {
-  const [isLight, setIsLight] = useState(false)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Read persisted preference
-    const stored = localStorage.getItem('theme')
-    if (stored === 'light') {
-      document.documentElement.classList.add('light')
-      setIsLight(true)
-    }
+    const stored = localStorage.getItem('theme') as 'dark' | 'light' | null
+    const initial = stored || 'dark'
+    setTheme(initial)
+    document.documentElement.setAttribute('data-theme', initial)
+    setMounted(true)
   }, [])
 
-  function toggleTheme() {
-    const next = !isLight
-    setIsLight(next)
-    if (next) {
-      document.documentElement.classList.add('light')
-      localStorage.setItem('theme', 'light')
-    } else {
-      document.documentElement.classList.remove('light')
-      localStorage.setItem('theme', 'dark')
-    }
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    document.documentElement.setAttribute('data-theme', newTheme)
+    localStorage.setItem('theme', newTheme)
   }
+
+  if (!mounted) return null
 
   return (
     <button
       onClick={toggleTheme}
+      className="p-2 rounded-lg transition-all duration-200"
+      style={{
+        background: 'rgba(134, 47, 250, 0.1)',
+        color: 'var(--text-primary)',
+        border: '1px solid var(--border-subtle)',
+      }}
       aria-label="Toggle theme"
-      className="btn-ghost p-2 rounded-lg transition-all"
-      title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      {isLight ? (
-        <Moon size={18} className="text-[var(--text-secondary)]" />
+      {theme === 'dark' ? (
+        <Sun size={18} />
       ) : (
-        <Sun size={18} className="text-[var(--text-secondary)]" />
+        <Moon size={18} />
       )}
     </button>
   )

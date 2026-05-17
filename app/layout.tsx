@@ -12,12 +12,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    // "dark" class not set here — we default to dark via CSS :root variables.
-    // The ThemeToggle component in the nav will add/remove the "light" class on <html>.
-    <html lang="en">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="icon" href="/ui_inspirations/details/logo.png" type="image/png" />
       </head>
       <body className="antialiased font-sans" suppressHydrationWarning>
         {children}
