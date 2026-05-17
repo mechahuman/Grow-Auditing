@@ -29,7 +29,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className="p-2 rounded-lg transition-all duration-200"
       style={{
-        background: 'rgba(134, 47, 250, 0.1)',
+        background: 'rgba(168, 85, 247, 0.1)',
         color: 'var(--text-primary)',
         border: '1px solid var(--border-subtle)',
       }}

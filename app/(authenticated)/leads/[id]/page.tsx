@@ -17,5 +17,5 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   const lead = leadRes.data
   const statusLabel = statusRes.data?.find((opt: any) => opt.value === lead.status)?.label || lead.status
 
-  return <LeadDetail lead={lead} statusLabel={statusLabel} />
+  return <LeadDetail lead={lead} statusLabel={statusLabel} statusOptions={statusRes.data ?? []} />
 }

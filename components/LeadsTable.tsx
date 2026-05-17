@@ -61,7 +61,6 @@ function ScoreBadge({ score }: { score: number | null }) {
   const meta = getScoreMeta(score)
   return (
     <span className={meta.badgeClass}>
-      {meta.icon && <span className="mr-1">{meta.icon}</span>}
       {score != null ? `${score.toFixed(1)} · ` : ''}{meta.label}
     </span>
   )
@@ -71,7 +70,7 @@ function ScoreBadge({ score }: { score: number | null }) {
 export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableProps) {
   const router = useRouter()
 
-  const [view, setView] = useState<'table' | 'grid'>('grid')
+  const [view, setView] = useState<'table' | 'grid'>('table')
   const [searchName, setSearchName] = useState('')
   const [subRange, setSubRange] = useState<'all' | 'under1k' | '1k-5k' | '5k-10k' | '10k-50k' | 'over50k'>('all')
   const [scoreRange, setScoreRange] = useState<'all' | 'strong' | 'solid' | 'weak' | 'poor'>('all')
@@ -129,7 +128,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
     return (
       <div className="card-glass p-16 text-center">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-             style={{ background: 'rgba(134, 47, 250, 0.15)', border: '1px solid rgba(134, 47, 250, 0.3)' }}>
+             style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
           <Play size={26} style={{ color: 'var(--text-secondary)' }} />
         </div>
         <p className="text-base font-semibold mb-1">No leads yet</p>
@@ -247,7 +246,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 title="Table view"
                 className="px-3 py-2 transition-all"
                 style={{
-                  background: view === 'table' ? 'rgba(134, 47, 250, 0.2)' : 'transparent',
+                  background: view === 'table' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
                   color: view === 'table' ? 'var(--text-primary)' : 'var(--text-muted)',
                 }}
               >
@@ -259,7 +258,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 title="Grid view"
                 className="px-3 py-2 transition-all"
                 style={{
-                  background: view === 'grid' ? 'rgba(134, 47, 250, 0.2)' : 'transparent',
+                  background: view === 'grid' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
                   color: view === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)',
                   borderLeft: '1px solid var(--border-subtle)',
                 }}
@@ -284,8 +283,8 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
             <table className="w-full">
               <thead>
                 <tr style={{
-                  borderBottom: '1px solid rgba(134, 47, 250, 0.2)',
-                  background: 'linear-gradient(90deg, rgba(134, 47, 250, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                  borderBottom: '1px solid rgba(168, 85, 247, 0.2)',
+                  background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
                 }}>
                   {['Lead', 'Found By', 'Subscribers', 'Score', 'Status', 'Date Added', 'Actions'].map((h) => (
                     <th
@@ -305,13 +304,13 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     onClick={() => router.push(`/leads/${lead.id}`)}
                     className="transition-all cursor-pointer group hover:shadow-md"
                     style={{
-                      borderBottom: '1px solid rgba(134, 47, 250, 0.1)',
+                      borderBottom: '1px solid rgba(168, 85, 247, 0.1)',
                       background: idx % 2 === 0
                         ? 'transparent'
-                        : 'rgba(134, 47, 250, 0.04)',
+                        : 'rgba(168, 85, 247, 0.04)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(134, 47, 250, 0.12)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(134, 47, 250, 0.04)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.12)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(168, 85, 247, 0.04)')}
                   >
                     {/* Lead name */}
                     <td className="px-5 py-4">
@@ -319,7 +318,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                         <div
                           className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-bold transition-all group-hover:scale-110"
                           style={{
-                            background: 'linear-gradient(135deg, #862ffa 0%, #f15bb5 100%)',
+                            background: 'linear-gradient(135deg, #a855f7 0%, #f15bb5 100%)',
                             color: '#fff',
                           }}
                         >
@@ -341,9 +340,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                       <span
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                         style={{
-                          background: 'rgba(134, 47, 250, 0.12)',
+                          background: 'rgba(168, 85, 247, 0.12)',
                           color: '#c084fc',
-                          border: '1px solid rgba(134, 47, 250, 0.25)',
+                          border: '1px solid rgba(168, 85, 247, 0.25)',
                         }}
                       >
                         {lead.found_by}
@@ -393,9 +392,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                           title="Edit lead"
                           className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
                           style={{
-                            background: 'rgba(134, 47, 250, 0.15)',
+                            background: 'rgba(168, 85, 247, 0.15)',
                             color: '#c084fc',
-                            border: '1px solid rgba(134, 47, 250, 0.3)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
                           }}
                         >
                           <Pencil size={14} />
@@ -449,17 +448,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                   onClick={() => router.push(`/leads/${lead.id}`)}
                   className="card-glass group overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(134, 47, 250, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
                   }}
                 >
-                  {/* Top gradient accent bar */}
-                  <div
-                    className="h-1 w-full"
-                    style={{
-                      background: 'linear-gradient(90deg, #862ffa 0%, #f15bb5 100%)',
-                    }}
-                  />
-
                   <div className="p-6 flex flex-col h-full">
                     {/* Card header with avatar and score */}
                     <div className="flex items-start justify-between mb-4">
@@ -467,7 +458,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                         <div
                           className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110"
                           style={{
-                            background: 'linear-gradient(135deg, #862ffa 0%, #f15bb5 100%)',
+                            background: 'linear-gradient(135deg, #a855f7 0%, #f15bb5 100%)',
                             color: '#fff',
                           }}
                         >
@@ -486,15 +477,15 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     </div>
 
                     {/* Divider */}
-                    <div style={{ borderTop: '1px solid rgba(134, 47, 250, 0.1)', marginBottom: '1rem' }} />
+                    <div style={{ borderTop: '1px solid rgba(168, 85, 247, 0.1)', marginBottom: '1rem' }} />
 
                     {/* Stats row */}
                     <div className="flex gap-3 mb-4">
                       <div
                         className="flex-1 rounded-xl px-3 py-3 text-center transition-all"
                         style={{
-                          background: 'rgba(134, 47, 250, 0.1)',
-                          border: '1px solid rgba(134, 47, 250, 0.2)',
+                          background: 'rgba(168, 85, 247, 0.1)',
+                          border: '1px solid rgba(168, 85, 247, 0.2)',
                         }}
                       >
                         <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Subscribers</p>
@@ -515,7 +506,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 mt-auto" style={{ borderTop: '1px solid rgba(134, 47, 250, 0.1)' }}>
+                    <div className="flex items-center justify-between pt-4 mt-auto" style={{ borderTop: '1px solid rgba(168, 85, 247, 0.1)' }}>
                       <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                         {formatDate(lead.created_at)}
                       </span>
@@ -526,9 +517,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                           title="Edit lead"
                           className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
                           style={{
-                            background: 'rgba(134, 47, 250, 0.15)',
+                            background: 'rgba(168, 85, 247, 0.15)',
                             color: '#c084fc',
-                            border: '1px solid rgba(134, 47, 250, 0.3)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
                           }}
                         >
                           <Pencil size={14} />

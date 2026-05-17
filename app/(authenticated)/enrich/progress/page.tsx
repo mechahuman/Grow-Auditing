@@ -97,14 +97,14 @@ export default function ProgressPage() {
           {/* Outer glow ring */}
           <div
             className="absolute inset-0 rounded-full animate-pulse-glow"
-            style={{ background: 'radial-gradient(circle, rgba(134, 47, 250, 0.3) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%)' }}
           />
           {/* Spinning arc */}
           <svg className="w-20 h-20 animate-spin" viewBox="0 0 80 80">
             <circle
               cx="40" cy="40" r="34"
               fill="none"
-              stroke="rgba(134, 47, 250, 0.1)"
+              stroke="rgba(168, 85, 247, 0.1)"
               strokeWidth="4"
             />
             <circle
@@ -117,7 +117,7 @@ export default function ProgressPage() {
             />
             <defs>
               <linearGradient id="spinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#862ffa" />
+                <stop offset="0%" stopColor="#a855f7" />
                 <stop offset="100%" stopColor="#f15bb5" />
               </linearGradient>
             </defs>
@@ -142,7 +142,7 @@ export default function ProgressPage() {
         {/* Step progress bar */}
         <div
           className="w-full h-2 rounded-full overflow-hidden mb-5"
-          style={{ background: 'rgba(134, 47, 250, 0.1)' }}
+          style={{ background: 'rgba(168, 85, 247, 0.1)' }}
         >
           <div
             className="h-full rounded-full transition-all duration-1000 ease-out gradient-bar-fill"
@@ -168,11 +168,11 @@ export default function ProgressPage() {
                 className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
                 style={{
                   background: i < stepIndex
-                    ? 'linear-gradient(135deg, #862ffa, #f15bb5)'
+                    ? 'linear-gradient(135deg, #a855f7, #f15bb5)'
                     : i === stepIndex
-                    ? 'rgba(134, 47, 250, 0.2)'
+                    ? 'rgba(168, 85, 247, 0.2)'
                     : 'rgba(255,255,255,0.06)',
-                  border: i === stepIndex ? '1px solid #862ffa' : 'none',
+                  border: i === stepIndex ? '1px solid #a855f7' : 'none',
                   color: i < stepIndex ? '#fff' : 'inherit',
                 }}
               >

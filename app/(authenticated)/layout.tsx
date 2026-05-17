@@ -27,7 +27,7 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
               className="transition-transform group-hover:scale-105"
               priority
             />
-            <span className="text-lg font-bold text-gradient-primary">GROW</span>
+            <span className="text-lg font-bold text-gradient-brand">GROW</span>
           </Link>
 
           {/* Right-side actions */}

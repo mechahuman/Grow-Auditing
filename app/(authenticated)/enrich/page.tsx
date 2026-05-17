@@ -176,10 +176,10 @@ export default function EnrichPage() {
                     <span
                       className="flex flex-col items-center py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200"
                       style={isSelected ? {
-                        background: 'linear-gradient(135deg, rgba(134, 47, 250, 0.2) 0%, rgba(241, 91, 181, 0.15) 100%)',
-                        borderColor: '#862ffa',
+                        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(241, 91, 181, 0.15) 100%)',
+                        borderColor: '#a855f7',
                         color: '#c084fc',
-                        boxShadow: '0 0 12px rgba(134, 47, 250, 0.35)',
+                        boxShadow: '0 0 12px rgba(168, 85, 247, 0.35)',
                       } : {
                         background: 'transparent',
                         borderColor: 'var(--border-subtle)',

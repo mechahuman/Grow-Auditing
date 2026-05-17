@@ -19,7 +19,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#862ffa" />
+        <meta name="theme-color" content="#a855f7" />
       </head>
       <body className="antialiased font-sans" suppressHydrationWarning>
         {children}
