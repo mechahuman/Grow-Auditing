@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/client'
-import { User, Link2, Zap, Mail, Globe, ChevronRight, TrendingUp } from 'lucide-react'
+import { User, Link2, Zap, Mail, Globe } from 'lucide-react'
 
 interface TeamMember {
   initials: string
@@ -62,18 +62,12 @@ export default function EnrichPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] flex items-start justify-center py-10 px-4">
-      <div className="w-full max-w-xl">
+    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center py-12 px-4">
+      <div className="w-full max-w-xl animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div
-            className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
-            style={{ background: 'linear-gradient(135deg, #A4F4C9 0%, #6EB498 100%)' }}
-          >
-            <TrendingUp size={22} color="#0D3B66" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-2xl font-bold text-gradient mb-1">Enrich a Lead</h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <h1 className="text-3xl font-bold text-gradient-primary mb-2">Start an Audit</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             Takes ~30–60 seconds — we'll fetch YouTube data and run AI analysis.
           </p>
         </div>
@@ -118,13 +112,12 @@ export default function EnrichPage() {
               className="input-field appearance-none"
               style={{
                 ...(errors.found_by ? { borderColor: 'var(--error)' } : {}),
-                background: 'rgba(13, 59, 102, 0.4)',
                 color: form.found_by ? 'var(--text-primary)' : 'var(--text-muted)',
               }}
             >
-              <option value="" style={{ background: '#0D3B66' }}>Select team member…</option>
+              <option value="">Select team member…</option>
               {teamMembers.map((m) => (
-                <option key={m.initials} value={m.initials} style={{ background: '#0D3B66' }}>
+                <option key={m.initials} value={m.initials}>
                   {m.full_name} ({m.initials})
                 </option>
               ))}
@@ -183,13 +176,13 @@ export default function EnrichPage() {
                     <span
                       className="flex flex-col items-center py-2.5 rounded-xl border text-xs font-semibold transition-all duration-200"
                       style={isSelected ? {
-                        background: 'linear-gradient(135deg, rgba(164,244,201,0.2) 0%, rgba(110,180,152,0.2) 100%)',
-                        borderColor: '#A4F4C9',
-                        color: '#A4F4C9',
-                        boxShadow: '0 0 12px rgba(164,244,201,0.25)',
+                        background: 'linear-gradient(135deg, rgba(134, 47, 250, 0.2) 0%, rgba(241, 91, 181, 0.15) 100%)',
+                        borderColor: '#862ffa',
+                        color: '#c084fc',
+                        boxShadow: '0 0 12px rgba(134, 47, 250, 0.35)',
                       } : {
                         background: 'transparent',
-                        borderColor: 'var(--border)',
+                        borderColor: 'var(--border-subtle)',
                         color: 'var(--text-muted)',
                       }}
                     >
@@ -251,11 +244,10 @@ export default function EnrichPage() {
           <button
             id="enrich-submit"
             type="submit"
-            className="btn-primary w-full py-3 text-sm mt-2"
+            className="btn-cta w-full py-3 text-base font-bold justify-center mt-6"
           >
-            <Zap size={16} />
-            Start Audit
-            <ChevronRight size={16} />
+            <Zap size={18} />
+            Run Audit →
           </button>
         </form>
       </div>

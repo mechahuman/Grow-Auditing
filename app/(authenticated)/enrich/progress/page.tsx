@@ -90,21 +90,21 @@ export default function ProgressPage() {
   const progress = ((stepIndex + 1) / STATUS_STEPS.length) * 100
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4">
-      <div className="glass-card p-10 max-w-sm w-full text-center">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
+      <div className="card-glass p-10 max-w-sm w-full text-center animate-fade-in">
         {/* Animated spinner ring */}
         <div className="relative w-20 h-20 mx-auto mb-7">
           {/* Outer glow ring */}
           <div
-            className="absolute inset-0 rounded-full animate-pulse-slow"
-            style={{ background: 'radial-gradient(circle, rgba(164,244,201,0.15) 0%, transparent 70%)' }}
+            className="absolute inset-0 rounded-full animate-pulse-glow"
+            style={{ background: 'radial-gradient(circle, rgba(134, 47, 250, 0.3) 0%, transparent 70%)' }}
           />
           {/* Spinning arc */}
           <svg className="w-20 h-20 animate-spin" viewBox="0 0 80 80">
             <circle
               cx="40" cy="40" r="34"
               fill="none"
-              stroke="rgba(164,244,201,0.1)"
+              stroke="rgba(134, 47, 250, 0.1)"
               strokeWidth="4"
             />
             <circle
@@ -117,8 +117,8 @@ export default function ProgressPage() {
             />
             <defs>
               <linearGradient id="spinGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#A4F4C9" />
-                <stop offset="100%" stopColor="#6EB498" />
+                <stop offset="0%" stopColor="#862ffa" />
+                <stop offset="100%" stopColor="#f15bb5" />
               </linearGradient>
             </defs>
           </svg>
@@ -132,24 +132,21 @@ export default function ProgressPage() {
         </div>
 
         {/* Status labels */}
-        <h2 className="text-lg font-bold mb-1 text-gradient">
+        <h2 className="text-lg font-bold mb-1 text-gradient-primary">
           {STATUS_STEPS[stepIndex].label}
         </h2>
-        <p className="text-sm mb-6 transition-all duration-500" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-sm mb-6 transition-all duration-500" style={{ color: 'var(--text-secondary)' }}>
           {STATUS_STEPS[stepIndex].detail}
         </p>
 
         {/* Step progress bar */}
         <div
-          className="w-full h-1.5 rounded-full overflow-hidden mb-5"
-          style={{ background: 'rgba(255,255,255,0.08)' }}
+          className="w-full h-2 rounded-full overflow-hidden mb-5"
+          style={{ background: 'rgba(134, 47, 250, 0.1)' }}
         >
           <div
-            className="h-full rounded-full transition-all duration-1000 ease-out"
-            style={{
-              width: `${progress}%`,
-              background: 'linear-gradient(90deg, #A4F4C9 0%, #6EB498 100%)',
-            }}
+            className="h-full rounded-full transition-all duration-1000 ease-out gradient-bar-fill"
+            style={{ width: `${progress}%` }}
           />
         </div>
 
@@ -171,12 +168,12 @@ export default function ProgressPage() {
                 className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
                 style={{
                   background: i < stepIndex
-                    ? 'linear-gradient(135deg, #A4F4C9, #6EB498)'
+                    ? 'linear-gradient(135deg, #862ffa, #f15bb5)'
                     : i === stepIndex
-                    ? 'rgba(164,244,201,0.2)'
+                    ? 'rgba(134, 47, 250, 0.2)'
                     : 'rgba(255,255,255,0.06)',
-                  border: i === stepIndex ? '1px solid #A4F4C9' : 'none',
-                  color: i < stepIndex ? '#0D3B66' : 'inherit',
+                  border: i === stepIndex ? '1px solid #862ffa' : 'none',
+                  color: i < stepIndex ? '#fff' : 'inherit',
                 }}
               >
                 {i < stepIndex ? '✓' : i + 1}
