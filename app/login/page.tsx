@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '../../lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Mail, Lock, Loader2, TrendingUp } from 'lucide-react'
+import { Mail, Lock, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -28,48 +29,53 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="page-bg min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      {/* Decorative blobs */}
+    <div className="bg-page min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Decorative gradient orbs */}
       <div
-        className="pointer-events-none fixed top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-20 animate-pulse-slow"
-        style={{ background: 'radial-gradient(circle, #1A5A63 0%, transparent 70%)' }}
+        className="pointer-events-none fixed top-[-10%] left-[10%] w-96 h-96 rounded-full opacity-40"
+        style={{
+          background: 'radial-gradient(circle, rgba(58, 12, 163, 0.6) 0%, transparent 70%)',
+          filter: 'blur(100px)',
+        }}
       />
       <div
-        className="pointer-events-none fixed bottom-[-15%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-15 animate-pulse-slow"
-        style={{ background: 'radial-gradient(circle, #6EB498 0%, transparent 70%)', animationDelay: '2s' }}
+        className="pointer-events-none fixed bottom-[-10%] right-[5%] w-96 h-96 rounded-full opacity-25"
+        style={{
+          background: 'radial-gradient(circle, rgba(241, 91, 181, 0.4) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+        }}
       />
 
       {/* Login card */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-sm animate-fade-in">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
-               style={{ background: 'linear-gradient(135deg, #A4F4C9 0%, #6EB498 100%)' }}>
-            <TrendingUp size={28} color="#0D3B66" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-3xl font-bold text-gradient mb-1">GROW</h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Lead Intelligence Platform</p>
+          <Image
+            src="/favicon.png"
+            alt="GROW Logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
+          <h1 className="text-4xl font-bold text-gradient-primary mb-2">GROW</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Lead Intelligence Platform</p>
         </div>
 
         {/* Glass card */}
-        <div className="glass-card p-8">
-          <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-            Welcome back
-          </h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+        <div className="card-glass p-8">
+          <h2 className="text-xl font-semibold mb-1">Welcome back</h2>
+          <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
             Sign in to access your dashboard
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email field */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                     style={{ color: 'var(--text-secondary)' }}>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                 Email
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                      style={{ color: 'var(--text-muted)' }} />
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
                 <input
                   id="login-email"
                   type="email"
@@ -85,13 +91,11 @@ export default function LoginPage() {
 
             {/* Password field */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5"
-                     style={{ color: 'var(--text-secondary)' }}>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
                 Password
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                      style={{ color: 'var(--text-muted)' }} />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
                 <input
                   id="login-password"
                   type="password"
@@ -106,19 +110,13 @@ export default function LoginPage() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg text-sm"
-                   style={{ background: 'rgba(255, 107, 107, 0.12)', border: '1px solid rgba(255, 107, 107, 0.3)', color: 'var(--error)' }}>
+              <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg text-sm border" style={{ background: 'rgba(255, 107, 107, 0.12)', borderColor: 'rgba(255, 107, 107, 0.3)', color: '#ff6b6b' }}>
                 <span>{error}</span>
               </div>
             )}
 
             {/* Submit */}
-            <button
-              id="login-submit"
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full mt-2"
-            >
+            <button id="login-submit" type="submit" disabled={loading} className="btn-primary w-full mt-6">
               {loading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
