@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Copy, Check, Youtube, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Instagram, Twitter, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star } from 'lucide-react'
+import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare } from 'lucide-react'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
@@ -180,7 +180,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
           <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
             style={{ color: 'var(--text-secondary)' }}>
-            <Youtube size={14} /> {lead.youtube_handle ?? lead.youtube_url}
+            <Play size={14} /> {lead.youtube_handle ?? lead.youtube_url}
           </a>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -352,7 +352,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             {/* Contact Details */}
             <div className="pt-3" style={{ borderTop: '1px solid var(--border)' }}>
               <SectionTitle>Contact Details</SectionTitle>
-              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Instagram], ['twitter', 'Twitter / X', Twitter]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
+              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Camera], ['twitter', 'Twitter / X', MessageSquare]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
                 <div key={key} className="mb-3">
                   <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>
                     <Icon size={11} className="inline mr-1" />{label}

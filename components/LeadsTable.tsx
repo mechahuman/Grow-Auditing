@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Search, Users, Star, UserCheck, LayoutGrid, LayoutList,
-  ExternalLink, Pencil, Trash2, Youtube, ChevronDown, X,
+  ExternalLink, Pencil, Trash2, ChevronDown, X, Play,
   TrendingUp, TrendingDown, Minus,
 } from 'lucide-react'
 
@@ -134,7 +134,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
       <div className="glass-card p-16 text-center">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
              style={{ background: 'rgba(164,244,201,0.1)', border: '1px solid rgba(164,244,201,0.2)' }}>
-          <Youtube size={26} style={{ color: 'var(--text-secondary)' }} />
+          <Play size={26} style={{ color: 'var(--text-secondary)' }} />
         </div>
         <p className="text-base font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>No leads yet</p>
         <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Enrich your first YouTube lead to get started</p>
