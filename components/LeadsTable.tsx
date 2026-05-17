@@ -33,11 +33,11 @@ interface LeadsTableProps {
 
 // ── Helpers ────────────────────────────────────────────────────
 function getScoreMeta(score: number | null) {
-  if (score == null) return { label: '—', badgeClass: 'badge badge-neutral', icon: null }
-  if (score >= 4.0) return { label: 'Strong fit', badgeClass: 'badge badge-success', icon: <TrendingUp size={11} /> }
-  if (score >= 3.0) return { label: 'Solid fit', badgeClass: 'badge', icon: <Minus size={11} />, style: { background: 'rgba(110,180,152,0.15)', color: '#6EB498', border: '1px solid rgba(110,180,152,0.3)' } }
-  if (score >= 2.0) return { label: 'Weak fit', badgeClass: 'badge badge-warning', icon: <TrendingDown size={11} /> }
-  return { label: 'Poor fit', badgeClass: 'badge badge-error', icon: <TrendingDown size={11} /> }
+  if (score == null) return { label: '—', badgeClass: 'badge-low', icon: null }
+  if (score >= 4.0) return { label: 'Strong fit', badgeClass: 'badge-high', icon: <TrendingUp size={11} /> }
+  if (score >= 3.0) return { label: 'Solid fit', badgeClass: 'badge-medium', icon: <Minus size={11} /> }
+  if (score >= 2.0) return { label: 'Weak fit', badgeClass: 'badge-low', icon: <TrendingDown size={11} /> }
+  return { label: 'Poor fit', badgeClass: 'badge-low', icon: <TrendingDown size={11} /> }
 }
 
 function formatDate(iso: string): string {
@@ -60,11 +60,7 @@ function initials(name: string) {
 function ScoreBadge({ score }: { score: number | null }) {
   const meta = getScoreMeta(score)
   return (
-    <span
-      className={meta.badgeClass}
-      // @ts-ignore – style override for "solid" tier
-      style={(meta as any).style}
-    >
+    <span className={meta.badgeClass}>
       {meta.icon && <span className="mr-1">{meta.icon}</span>}
       {score != null ? `${score.toFixed(1)} · ` : ''}{meta.label}
     </span>
@@ -131,13 +127,13 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
   // ── Empty state ──────────────────────────────────────────────
   if (leads.length === 0) {
     return (
-      <div className="glass-card p-16 text-center">
+      <div className="card-glass p-16 text-center">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-             style={{ background: 'rgba(164,244,201,0.1)', border: '1px solid rgba(164,244,201,0.2)' }}>
+             style={{ background: 'rgba(134, 47, 250, 0.15)', border: '1px solid rgba(134, 47, 250, 0.3)' }}>
           <Play size={26} style={{ color: 'var(--text-secondary)' }} />
         </div>
-        <p className="text-base font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>No leads yet</p>
-        <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Enrich your first YouTube lead to get started</p>
+        <p className="text-base font-semibold mb-1">No leads yet</p>
+        <p className="text-sm mb-5" style={{ color: 'var(--text-secondary)' }}>Enrich your first YouTube lead to get started</p>
         <Link href="/enrich" className="btn-primary inline-flex">
           + Enrich a Lead
         </Link>
@@ -147,9 +143,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
 
   // ── Select style (shared) ────────────────────────────────────
   const selStyle = {
-    background: 'rgba(13,59,102,0.4)',
+    background: 'var(--bg-surface)',
     color: 'var(--text-primary)',
-    border: '1px solid var(--border)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '0.625rem',
     padding: '0.5rem 0.875rem',
     fontSize: '0.8125rem',
@@ -161,7 +157,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
   return (
     <div className="space-y-4">
       {/* ── Toolbar ─────────────────────────────────────────── */}
-      <div className="glass-card px-5 py-4">
+      <div className="card-glass px-5 py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
@@ -187,12 +183,12 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 onChange={(e) => setSubRange(e.target.value as any)}
                 style={selStyle}
               >
-                <option value="all" style={{ background: '#0D3B66' }}>All subs</option>
-                <option value="under1k" style={{ background: '#0D3B66' }}>&lt; 1K</option>
-                <option value="1k-5k" style={{ background: '#0D3B66' }}>1K – 5K</option>
-                <option value="5k-10k" style={{ background: '#0D3B66' }}>5K – 10K</option>
-                <option value="10k-50k" style={{ background: '#0D3B66' }}>10K – 50K</option>
-                <option value="over50k" style={{ background: '#0D3B66' }}>50K+</option>
+                <option value="all">All subs</option>
+                <option value="under1k">&lt; 1K</option>
+                <option value="1k-5k">1K – 5K</option>
+                <option value="5k-10k">5K – 10K</option>
+                <option value="10k-50k">10K – 50K</option>
+                <option value="over50k">50K+</option>
               </select>
             </div>
 
@@ -204,11 +200,11 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 onChange={(e) => setScoreRange(e.target.value as any)}
                 style={selStyle}
               >
-                <option value="all" style={{ background: '#0D3B66' }}>All scores</option>
-                <option value="strong" style={{ background: '#0D3B66' }}>Strong fit (≥4.0)</option>
-                <option value="solid" style={{ background: '#0D3B66' }}>Solid fit (3–3.99)</option>
-                <option value="weak" style={{ background: '#0D3B66' }}>Weak fit (2–2.99)</option>
-                <option value="poor" style={{ background: '#0D3B66' }}>Poor fit (&lt;2)</option>
+                <option value="all">All scores</option>
+                <option value="strong">Strong fit (≥4.0)</option>
+                <option value="solid">Solid fit (3–3.99)</option>
+                <option value="weak">Weak fit (2–2.99)</option>
+                <option value="poor">Poor fit (&lt;2)</option>
               </select>
             </div>
 
@@ -220,9 +216,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 onChange={(e) => setFoundBy(e.target.value)}
                 style={selStyle}
               >
-                <option value="all" style={{ background: '#0D3B66' }}>All members</option>
+                <option value="all">All members</option>
                 {teamMembers.map((tm) => (
-                  <option key={tm.initials} value={tm.initials} style={{ background: '#0D3B66' }}>
+                  <option key={tm.initials} value={tm.initials}>
                     {tm.initials} – {tm.full_name}
                   </option>
                 ))}
@@ -243,7 +239,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
             {/* View toggle */}
             <div
               className="flex rounded-lg overflow-hidden"
-              style={{ border: '1px solid var(--border)' }}
+              style={{ border: '1px solid var(--border-subtle)' }}
             >
               <button
                 id="view-table"
@@ -251,8 +247,8 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 title="Table view"
                 className="px-3 py-2 transition-all"
                 style={{
-                  background: view === 'table' ? 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))' : 'transparent',
-                  color: view === 'table' ? 'var(--text-secondary)' : 'var(--text-muted)',
+                  background: view === 'table' ? 'rgba(134, 47, 250, 0.2)' : 'transparent',
+                  color: view === 'table' ? 'var(--text-primary)' : 'var(--text-muted)',
                 }}
               >
                 <LayoutList size={16} />
@@ -263,9 +259,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 title="Grid view"
                 className="px-3 py-2 transition-all"
                 style={{
-                  background: view === 'grid' ? 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))' : 'transparent',
-                  color: view === 'grid' ? 'var(--text-secondary)' : 'var(--text-muted)',
-                  borderLeft: '1px solid var(--border)',
+                  background: view === 'grid' ? 'rgba(134, 47, 250, 0.2)' : 'transparent',
+                  color: view === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)',
+                  borderLeft: '1px solid var(--border-subtle)',
                 }}
               >
                 <LayoutGrid size={16} />

@@ -23,15 +23,12 @@ export default async function LeadsPage() {
   ])
 
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Page header */}
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <LayoutList size={18} style={{ color: 'var(--text-secondary)' }} />
-            <h1 className="text-2xl font-bold text-gradient">Saved Leads</h1>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          <h1 className="text-3xl font-bold text-gradient-primary mb-1">Saved Leads</h1>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {(leads ?? []).length} leads in your pipeline
           </p>
         </div>
