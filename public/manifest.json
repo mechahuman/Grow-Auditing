@@ -1,0 +1,25 @@
+{
+  "name": "GROW Lead Intelligence",
+  "short_name": "GROW",
+  "description": "Internal lead scouting and research tool for YouTube creators",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09061a",
+  "theme_color": "#862ffa",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["business", "productivity"]
+}
