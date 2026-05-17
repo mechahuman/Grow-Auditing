@@ -22,11 +22,12 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
             <Image
               src="/favicon.png"
               alt="GROW Logo"
-              width={32}
-              height={32}
+              width={36}
+              height={36}
               className="transition-transform group-hover:scale-105"
+              priority
             />
-            <span className="text-sm font-bold text-gradient-primary hidden sm:inline">GROW Lead Intel</span>
+            <span className="text-lg font-bold text-gradient-primary">GROW</span>
           </Link>
 
           {/* Right-side actions */}

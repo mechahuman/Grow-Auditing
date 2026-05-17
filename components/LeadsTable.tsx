@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Search, Users, Star, UserCheck, LayoutGrid, LayoutList,
-  ExternalLink, Pencil, Trash2, ChevronDown, X, Play,
+  Pencil, Trash2, ChevronDown, X, Play,
   TrendingUp, TrendingDown, Minus,
 } from 'lucide-react'
 
@@ -71,7 +71,7 @@ function ScoreBadge({ score }: { score: number | null }) {
 export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableProps) {
   const router = useRouter()
 
-  const [view, setView] = useState<'table' | 'grid'>('table')
+  const [view, setView] = useState<'table' | 'grid'>('grid')
   const [searchName, setSearchName] = useState('')
   const [subRange, setSubRange] = useState<'all' | 'under1k' | '1k-5k' | '5k-10k' | '10k-50k' | 'over50k'>('all')
   const [scoreRange, setScoreRange] = useState<'all' | 'strong' | 'solid' | 'weak' | 'poor'>('all')
@@ -279,16 +279,19 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
 
       {/* ── TABLE VIEW ─────────────────────────────────────────── */}
       {view === 'table' && (
-        <div className="glass-card overflow-hidden">
+        <div className="card-glass overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(26,90,99,0.35)' }}>
+                <tr style={{
+                  borderBottom: '1px solid rgba(134, 47, 250, 0.2)',
+                  background: 'linear-gradient(90deg, rgba(134, 47, 250, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                }}>
                   {['Lead', 'Found By', 'Subscribers', 'Score', 'Status', 'Date Added', 'Actions'].map((h) => (
                     <th
                       key={h}
-                      className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}
+                      className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-widest"
+                      style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}
                     >
                       {h}
                     </th>
@@ -299,23 +302,25 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                 {filteredLeads.map((lead, idx) => (
                   <tr
                     key={lead.id}
-                    className="transition-colors group"
+                    onClick={() => router.push(`/leads/${lead.id}`)}
+                    className="transition-all cursor-pointer group hover:shadow-md"
                     style={{
-                      borderBottom: '1px solid var(--border)',
-                      background: idx % 2 === 0 ? 'transparent' : 'rgba(13,59,102,0.2)',
+                      borderBottom: '1px solid rgba(134, 47, 250, 0.1)',
+                      background: idx % 2 === 0
+                        ? 'transparent'
+                        : 'rgba(134, 47, 250, 0.04)',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(26,90,99,0.3)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(13,59,102,0.2)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(134, 47, 250, 0.12)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(134, 47, 250, 0.04)')}
                   >
                     {/* Lead name */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold"
+                          className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-bold transition-all group-hover:scale-110"
                           style={{
-                            background: 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))',
-                            border: '1px solid rgba(164,244,201,0.2)',
-                            color: 'var(--text-secondary)',
+                            background: 'linear-gradient(135deg, #862ffa 0%, #f15bb5 100%)',
+                            color: '#fff',
                           }}
                         >
                           {initials(lead.lead_name)}
@@ -334,8 +339,12 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     {/* Found by */}
                     <td className="px-5 py-4">
                       <span
-                        className="text-xs font-semibold px-2 py-1 rounded-lg"
-                        style={{ background: 'rgba(110,180,152,0.12)', color: 'var(--accent-secondary)', border: '1px solid rgba(110,180,152,0.2)' }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                        style={{
+                          background: 'rgba(134, 47, 250, 0.12)',
+                          color: '#c084fc',
+                          border: '1px solid rgba(134, 47, 250, 0.25)',
+                        }}
                       >
                         {lead.found_by}
                       </span>
@@ -343,9 +352,9 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
 
                     {/* Subscribers */}
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5">
-                        <Users size={13} style={{ color: 'var(--text-muted)' }} />
-                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      <div className="flex items-center gap-2">
+                        <Users size={14} style={{ color: 'var(--text-muted)' }} />
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                           {formatSubs(lead.subscriber_count)}
                         </span>
                       </div>
@@ -358,39 +367,52 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
 
                     {/* Status */}
                     <td className="px-5 py-4">
-                      <span className="badge badge-neutral capitalize">{lead.status}</span>
+                      <span
+                        className="badge capitalize text-xs font-semibold px-3 py-1.5 rounded-lg"
+                        style={{
+                          background: 'rgba(241, 91, 181, 0.12)',
+                          color: '#f15bb5',
+                          border: '1px solid rgba(241, 91, 181, 0.25)',
+                        }}
+                      >
+                        {lead.status}
+                      </span>
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-4 text-sm" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                    <td className="px-5 py-4 text-sm font-medium" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                       {formatDate(lead.created_at)}
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5">
-                        <Link
-                          href={`/leads/${lead.id}`}
-                          title="Open lead"
-                          className="p-1.5 rounded-lg transition-all hover:scale-105"
-                          style={{ background: 'rgba(164,244,201,0.1)', color: 'var(--text-secondary)', border: '1px solid rgba(164,244,201,0.15)' }}
-                        >
-                          <ExternalLink size={14} />
-                        </Link>
+                    <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
                         <Link
                           href={`/leads/${lead.id}/edit`}
+                          onClick={(e) => e.stopPropagation()}
                           title="Edit lead"
-                          className="p-1.5 rounded-lg transition-all hover:scale-105"
-                          style={{ background: 'rgba(110,180,152,0.1)', color: '#6EB498', border: '1px solid rgba(110,180,152,0.15)' }}
+                          className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
+                          style={{
+                            background: 'rgba(134, 47, 250, 0.15)',
+                            color: '#c084fc',
+                            border: '1px solid rgba(134, 47, 250, 0.3)',
+                          }}
                         >
                           <Pencil size={14} />
                         </Link>
                         <button
                           title="Delete lead"
-                          onClick={() => { if (confirm('Delete this lead?')) handleDelete(lead.id) }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (confirm('Delete this lead?')) handleDelete(lead.id)
+                          }}
                           disabled={deletingId === lead.id}
-                          className="p-1.5 rounded-lg transition-all hover:scale-105 disabled:opacity-40"
-                          style={{ background: 'rgba(255,107,107,0.1)', color: 'var(--error)', border: '1px solid rgba(255,107,107,0.15)' }}
+                          className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md disabled:opacity-40"
+                          style={{
+                            background: 'rgba(255, 107, 107, 0.12)',
+                            color: 'var(--error)',
+                            border: '1px solid rgba(255, 107, 107, 0.25)',
+                          }}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -404,7 +426,7 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
             {filteredLeads.length === 0 && (
               <div className="py-16 text-center" style={{ color: 'var(--text-muted)' }}>
                 <Search size={32} className="mx-auto mb-3 opacity-40" />
-                <p className="text-sm">No leads match your filters</p>
+                <p className="text-sm font-medium">No leads match your filters</p>
               </div>
             )}
           </div>
@@ -415,93 +437,119 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
       {view === 'grid' && (
         <>
           {filteredLeads.length === 0 ? (
-            <div className="glass-card py-16 text-center" style={{ color: 'var(--text-muted)' }}>
-              <Search size={32} className="mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No leads match your filters</p>
+            <div className="card-glass py-16 text-center">
+              <Search size={32} className="mx-auto mb-3 opacity-40" style={{ color: 'var(--text-muted)' }} />
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No leads match your filters</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredLeads.map((lead) => (
                 <div
                   key={lead.id}
-                  className="glass-card p-5 flex flex-col gap-4 hover:scale-[1.01] transition-transform"
+                  onClick={() => router.push(`/leads/${lead.id}`)}
+                  className="card-glass group overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(134, 47, 250, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                  }}
                 >
-                  {/* Card header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                  {/* Top gradient accent bar */}
+                  <div
+                    className="h-1 w-full"
+                    style={{
+                      background: 'linear-gradient(90deg, #862ffa 0%, #f15bb5 100%)',
+                    }}
+                  />
+
+                  <div className="p-6 flex flex-col h-full">
+                    {/* Card header with avatar and score */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div
+                          className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110"
+                          style={{
+                            background: 'linear-gradient(135deg, #862ffa 0%, #f15bb5 100%)',
+                            color: '#fff',
+                          }}
+                        >
+                          {initials(lead.lead_name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-semibold leading-tight truncate" style={{ color: 'var(--text-primary)' }}>
+                            {lead.lead_name}
+                          </p>
+                          {lead.youtube_handle && (
+                            <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>@{lead.youtube_handle}</p>
+                          )}
+                        </div>
+                      </div>
+                      <ScoreBadge score={lead.lead_score_total} />
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ borderTop: '1px solid rgba(134, 47, 250, 0.1)', marginBottom: '1rem' }} />
+
+                    {/* Stats row */}
+                    <div className="flex gap-3 mb-4">
                       <div
-                        className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold"
+                        className="flex-1 rounded-xl px-3 py-3 text-center transition-all"
                         style={{
-                          background: 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))',
-                          border: '1px solid rgba(164,244,201,0.25)',
-                          color: 'var(--text-secondary)',
+                          background: 'rgba(134, 47, 250, 0.1)',
+                          border: '1px solid rgba(134, 47, 250, 0.2)',
                         }}
                       >
-                        {initials(lead.lead_name)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-                          {lead.lead_name}
+                        <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Subscribers</p>
+                        <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                          {formatSubs(lead.subscriber_count)}
                         </p>
-                        {lead.youtube_handle && (
-                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{lead.youtube_handle}</p>
-                        )}
+                      </div>
+                      <div
+                        className="flex-1 rounded-xl px-3 py-3 text-center transition-all"
+                        style={{
+                          background: 'rgba(241, 91, 181, 0.08)',
+                          border: '1px solid rgba(241, 91, 181, 0.15)',
+                        }}
+                      >
+                        <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Found By</p>
+                        <p className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>{lead.found_by}</p>
                       </div>
                     </div>
-                    <ScoreBadge score={lead.lead_score_total} />
-                  </div>
 
-                  {/* Stats row */}
-                  <div className="flex gap-3">
-                    <div
-                      className="flex-1 rounded-lg px-3 py-2 text-center"
-                      style={{ background: 'rgba(13,59,102,0.4)', border: '1px solid var(--border)' }}
-                    >
-                      <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>Subscribers</p>
-                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                        {formatSubs(lead.subscriber_count)}
-                      </p>
-                    </div>
-                    <div
-                      className="flex-1 rounded-lg px-3 py-2 text-center"
-                      style={{ background: 'rgba(13,59,102,0.4)', border: '1px solid var(--border)' }}
-                    >
-                      <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>Found By</p>
-                      <p className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>{lead.found_by}</p>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-1" style={{ borderTop: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {formatDate(lead.created_at)}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <Link
-                        href={`/leads/${lead.id}`}
-                        title="Open"
-                        className="p-1.5 rounded-lg transition-all hover:scale-110"
-                        style={{ background: 'rgba(164,244,201,0.1)', color: 'var(--text-secondary)', border: '1px solid rgba(164,244,201,0.15)' }}
-                      >
-                        <ExternalLink size={13} />
-                      </Link>
-                      <Link
-                        href={`/leads/${lead.id}/edit`}
-                        title="Edit"
-                        className="p-1.5 rounded-lg transition-all hover:scale-110"
-                        style={{ background: 'rgba(110,180,152,0.1)', color: '#6EB498', border: '1px solid rgba(110,180,152,0.15)' }}
-                      >
-                        <Pencil size={13} />
-                      </Link>
-                      <button
-                        title="Delete"
-                        onClick={() => { if (confirm('Delete this lead?')) handleDelete(lead.id) }}
-                        disabled={deletingId === lead.id}
-                        className="p-1.5 rounded-lg transition-all hover:scale-110 disabled:opacity-40"
-                        style={{ background: 'rgba(255,107,107,0.1)', color: 'var(--error)', border: '1px solid rgba(255,107,107,0.15)' }}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-4 mt-auto" style={{ borderTop: '1px solid rgba(134, 47, 250, 0.1)' }}>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                        {formatDate(lead.created_at)}
+                      </span>
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Link
+                          href={`/leads/${lead.id}/edit`}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Edit lead"
+                          className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
+                          style={{
+                            background: 'rgba(134, 47, 250, 0.15)',
+                            color: '#c084fc',
+                            border: '1px solid rgba(134, 47, 250, 0.3)',
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </Link>
+                        <button
+                          title="Delete lead"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (confirm('Delete this lead?')) handleDelete(lead.id)
+                          }}
+                          disabled={deletingId === lead.id}
+                          className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md disabled:opacity-40"
+                          style={{
+                            background: 'rgba(255, 107, 107, 0.12)',
+                            color: 'var(--error)',
+                            border: '1px solid rgba(255, 107, 107, 0.25)',
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
