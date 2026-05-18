@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw } from 'lucide-react'
+import { Avatar } from './Avatar'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
@@ -16,6 +17,7 @@ interface Lead {
   g_factor: number; yt_score_factor: number | null; sub_range_factor: number | null; s2v_factor: number | null
   lead_score_total: number | null; ai_confidence: string | null; status: string; status_notes: string | null
   draft: boolean; raw_youtube_data: { recentVideos?: { title: string; publishedAt: string; viewCount: number }[] } | null
+  channel_thumbnail_url: string | null
   re_enrich_count?: number; re_enriched_at?: string | null
 }
 interface TeamMember { initials: string; full_name: string }
@@ -40,6 +42,9 @@ function daysAgo(iso: string | null) {
   if (!iso) return '—'
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
   return d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d}d ago`
+}
+function getInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 function monthsAgo(iso: string | null) {
   if (!iso) return '—'
@@ -213,20 +218,28 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
       )}
 
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7">
-        <div>
-          <h1 className="text-2xl font-bold text-gradient mb-0.5">{lead.lead_name}</h1>
-          <div className="flex items-center gap-3 flex-wrap">
-            <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
-              style={{ color: 'var(--text-secondary)' }}>
-              <Play size={14} /> {lead.youtube_handle ?? lead.youtube_url}
-            </a>
-            {lead.re_enrich_count !== undefined && lead.re_enrich_count > 0 && (
-              <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'rgba(164,244,201,0.12)', border: '1px solid rgba(164,244,201,0.2)', color: 'var(--text-secondary)' }}>
-                Re-enriched {lead.re_enrich_count} time{lead.re_enrich_count > 1 ? 's' : ''} · {daysAgo(lead.re_enriched_at ?? null)}
-              </div>
-            )}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-7">
+        <div className="flex items-start gap-4">
+          <Avatar
+            thumbnailUrl={lead.channel_thumbnail_url || null}
+            initials={getInitials(lead.lead_name)}
+            name={lead.lead_name}
+            size="lg"
+          />
+          <div>
+            <h1 className="text-2xl font-bold text-gradient mb-0.5">{lead.lead_name}</h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
+                style={{ color: 'var(--text-secondary)' }}>
+                <Play size={14} /> {lead.youtube_handle ?? lead.youtube_url}
+              </a>
+              {lead.re_enrich_count !== undefined && lead.re_enrich_count > 0 && (
+                <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'rgba(164,244,201,0.12)', border: '1px solid rgba(164,244,201,0.2)', color: 'var(--text-secondary)' }}>
+                  Re-enriched {lead.re_enrich_count} time{lead.re_enrich_count > 1 ? 's' : ''} · {daysAgo(lead.re_enriched_at ?? null)}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">

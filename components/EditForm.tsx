@@ -2,11 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useMemo } from 'react'
+import { Avatar } from './Avatar'
 
 interface EditFormProps {
   lead: any
   teamMembers: { initials: string; full_name: string }[]
   statusOptions: { value: string; label: string }[]
+}
+
+function getInitials(name: string): string {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
@@ -113,9 +118,17 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Edit Lead</h1>
-          <p className="text-gray-600">{lead.lead_name}</p>
+        <div className="mb-6 flex items-center gap-4">
+          <Avatar
+            thumbnailUrl={lead.channel_thumbnail_url || null}
+            initials={getInitials(lead.lead_name)}
+            name={lead.lead_name}
+            size="lg"
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Lead</h1>
+            <p className="text-gray-600">{lead.lead_name}</p>
+          </div>
         </div>
 
         {/* Toast */}

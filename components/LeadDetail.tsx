@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { Avatar } from './Avatar'
 
 export default function LeadDetail({ lead, statusLabel }: any) {
   const router = useRouter()
@@ -52,7 +53,12 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold" style={{ background: 'linear-gradient(135deg, #a855f7 0%, #f15bb5 100%)', color: '#fff' }}>{initials}</div>
+            <Avatar
+              thumbnailUrl={lead.channel_thumbnail_url || null}
+              initials={initials}
+              name={lead.lead_name}
+              size="lg"
+            />
             <div>
               <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #a855f7 0%, #f15bb5 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{lead.lead_name}</h1>
               <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm mt-2 hover:opacity-75 transition-opacity" style={{ color: '#c084fc' }}>

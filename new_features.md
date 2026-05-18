@@ -8,12 +8,23 @@
 
 
 ### RE-ENRICH
+There should be a button of Re-Enrich for every lead when their review form is opened. On clicking on it the AI should re-enrich the data for the lead. So for example maybe if the contact details could not be retreived in the first go then the AI should try to retreive it on clicking the re-enrich button.
+The re-enrich should come up with a more detailed version of data extraction and AI analysis. The data that was previously fetched on enriching the first time should not go away but on re-enriching more details and detailed info should be added.
 
 
 ### Profile Photo as Name
 
+Current Output: 
 
-### Open Lead on clicking the lead and not the open button.
+![alt text](image.png)
+![alt text](image-1.png)
+Instead of the initials displayed, we can put the channel's profile photo on the lead card. Tell me ways that this can be done as well as how it should be properly implemented.
+
+Desired Output:
+![alt text](image-2.png)
+![alt text](image-3.png)
+
+
 
 ### Getting Comment section details
 
