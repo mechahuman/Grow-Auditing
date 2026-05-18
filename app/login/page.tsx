@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { createClient } from '../../lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, Loader2 } from 'lucide-react'
@@ -74,7 +73,7 @@ export default function LoginPage() {
         <div className="relative w-full max-w-md">
           {/* GROW Logo / Brand */}
           <div className="text-center mb-8">
-            <Image
+            <img
               src="/favicon.png"
               alt="GROW Logo"
               width={64}
