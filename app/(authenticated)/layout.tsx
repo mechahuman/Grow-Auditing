@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '../../lib/supabase/server'
 import { SignOutButton } from '../../components/SignOutButton'
 import { ThemeToggle } from '../../components/ThemeToggle'
@@ -19,13 +18,12 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo & Brand */}
           <Link href="/leads" className="flex items-center gap-3 group">
-            <Image
+            <img
               src="/favicon.png"
               alt="GROW Logo"
               width={36}
               height={36}
               className="transition-transform group-hover:scale-105"
-              priority
             />
             <span className="text-lg font-bold text-gradient-brand">GROW</span>
           </Link>
