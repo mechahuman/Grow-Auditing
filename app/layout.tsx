@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { PageTransition } from '../components/PageTransition'
 
 export const metadata: Metadata = {
   title: 'GROW Lead Intelligence',
@@ -22,7 +23,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#a855f7" />
       </head>
       <body className="antialiased font-sans" suppressHydrationWarning>
-        {children}
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   )
