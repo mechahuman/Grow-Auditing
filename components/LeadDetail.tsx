@@ -141,6 +141,89 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         </div>
       </div>
 
+      {/* AI Insights - Full Width */}
+      <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(241, 91, 181, 0.08) 100%)', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+        <h3 className="text-sm font-bold uppercase tracking-widest mb-8 pb-4" style={{ color: '#a855f7', borderBottom: '1px solid rgba(168, 85, 247, 0.3)', letterSpacing: '1.5px' }}>AI Insights & Analysis</h3>
+
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[
+            ['Category', lead.category],
+            ['Content Style', lead.content_style],
+            ['Monetization', lead.monetization],
+            ['Posting Pattern', lead.posting_pattern],
+          ].map(([label, val]) => (
+            <div key={label as string} className="rounded-xl p-4" style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
+              <p className="text-xs mb-2" style={{ color: '#9b5de5', fontWeight: '600', letterSpacing: '0.5px' }}>{label}</p>
+              <p className="text-sm font-semibold leading-relaxed" style={{ color: 'var(--text-primary)' }}>{val ?? '—'}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Strengths and Concerns in 2 Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+          {/* Strengths */}
+          {(lead.strengths ?? []).length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#A4F4C9' }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A4F4C9' }}>Strengths</p>
+              </div>
+              <ul className="space-y-3">
+                {(lead.strengths ?? []).map((s: string, i: number) => (
+                  <li key={i} className="flex gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span style={{ color: '#A4F4C9', fontWeight: 'bold' }}>•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Concerns */}
+          {(lead.concerns ?? []).length > 0 && (
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#FF6B6B' }} />
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B6B' }}>Considerations</p>
+              </div>
+              <ul className="space-y-3">
+                {(lead.concerns ?? []).map((c: string, i: number) => (
+                  <li key={i} className="flex gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+                    <span style={{ color: '#FF6B6B', fontWeight: 'bold' }}>•</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* AI Confidence */}
+        {(lead.ai_confidence || (lead.data_gaps ?? []).length > 0) && (
+          <div className="rounded-xl p-4" style={{ background: 'rgba(241, 91, 181, 0.08)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
+            <div className="flex items-start gap-3">
+              <Info size={16} style={{ color: '#f15bb5', marginTop: '2px' }} className="flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#f15bb5' }}>
+                  AI Confidence: {lead.ai_confidence ?? 'Unknown'}
+                </p>
+                {(lead.data_gaps ?? []).length > 0 && (
+                  <ul className="space-y-1.5">
+                    {(lead.data_gaps ?? []).map((d: string, i: number) => (
+                      <li key={i} className="text-xs flex gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>○</span>
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -181,86 +264,6 @@ export default function LeadDetail({ lead, statusLabel }: any) {
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
-
-          {/* AI Observations */}
-          <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.04) 100%)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
-            <h3 className="text-xs font-bold uppercase tracking-widest mb-5 pb-3" style={{ color: '#a855f7', borderBottom: '1px solid rgba(168, 85, 247, 0.2)', letterSpacing: '1px' }}>AI Insights</h3>
-
-            {/* Metadata Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {[
-                ['Category', lead.category],
-                ['Content Style', lead.content_style],
-                ['Monetization', lead.monetization],
-                ['Posting', lead.posting_pattern],
-              ].map(([label, val]) => (
-                <div key={label as string} className="rounded-xl p-3" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(168, 85, 247, 0.1)' }}>
-                  <p className="text-xs mb-1.5" style={{ color: '#9b5de5', fontWeight: '600', letterSpacing: '0.5px' }}>{label}</p>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{val ?? '—'}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Strengths */}
-            {(lead.strengths ?? []).length > 0 && (
-              <div className="mb-5 pb-5" style={{ borderBottom: '1px solid rgba(168, 85, 247, 0.15)' }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#A4F4C9' }} />
-                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A4F4C9' }}>Strengths</p>
-                </div>
-                <div className="space-y-2">
-                  {(lead.strengths ?? []).map((s: string, i: number) => (
-                    <div key={i} className="flex gap-3 pl-4">
-                      <span className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{s}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Concerns */}
-            {(lead.concerns ?? []).length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#FF6B6B' }} />
-                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B6B' }}>Considerations</p>
-                </div>
-                <div className="space-y-2">
-                  {(lead.concerns ?? []).map((c: string, i: number) => (
-                    <div key={i} className="flex gap-3 pl-4">
-                      <span className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{c}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* AI Confidence */}
-          {(lead.ai_confidence || (lead.data_gaps ?? []).length > 0) && (
-            <div className="glass-card p-5" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(241, 91, 181, 0.15)' }}>
-                  <Info size={16} style={{ color: '#f15bb5' }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: '#f15bb5' }}>
-                    AI Confidence: {lead.ai_confidence ?? 'Unknown'}
-                  </p>
-                  {(lead.data_gaps ?? []).length > 0 && (
-                    <ul className="space-y-1.5">
-                      {(lead.data_gaps ?? []).map((d: string, i: number) => (
-                        <li key={i} className="text-xs flex gap-2" style={{ color: 'var(--text-secondary)' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>○</span>
-                          <span>{d}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
             </div>
           )}
         </div>

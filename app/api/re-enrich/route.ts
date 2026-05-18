@@ -79,13 +79,29 @@ export async function POST(request: NextRequest) {
       },
       raw_ai_response: aiAnalysis.raw_response,
 
-      // Always overwrite with fresh AI analysis
+      // Always overwrite with fresh AI analysis (except strengths/concerns which are appended)
       category: aiAnalysis.analysis.category,
       content_style: aiAnalysis.analysis.content_style,
       posting_pattern: aiAnalysis.analysis.posting_pattern,
       monetization: aiAnalysis.analysis.monetization,
-      strengths: aiAnalysis.analysis.strengths,
-      concerns: aiAnalysis.analysis.concerns,
+      // Append new unique strengths (avoid duplicates)
+      strengths: Array.from(new Set([
+        ...(existingLead.strengths || []),
+        ...aiAnalysis.analysis.strengths.filter((s: string) =>
+          !(existingLead.strengths || []).some((existing: string) =>
+            existing.toLowerCase() === s.toLowerCase()
+          )
+        )
+      ])),
+      // Append new unique concerns (avoid duplicates)
+      concerns: Array.from(new Set([
+        ...(existingLead.concerns || []),
+        ...aiAnalysis.analysis.concerns.filter((c: string) =>
+          !(existingLead.concerns || []).some((existing: string) =>
+            existing.toLowerCase() === c.toLowerCase()
+          )
+        )
+      ])),
       data_gaps: aiAnalysis.analysis.data_gaps,
       ai_confidence: aiAnalysis.analysis.ai_confidence,
       remarks_ai_draft: aiAnalysis.analysis.remarks_draft,
