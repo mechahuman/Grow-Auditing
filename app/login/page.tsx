@@ -35,51 +35,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex overflow-hidden">
-      {/* Left panel — Video background with overlay (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-[55%] relative flex-col bg-black">
+      {/* Left panel — Video background only (hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-[55%] relative bg-black overflow-hidden">
         <VideoBackground />
-
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-
-        {/* Decorative gradient orb (bottom-right of video panel) */}
-        <div
-          className="pointer-events-none absolute bottom-[-10%] right-[-5%] w-96 h-96 rounded-full opacity-30"
-          style={{
-            background: 'radial-gradient(circle, rgba(164, 244, 201, 0.3) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-        />
-
-        {/* Content overlay */}
-        <div className="relative z-10 flex flex-col justify-between h-full p-12">
-          {/* Logo top-left */}
-          <div className="flex items-center gap-3">
-            <Image
-              src="/favicon.png"
-              alt="GreenTrace Logo"
-              width={32}
-              height={32}
-              className="rounded-lg"
-            />
-            <span className="text-white font-bold text-lg tracking-wide">GreenTrace</span>
-          </div>
-
-          {/* Tagline bottom-left */}
-          <div>
-            <h2 className="text-5xl font-bold text-white leading-tight mb-4">
-              Discover the next<br />big creator.
-            </h2>
-            <p className="text-white/60 text-base leading-relaxed max-w-sm">
-              AI-powered lead intelligence for creator partnerships. Find your next collaboration opportunity.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Right panel — Login form */}
       <div
-        className="flex-1 lg:w-[45%] bg-page flex items-center justify-center p-8 relative"
+        className="flex-1 lg:w-[45%] bg-page flex items-center justify-center p-8 relative overflow-hidden"
         style={{
           opacity: isLeaving ? 0 : 1,
           transition: 'opacity 0.4s ease-in',
@@ -102,18 +65,18 @@ export default function LoginPage() {
         />
 
         <div className="relative w-full max-w-md">
-          {/* Mobile logo (only visible on small screens) */}
-          <div className="lg:hidden text-center mb-8">
+          {/* GROW Logo / Brand */}
+          <div className="text-center mb-8">
             <Image
               src="/favicon.png"
-              alt="GreenTrace Logo"
+              alt="GROW Logo"
               width={64}
               height={64}
-              className="mx-auto mb-4 rounded-lg"
+              className="mx-auto mb-4"
             />
-            <h1 className="text-4xl font-bold text-gradient-primary mb-2">GreenTrace</h1>
+            <h1 className="text-4xl font-bold text-gradient-primary mb-2">GROW</h1>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Creator Intelligence Platform
+              Lead Intelligence Platform
             </p>
           </div>
 
