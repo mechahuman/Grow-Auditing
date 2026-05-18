@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       g_factor_normalized: score.gFactorNormalized,
       lead_score_total: score.leadScoreTotal,
       ai_confidence: analysis.ai_confidence,
+      channel_thumbnail_url: ytData.thumbnailUrl,
       draft: true,
       status: 'new',
       enriched_by: user.email,

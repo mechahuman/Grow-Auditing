@@ -8,6 +8,7 @@ import {
   Pencil, Trash2, ChevronDown, X, Play,
   TrendingUp, TrendingDown, Minus,
 } from 'lucide-react'
+import { Avatar } from './Avatar'
 
 interface Lead {
   id: string
@@ -18,6 +19,7 @@ interface Lead {
   status: string
   created_at: string
   youtube_handle: string | null
+  channel_thumbnail_url: string | null
 }
 
 interface TeamMember {
@@ -315,14 +317,13 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     {/* Lead name */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-bold transition-all group-hover:scale-110"
-                          style={{
-                            background: 'linear-gradient(135deg, #a855f7 0%, #f15bb5 100%)',
-                            color: '#fff',
-                          }}
-                        >
-                          {initials(lead.lead_name)}
+                        <div className="transition-all group-hover:scale-110">
+                          <Avatar
+                            thumbnailUrl={lead.channel_thumbnail_url}
+                            initials={initials(lead.lead_name)}
+                            name={lead.lead_name}
+                            size="md"
+                          />
                         </div>
                         <div>
                           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -455,14 +456,13 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
                     {/* Card header with avatar and score */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-1">
-                        <div
-                          className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110"
-                          style={{
-                            background: 'linear-gradient(135deg, #a855f7 0%, #f15bb5 100%)',
-                            color: '#fff',
-                          }}
-                        >
-                          {initials(lead.lead_name)}
+                        <div className="transition-all group-hover:scale-110">
+                          <Avatar
+                            thumbnailUrl={lead.channel_thumbnail_url}
+                            initials={initials(lead.lead_name)}
+                            name={lead.lead_name}
+                            size="lg"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-base font-semibold leading-tight truncate" style={{ color: 'var(--text-primary)' }}>

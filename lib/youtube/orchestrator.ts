@@ -72,6 +72,7 @@ export async function fetchAllYouTubeData(youtubeUrl: string): Promise<YouTubeEn
     email: about.email,
     website: about.website,
     socialLinks: about.socialLinks,
+    thumbnailUrl: channel.thumbnailUrl,
     rawApiResponses: {
       channel,
       videoIds,

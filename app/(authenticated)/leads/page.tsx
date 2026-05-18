@@ -12,7 +12,7 @@ export default async function LeadsPage() {
   ] = await Promise.all([
     supabase
       .from('leads')
-      .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle')
+      .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle, channel_thumbnail_url')
       .eq('draft', false)
       .order('created_at', { ascending: false }),
     supabase

@@ -17,6 +17,7 @@ export interface ChannelData {
   uploadsPlaylistId: string
   keywords: string[]
   country: string | null
+  thumbnailUrl: string | null
 }
 
 export interface VideoData {
@@ -53,6 +54,7 @@ export interface YouTubeEnrichmentResult {
   email: string | null
   website: string | null
   socialLinks: Array<{ platform: string; url: string }>
+  thumbnailUrl: string | null
   rawApiResponses: {
     channel: unknown
     videoIds: unknown

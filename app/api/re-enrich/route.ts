@@ -105,6 +105,9 @@ export async function POST(request: NextRequest) {
       // Re-enrich tracking
       re_enrich_count: (existingLead.re_enrich_count || 0) + 1,
       re_enriched_at: new Date().toISOString(),
+
+      // Channel thumbnail (always overwrite)
+      channel_thumbnail_url: ytData.thumbnailUrl,
     }
 
     // Update lead in database

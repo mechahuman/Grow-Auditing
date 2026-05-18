@@ -12,6 +12,11 @@ type RawChannelItem = {
     publishedAt: string
     customUrl?: string
     country?: string
+    thumbnails?: {
+      default?: { url: string }
+      medium?: { url: string }
+      high?: { url: string }
+    }
   }
   statistics: {
     subscriberCount?: string
@@ -28,6 +33,9 @@ function parseKeywords(raw: string | undefined): string[] {
 }
 
 function parseItem(item: RawChannelItem): ChannelData {
+  const thumbnails = item.snippet.thumbnails
+  const thumbnailUrl = thumbnails?.high?.url ?? thumbnails?.medium?.url ?? thumbnails?.default?.url ?? null
+
   return {
     channelId: item.id,
     handle: item.snippet.customUrl ?? null,
@@ -40,6 +48,7 @@ function parseItem(item: RawChannelItem): ChannelData {
     uploadsPlaylistId: item.contentDetails?.relatedPlaylists?.uploads ?? '',
     keywords: parseKeywords(item.brandingSettings?.channel?.keywords),
     country: item.snippet.country ?? null,
+    thumbnailUrl,
   }
 }
 
