@@ -7,7 +7,7 @@ interface AvatarProps {
   thumbnailUrl: string | null
   initials: string
   name: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 export function Avatar({ thumbnailUrl, initials, name, size = 'md' }: AvatarProps) {
@@ -17,18 +17,21 @@ export function Avatar({ thumbnailUrl, initials, name, size = 'md' }: AvatarProp
     sm: 'w-8 h-8 text-xs',
     md: 'w-10 h-10 text-sm',
     lg: 'w-12 h-12 text-base',
+    xl: 'w-20 h-20 text-2xl',
   }
 
   const showImage = thumbnailUrl && !imageError
 
   if (showImage) {
+    const sizeMap = { sm: 32, md: 40, lg: 48, xl: 80 }
+    const dimension = sizeMap[size]
     return (
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden flex-shrink-0`}>
         <Image
           src={thumbnailUrl}
           alt={name}
-          width={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
-          height={size === 'sm' ? 32 : size === 'md' ? 40 : 48}
+          width={dimension}
+          height={dimension}
           onError={() => setImageError(true)}
           className="w-full h-full object-cover"
         />

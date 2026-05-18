@@ -57,7 +57,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
               thumbnailUrl={lead.channel_thumbnail_url || null}
               initials={initials}
               name={lead.lead_name}
-              size="lg"
+              size="xl"
             />
             <div>
               <h1 className="text-3xl font-bold" style={{ background: 'linear-gradient(90deg, #a855f7 0%, #f15bb5 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>{lead.lead_name}</h1>

@@ -224,7 +224,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             thumbnailUrl={lead.channel_thumbnail_url || null}
             initials={getInitials(lead.lead_name)}
             name={lead.lead_name}
-            size="lg"
+            size="xl"
           />
           <div>
             <h1 className="text-2xl font-bold text-gradient mb-0.5">{lead.lead_name}</h1>
