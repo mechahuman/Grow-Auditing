@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare } from 'lucide-react'
+import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw } from 'lucide-react'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
@@ -16,6 +16,7 @@ interface Lead {
   g_factor: number; yt_score_factor: number | null; sub_range_factor: number | null; s2v_factor: number | null
   lead_score_total: number | null; ai_confidence: string | null; status: string; status_notes: string | null
   draft: boolean; raw_youtube_data: { recentVideos?: { title: string; publishedAt: string; viewCount: number }[] } | null
+  re_enrich_count?: number; re_enriched_at?: string | null
 }
 interface TeamMember { initials: string; full_name: string }
 interface StatusOption { value: string; label: string }
@@ -85,6 +86,8 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   const [showDiscard, setShowDiscard] = useState(false)
   const [showAIDraft, setShowAIDraft] = useState(false)
   const [showScoreModal, setShowScoreModal] = useState(false)
+  const [re_enriching, setReEnriching] = useState(false)
+  const [showReEnrichModal, setShowReEnrichModal] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [gFactor, setGFactor] = useState(lead.g_factor)
   const [fields, setFields] = useState({
@@ -124,6 +127,23 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
     await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' })
     router.push('/leads')
   }
+  async function handleReEnrich() {
+    setReEnriching(true)
+    setShowReEnrichModal(false)
+    const res = await fetch('/api/re-enrich', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id: lead.id }),
+    })
+    const data = await res.json()
+    setReEnriching(false)
+    if (data.error) {
+      showToast(`Re-enrich failed: ${data.error}`, false)
+    } else {
+      showToast(`Lead re-enriched! (${data.re_enrich_count} total)`)
+      setTimeout(() => window.location.reload(), 1000)
+    }
+  }
 
   const inputCls = 'input-field text-sm'
   const labelCls = 'block text-xs font-semibold uppercase tracking-wider mb-1.5'
@@ -156,6 +176,25 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         </div>
       )}
 
+      {/* Re-Enrich confirmation modal */}
+      {showReEnrichModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card p-6 max-w-sm w-full mx-4">
+            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Re-enrich this channel?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>We'll fetch fresh YouTube data and re-run AI analysis. Your edited remarks and G-Factor will be preserved.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowReEnrichModal(false)} className="btn-ghost flex-1">Cancel</button>
+              <button onClick={handleReEnrich} disabled={re_enriching} className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                style={{ background: 'rgba(164,244,201,0.15)', border: '1px solid rgba(164,244,201,0.3)', color: '#A4F4C9' }}>
+                {re_enriching ? <>
+                  <Loader2 size={14} className="inline mr-1.5 animate-spin" />Re-enriching…
+                </> : 'Yes, re-enrich'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Discard modal */}
       {showDiscard && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -177,13 +216,30 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7">
         <div>
           <h1 className="text-2xl font-bold text-gradient mb-0.5">{lead.lead_name}</h1>
-          <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
-            style={{ color: 'var(--text-secondary)' }}>
-            <Play size={14} /> {lead.youtube_handle ?? lead.youtube_url}
-          </a>
+          <div className="flex items-center gap-3 flex-wrap">
+            <a href={lead.youtube_url} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70"
+              style={{ color: 'var(--text-secondary)' }}>
+              <Play size={14} /> {lead.youtube_handle ?? lead.youtube_url}
+            </a>
+            {lead.re_enrich_count !== undefined && lead.re_enrich_count > 0 && (
+              <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'rgba(164,244,201,0.12)', border: '1px solid rgba(164,244,201,0.2)', color: 'var(--text-secondary)' }}>
+                Re-enriched {lead.re_enrich_count} time{lead.re_enrich_count > 1 ? 's' : ''} · {daysAgo(lead.re_enriched_at ?? null)}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex gap-2 flex-wrap">
+          {!lead.draft && (
+            <button onClick={() => setShowReEnrichModal(true)} disabled={re_enriching} className="btn-ghost flex items-center gap-1.5 text-sm transition-all disabled:opacity-50"
+              style={{ color: '#A4F4C9', borderColor: 'rgba(164,244,201,0.3)' }}>
+              {re_enriching ? <>
+                <Loader2 size={14} className="animate-spin" />Re-enriching…
+              </> : <>
+                <RefreshCw size={14} /> Re-Enrich
+              </>}
+            </button>
+          )}
           {lead.draft && (
             <button onClick={() => setShowDiscard(true)} className="btn-ghost flex items-center gap-1.5 text-sm"
               style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
