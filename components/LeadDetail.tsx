@@ -2,13 +2,16 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp } from 'lucide-react'
+import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp, RefreshCw, Loader2, Check } from 'lucide-react'
 import { Avatar } from './Avatar'
 
 export default function LeadDetail({ lead, statusLabel }: any) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [showAIDraft, setShowAIDraft] = useState(false)
+  const [re_enriching, setReEnriching] = useState(false)
+  const [showReEnrichModal, setShowReEnrichModal] = useState(false)
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
   const initials = lead.lead_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -40,6 +43,11 @@ export default function LeadDetail({ lead, statusLabel }: any) {
   const { label: scoreLabel, color: scoreColor } = getScore(lead.lead_score_total)
   const recentVideos = lead.raw_youtube_data?.recentVideos?.slice(0, 5) ?? []
 
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   async function handleDelete() {
     if (!confirm('Delete this lead?')) return
     setDeleting(true)
@@ -47,8 +55,53 @@ export default function LeadDetail({ lead, statusLabel }: any) {
     if (res.ok) router.push('/leads')
   }
 
+  async function handleReEnrich() {
+    setReEnriching(true)
+    setShowReEnrichModal(false)
+    const res = await fetch('/api/re-enrich', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lead_id: lead.id }),
+    })
+    const data = await res.json()
+    setReEnriching(false)
+    if (data.error) {
+      showToast(`Re-enrich failed: ${data.error}`, false)
+    } else {
+      showToast(`Lead re-enriched! (${data.re_enrich_count} total)`)
+      setTimeout(() => window.location.reload(), 1000)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-20 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all"
+          style={{ background: toast.ok ? 'rgba(164,244,201,0.15)' : 'rgba(255,107,107,0.15)', border: `1px solid ${toast.ok ? 'rgba(164,244,201,0.4)' : 'rgba(255,107,107,0.4)'}`, color: toast.ok ? '#A4F4C9' : '#FF6B6B', backdropFilter: 'blur(12px)' }}>
+          {toast.ok ? <Check size={15} /> : null}{toast.msg}
+        </div>
+      )}
+
+      {/* Re-Enrich confirmation modal */}
+      {showReEnrichModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="glass-card p-6 max-w-sm w-full mx-4" style={{ background: 'rgba(20, 20, 30, 0.9)', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Re-enrich this channel?</h3>
+            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>We'll fetch fresh YouTube data and re-run AI analysis. Your edited remarks and G-Factor will be preserved.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowReEnrichModal(false)} className="btn-ghost flex-1" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>Cancel</button>
+              <button onClick={handleReEnrich} disabled={re_enriching} className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                style={{ background: 'rgba(164,244,201,0.15)', border: '1px solid rgba(164,244,201,0.3)', color: '#A4F4C9' }}>
+                {re_enriching ? <>
+                  <Loader2 size={14} className="inline mr-1.5 animate-spin" />Re-enriching…
+                </> : 'Yes, re-enrich'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
@@ -71,7 +124,14 @@ export default function LeadDetail({ lead, statusLabel }: any) {
             <span className="text-xs font-semibold px-3 py-1.5 rounded-lg capitalize" style={{ background: 'rgba(241, 91, 181, 0.12)', color: '#f15bb5', border: '1px solid rgba(241, 91, 181, 0.25)' }}>{statusLabel}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => setShowReEnrichModal(true)} disabled={re_enriching} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50" style={{ background: 'rgba(164, 244, 201, 0.12)', color: '#A4F4C9', border: '1px solid rgba(164, 244, 201, 0.3)' }}>
+            {re_enriching ? <>
+              <Loader2 size={16} className="animate-spin" />Re-enriching…
+            </> : <>
+              <RefreshCw size={16} /> Re-Enrich
+            </>}
+          </button>
           <button onClick={() => router.push(`/leads/${lead.id}/edit`)} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #a855f7 0%, #d946ef 100%)', color: '#fff', border: '1px solid rgba(168, 85, 247, 0.5)' }}>
             <Pencil size={16} /> Edit
           </button>
