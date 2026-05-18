@@ -36,7 +36,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex overflow-hidden">
       {/* Left panel — Video background only (hidden on mobile) */}
-      <div className="hidden lg:block lg:w-[55%] relative bg-black overflow-hidden h-screen">
+      <div
+        className="hidden lg:block lg:w-[55%] bg-black overflow-hidden"
+        style={{
+          position: 'relative',
+          height: '100vh',
+          width: '55%',
+        }}
+      >
         <VideoBackground />
       </div>
 
