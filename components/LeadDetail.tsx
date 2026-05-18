@@ -209,34 +209,34 @@ export default function LeadDetail({ lead, statusLabel }: any) {
             </div>
           </div>
 
-          {/* Contact Details */}
+          {/* Contact Details - Expanded */}
           {(lead.email || lead.website || lead.instagram || lead.twitter) && (
-            <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%)', border: '1px solid rgba(241, 91, 181, 0.15)' }}>
-              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 pb-3" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.2)', letterSpacing: '1px' }}>Get In Touch</h3>
-              <div className="space-y-2.5">
+            <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
+              <div className="space-y-4">
                 {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-                    <Mail size={16} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{lead.email}</span>
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Mail size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.email}</span>
                   </a>
                 )}
                 {lead.website && (
-                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-                    <Globe size={16} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{lead.website}</span>
+                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lead.website}</span>
                   </a>
                 )}
                 {lead.instagram && (
-                  <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-                    <Camera size={16} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{lead.instagram}</span>
-                  </div>
+                  <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.instagram}</span>
+                  </a>
                 )}
                 {lead.twitter && (
-                  <div className="flex items-center gap-3 py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-                    <MessageSquare size={16} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
-                  </div>
+                  <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
+                  </a>
                 )}
               </div>
             </div>
