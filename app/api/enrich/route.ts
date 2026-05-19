@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
   const { data: lead, error: insertError } = await supabase
     .from('leads')
     .insert({
+      user_id: user.id,
       lead_name,
       found_by,
       youtube_url,

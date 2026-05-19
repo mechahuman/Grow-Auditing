@@ -3,13 +3,22 @@ import Link from 'next/link'
 import { createClient } from '../../lib/supabase/server'
 import { SignOutButton } from '../../components/SignOutButton'
 import { ThemeToggle } from '../../components/ThemeToggle'
-import { Plus } from 'lucide-react'
+import { Plus, Shield } from 'lucide-react'
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  // Fetch user's role from team_members table
+  const { data: teamMember } = await supabase
+    .from('team_members')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  const isAdmin = teamMember?.role === 'admin'
 
   return (
     <div className="bg-page min-h-screen">
@@ -34,6 +43,19 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
               <Plus size={14} />
               <span className="hidden sm:inline">New Lead</span>
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="text-xs px-4 py-2 flex items-center gap-1.5 rounded-lg border transition-colors hover:bg-opacity-50"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <Shield size={14} />
+                <span className="hidden sm:inline">Admin Panel</span>
+              </Link>
+            )}
             <span className="text-xs px-3 hidden md:block" style={{ color: 'var(--text-secondary)' }}>
               {user.email}
             </span>
