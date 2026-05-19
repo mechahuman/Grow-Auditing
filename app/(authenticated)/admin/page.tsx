@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '../../../lib/supabase/client'
-import { Mail, Plus, Trash2, Users, BarChart3, AlertCircle, Home, Users as UsersIcon, List, TrendingUp, Lock, FileText, LogOut } from 'lucide-react'
+import { Mail, Plus, Trash2, Users, BarChart3, AlertCircle, Home, List, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 interface TeamMember {
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     fetchAdminData()
@@ -144,66 +145,79 @@ export default function AdminPage() {
 
   return (
     <div className="flex h-screen bg-page overflow-hidden">
-      {/* Left Sidebar */}
+      {/* Left Sidebar - Retractable */}
       <div
-        className="w-64 border-r flex flex-col"
+        className={`border-r flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}
         style={{
           borderColor: 'var(--border-subtle)',
           background: 'rgba(255, 255, 255, 0.02)',
         }}
       >
         {/* Sidebar Header */}
-        <div className="p-6 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h1 className="text-lg font-bold text-gradient-primary">GROW ADMIN</h1>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            Control Center
-          </p>
+        <div className="px-4 py-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
+          {sidebarOpen && (
+            <div>
+              <h1 className="text-sm font-bold text-gradient-primary">GROW</h1>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                Admin
+              </p>
+            </div>
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1 rounded-lg transition-colors hover:bg-opacity-50"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {[
             { id: 'dashboard', label: 'Dashboard', icon: Home },
-            { id: 'members', label: 'Team Members', icon: UsersIcon },
+            { id: 'members', label: 'Team Members', icon: Users },
             { id: 'leads', label: 'Lead Management', icon: List },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setCurrentSection(id as any)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
               style={{
                 background: currentSection === id ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
                 color: currentSection === id ? '#a855f7' : 'var(--text-secondary)',
-                borderLeft: currentSection === id ? '2px solid #a855f7' : '2px solid transparent',
               }}
+              title={!sidebarOpen ? label : ''}
             >
-              <Icon size={16} />
-              {label}
+              <Icon size={18} className="flex-shrink-0" />
+              {sidebarOpen && <span>{label}</span>}
             </button>
           ))}
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t space-y-2" style={{ borderColor: 'var(--border-subtle)' }}>
+        <div className="p-2 border-t space-y-1" style={{ borderColor: 'var(--border-subtle)' }}>
           <Link
             href="/leads"
-            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
             style={{
               color: 'var(--text-secondary)',
             }}
+            title="Back to Leads"
           >
-            <BarChart3 size={16} />
-            Back to Leads
+            <ArrowLeft size={18} className="flex-shrink-0" />
+            {sidebarOpen && <span>Back to Leads</span>}
           </Link>
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
             style={{
               color: 'var(--text-secondary)',
             }}
+            title="Sign Out"
           >
-            <LogOut size={16} />
-            Sign Out
+            <LogOut size={18} className="flex-shrink-0" />
+            {sidebarOpen && <span>Sign Out</span>}
           </button>
         </div>
       </div>
