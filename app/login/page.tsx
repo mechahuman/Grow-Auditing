@@ -40,14 +40,22 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
+    } else if (data.user) {
+      // Check user role to determine redirect destination
+      const { data: teamMember } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single()
+
+      const isAdmin = teamMember?.role === 'admin'
       setIsLeaving(true)
       setTimeout(() => {
-        router.push('/leads')
+        router.push(isAdmin ? '/admin' : '/leads')
         router.refresh()
       }, 400)
     }

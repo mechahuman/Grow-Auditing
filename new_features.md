@@ -26,8 +26,6 @@ Desired Output:
 
 
 
-### Getting Comment section details
-
 
 ### WE WILL MOVE FORWARD WITH AUTONOMOUS LEAD SEARCHING SYSTEM.
 - This comes very much in the later stage after our current product is working with full efficiency.

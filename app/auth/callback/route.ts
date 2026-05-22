@@ -30,9 +30,21 @@ export async function GET(request: NextRequest) {
     )
 
     // Exchange code for session
-    await supabase.auth.exchangeCodeForSession(code)
+    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
+
+    // Check user role to determine redirect destination
+    if (user) {
+      const { data: teamMember } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+
+      const isAdmin = teamMember?.role === 'admin'
+      return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/leads', request.url))
+    }
   }
 
-  // Redirect to /leads on successful login, or /login if failed
-  return NextResponse.redirect(new URL('/leads', request.url))
+  // Redirect to /login if failed
+  return NextResponse.redirect(new URL('/login', request.url))
 }

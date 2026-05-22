@@ -35,28 +35,28 @@ create index leads_user_id_idx on leads(user_id);
 create or replace function handle_auth_user_signup()
 returns trigger as $$
 declare
-  existing_member record;
+  existing_member_id uuid;
 begin
   -- Check if email already exists in team_members
-  select id into existing_member from team_members where email = new.email limit 1;
+  select id into existing_member_id from public.team_members where email = new.email limit 1;
 
-  if existing_member is not null then
+  if existing_member_id is not null then
     -- Email exists in whitelist: link the user_id
-    update team_members
+    update public.team_members
     set user_id = new.id
     where email = new.email;
   elsif new.email = 'growadmin@gmail.com' then
     -- Special case: admin account
-    insert into team_members (user_id, email, full_name, initials, role, active)
+    insert into public.team_members (user_id, email, full_name, initials, role, active)
     values (new.id, new.email, 'Admin', 'A', 'admin', true)
     on conflict (email) do update
     set user_id = new.id, role = 'admin'
-    where team_members.email = 'growadmin@gmail.com';
+    where public.team_members.email = 'growadmin@gmail.com';
   end if;
 
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- Drop trigger if it exists (idempotent)
 drop trigger if exists on_auth_user_created on auth.users;
