@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
-import { Mail, Plus, Trash2, AlertCircle, Trophy } from 'lucide-react'
+import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight } from 'lucide-react'
 
 interface TeamMember {
   id: string
@@ -17,11 +18,8 @@ interface TeamMember {
 
 interface DashboardMetrics {
   totalMembers: number
+  totalAdmins: number
   totalLeads: number
-  completedLeads: number
-  inProgressLeads: number
-  draftLeads: number
-  activeToday: number
 }
 
 interface PerformanceData {
@@ -111,7 +109,7 @@ export default function AdminPage() {
     setLoading(true)
     try {
       const [membersRes, leadsRes] = await Promise.all([
-        supabase.from('team_members').select('id, email, full_name, initials, role, active, created_at').order('full_name'),
+        supabase.from('team_members').select('id, user_id, email, full_name, initials, role, active, created_at').order('full_name'),
         supabase.from('leads').select('id, user_id, draft, status, lead_score_total'),
       ])
 
@@ -120,25 +118,25 @@ export default function AdminPage() {
 
       setTeamMembers(membersRes.data || [])
 
+      const members = membersRes.data || []
       const leads = leadsRes.data || []
-      const completedLeads = leads.filter((l) => l.draft === false && l.status !== 'new').length
-      const inProgressLeads = leads.filter((l) => l.draft === false && l.status === 'new').length
-      const draftLeads = leads.filter((l) => l.draft === true).length
 
       setMetrics({
-        totalMembers: membersRes.data?.length || 0,
+        totalMembers: members.filter((m) => m.active && m.role !== 'admin').length,
+        totalAdmins: members.filter((m) => m.active && m.role === 'admin').length,
         totalLeads: leads.length,
-        completedLeads,
-        inProgressLeads,
-        draftLeads,
-        activeToday: membersRes.data?.filter((m) => m.active).length || 0,
       })
 
       // Calculate performance data
       const performance: Record<string, PerformanceData & { scoreSum: number; scoreCount: number }> = {}
 
       ;(membersRes.data || []).forEach((member) => {
-        performance[member.id] = {
+        if (!member.active) return
+        if (!member.email || member.email.trim() === '') return
+        if (member.role === 'admin') return
+
+        const key = member.user_id || member.id
+        performance[key] = {
           memberId: member.id,
           memberName: member.full_name,
           email: member.email,
@@ -195,7 +193,7 @@ export default function AdminPage() {
             }
           }
           duplicateMap[lead.youtube_channel_id].count++
-          const member = membersRes.data?.find((m) => m.id === lead.user_id)
+          const member = membersRes.data?.find((m) => (m.user_id || m.id) === lead.user_id)
           duplicateMap[lead.youtube_channel_id].leads.push({
             id: lead.id,
             created_at: lead.created_at,
@@ -273,7 +271,7 @@ export default function AdminPage() {
 
       const notesWithDetails = (notesRes.data || []).map((note) => {
         const lead = allLeads.find((l) => l.id === note.lead_id)
-        const member = membersRes.data?.find((m) => m.id === note.admin_id)
+        const member = membersRes.data?.find((m) => (m.user_id || m.id) === note.admin_id)
         return {
           ...note,
           lead_name: lead?.lead_name || 'Unknown Lead',
@@ -287,7 +285,7 @@ export default function AdminPage() {
       const lowScores = allLeads
         .filter((l) => l.lead_score_total && l.lead_score_total < 2.5)
         .map((l) => {
-          const member = membersRes.data?.find((m) => m.id === l.user_id)
+          const member = membersRes.data?.find((m) => (m.user_id || m.id) === l.user_id)
           return {
             id: l.id,
             lead_name: l.lead_name,
@@ -441,15 +439,20 @@ export default function AdminPage() {
   }
 
   async function handleRemoveMember(memberId: string) {
-    if (!window.confirm('Deactivate this member?')) return
+    if (!window.confirm('Delete this member permanently? This action cannot be undone.')) return
 
     try {
-      const { error } = await supabase.from('team_members').update({ active: false }).eq('id', memberId)
-      if (error) throw error
-      setSuccess('Member deactivated')
+      const { data, error } = await supabase.from('team_members').delete().eq('id', memberId)
+      if (error) {
+        console.error('Delete error:', error)
+        throw error
+      }
+      console.log('Delete response:', data)
+      setSuccess('Member deleted successfully')
       await fetchAdminData()
     } catch (err: any) {
-      setError(err.message || 'Failed to deactivate member')
+      console.error('Delete failed:', err)
+      setError(err.message || 'Failed to delete member')
     }
   }
 
@@ -479,35 +482,268 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Dashboard Section */}
+      {/* Dashboard Section — Premium Balanced Grid Layout */}
       {section === 'dashboard' && metrics && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>System overview and key metrics</p>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">Dashboard</h1>
+            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Real-time insights into your team's performance</p>
           </div>
 
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { label: 'Total Team Members', value: metrics.totalMembers, sub: 'Active members' },
-              { label: 'Total Leads', value: metrics.totalLeads, sub: 'All leads' },
-              { label: 'Completed Leads', value: metrics.completedLeads, sub: 'Published' },
-              { label: 'In Progress', value: metrics.inProgressLeads, sub: 'Being reviewed' },
-              { label: 'Draft Leads', value: metrics.draftLeads, sub: 'Not published' },
-              { label: 'Active Today', value: metrics.activeToday, sub: 'Logged in' },
-            ].map((m, i) => (
-              <div key={i} className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {m.label}
-                </p>
-                <p className="text-3xl font-bold mt-2 text-gradient-primary">{m.value}</p>
-                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                  {m.sub}
-                </p>
+          {/* Top Metrics Row — Equal Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Total Leads Card */}
+            <Link href="/admin?section=leads">
+              <div
+                className="group glass-card relative overflow-hidden rounded-2xl p-7 cursor-pointer transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(139,92,246,0.04) 100%), rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Total Leads</p>
+                    <p className="text-5xl font-bold mt-4 bg-gradient-to-r from-purple-300 to-purple-200 bg-clip-text text-transparent">{metrics.totalLeads}</p>
+                    <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>Across all members</p>
+                  </div>
+                  <div className="p-3 rounded-xl opacity-30 group-hover:opacity-50 transition-opacity" style={{ background: 'rgba(168,85,247,0.1)' }}>
+                    <List size={28} style={{ color: '#a855f7' }} />
+                  </div>
+                </div>
               </div>
-            ))}
+            </Link>
+
+            {/* Active Members Card */}
+            <Link href="/admin?section=members">
+              <div
+                className="group glass-card relative overflow-hidden rounded-2xl p-7 cursor-pointer transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(139,92,246,0.04) 100%), rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Active Members</p>
+                    <p className="text-5xl font-bold mt-4 bg-gradient-to-r from-purple-300 to-purple-200 bg-clip-text text-transparent">{metrics.totalMembers}</p>
+                    <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>Team members</p>
+                  </div>
+                  <div className="p-3 rounded-xl opacity-30 group-hover:opacity-50 transition-opacity" style={{ background: 'rgba(168,85,247,0.1)' }}>
+                    <Users size={28} style={{ color: '#a855f7' }} />
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Admins Card */}
+            <Link href="/admin?section=members">
+              <div
+                className="group glass-card relative overflow-hidden rounded-2xl p-7 cursor-pointer transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(139,92,246,0.04) 100%), rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Administrators</p>
+                    <p className="text-5xl font-bold mt-4 bg-gradient-to-r from-purple-300 to-purple-200 bg-clip-text text-transparent">{metrics.totalAdmins}</p>
+                    <p className="text-xs mt-3" style={{ color: 'var(--text-secondary)' }}>Admin users</p>
+                  </div>
+                  <div className="p-3 rounded-xl opacity-30 group-hover:opacity-50 transition-opacity" style={{ background: 'rgba(168,85,247,0.1)' }}>
+                    <ShieldCheck size={28} style={{ color: '#a855f7' }} />
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
+
+          {/* Bottom Two-Column Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Team Performance Table */}
+            <div 
+              className="glass-card rounded-2xl p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]" 
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-subtle)'
+              }}
+            >
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold">Team Performance</h3>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Leads contributed by members</p>
+              </div>
+              <div className="space-y-2.5">
+                {performanceData.length === 0 ? (
+                  <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No team members yet</p>
+                ) : (
+                  performanceData
+                    .sort((a, b) => b.totalLeads - a.totalLeads)
+                    .map((perf) => {
+                      const member = teamMembers.find((m) => m.id === perf.memberId)
+                      return (
+                        <Link key={perf.memberId} href="/admin?section=leads">
+                          <div
+                            className="group flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-300 hover:-translate-y-0.5"
+                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                              e.currentTarget.style.borderColor = 'rgba(168,85,247,0.3)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+                              e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                            }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                                  <span className="text-xs font-bold" style={{ color: '#a855f7' }}>{perf.memberName.charAt(0)}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium">{perf.memberName}</p>
+                                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{perf.email}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="ml-4 flex-shrink-0">
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(168,85,247,0.1)' }}>
+                                <span className="text-sm font-bold" style={{ color: '#a855f7' }}>{perf.totalLeads}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })
+                )}
+              </div>
+            </div>
+
+            {/* Right Column — Activity & API Status Stacked */}
+            <div className="space-y-6">
+              {/* Recent Activity */}
+              <div 
+                className="glass-card rounded-2xl p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]" 
+                style={{ background: 'rgba(168,85,247,0.05)', border: '1px solid rgba(168,85,247,0.3)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.5)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.3)'
+                }}
+              >
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="p-2 rounded-lg" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                    <Activity size={18} style={{ color: '#a855f7' }} />
+                  </div>
+                  <h3 className="text-lg font-semibold">Recent Activity</h3>
+                </div>
+                <div className="space-y-2.5">
+                  {teamMembers
+                    .filter((m) => m.active)
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .slice(0, 6)
+                    .map((member) => (
+                      <div key={member.id} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                          <span className="text-xs font-bold" style={{ color: '#a855f7' }}>
+                            {member.initials}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium">{member.full_name}</p>
+                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            Joined {Math.floor((Date.now() - new Date(member.created_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* API Status */}
+              <Link href="/admin?section=api" className="block">
+                <div
+                  className="group glass-card relative overflow-hidden rounded-2xl p-7 cursor-pointer transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(76,175,80,0.12)]"
+                  style={{
+                    background: 'rgba(76,175,80,0.05)',
+                    border: '1px solid rgba(76,175,80,0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(76,175,80,0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(76,175,80,0.3)'
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2 rounded-lg" style={{ background: 'rgba(168,85,247,0.1)' }}>
+                      <Zap size={18} style={{ color: '#a855f7' }} />
+                    </div>
+                    <h3 className="text-lg font-semibold">API Status</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      { name: 'YouTube Data API' },
+                      { name: 'Groq AI' },
+                      { name: 'Google Sheets Sync' },
+                    ].map((api) => (
+                      <div key={api.name} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{
+                            background: '#4caf50',
+                            boxShadow: '0 0 8px rgba(76,175,80,0.6)',
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                          }}
+                        />
+                        <p className="text-xs font-medium flex-1">{api.name}</p>
+                        <span className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(76,175,80,0.15)', color: '#4caf50' }}>Live</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-6 pt-4 border-t flex items-center gap-2 text-xs" style={{ borderColor: 'var(--border-subtle)', color: 'rgba(168,85,247,0.8)' }}>
+                    <span>View details</span>
+                    <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Pulse Animation Keyframes */}
+          <style>{`
+            @keyframes pulse {
+              0%, 100% {
+                box-shadow: 0 0 8px rgba(76,175,80,0.6);
+              }
+              50% {
+                box-shadow: 0 0 16px rgba(76,175,80,0.9);
+              }
+            }
+          `}</style>
         </div>
       )}
 
@@ -523,18 +759,18 @@ export default function AdminPage() {
           <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
             <h3 className="text-sm font-bold mb-4">Add New Member</h3>
             <form onSubmit={handleAddMember} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Full Name</label>
-                  <input type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} placeholder="John Doe" className="input-field w-full text-sm h-9" />
+                  <input type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} placeholder="John Doe" className="input-field w-full text-sm h-10" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Gmail</label>
-                  <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="john@gmail.com" className="input-field w-full text-sm h-9" />
+                  <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="john@gmail.com" className="input-field w-full text-sm h-10" />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Role</label>
-                  <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full appearance-none text-sm h-9">
+                  <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full text-sm h-10" style={{ paddingRight: '1.5rem' }}>
                     <option value="member">Member</option>
                     <option value="admin">Admin</option>
                   </select>

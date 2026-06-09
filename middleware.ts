@@ -31,6 +31,12 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) return response
   if (pathname.startsWith('/auth/')) return response
 
+  // Fallback: If Supabase Redirect URLs are misconfigured and it falls back to the Site URL
+  // with an OAuth code, catch it and forward it to the callback handler.
+  if (pathname === '/' && request.nextUrl.searchParams.has('code')) {
+    return NextResponse.redirect(new URL(`/auth/callback?${request.nextUrl.searchParams.toString()}`, request.url))
+  }
+
   const isLoginPage = pathname === '/login'
   const isUnauthorizedPage = pathname === '/unauthorized'
 
