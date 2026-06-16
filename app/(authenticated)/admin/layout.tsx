@@ -3,18 +3,14 @@
 import { useState } from 'react'
 import { ThemeToggle } from '../../../components/ThemeToggle'
 import { SignOutButton } from '../../../components/SignOutButton'
-import { Home, Users, List, TrendingUp, ArrowLeft, Copy, BarChart3, MessageSquare, AlertTriangle, Download, Zap } from 'lucide-react'
+import { Home, Users, List, ArrowLeft, Copy, Download, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'members', label: 'Team Members', icon: Users },
   { id: 'leads', label: 'Lead Management', icon: List },
-  { id: 'performance', label: 'Performance', icon: TrendingUp },
   { id: 'duplicates', label: 'Duplicates', icon: Copy },
-  { id: 'trends', label: 'Score Trends', icon: BarChart3 },
-  { id: 'notes', label: 'Internal Notes', icon: MessageSquare },
-  { id: 'audit', label: 'Lead Audit', icon: AlertTriangle },
   { id: 'export', label: 'Export', icon: Download },
   { id: 'api', label: 'API Status', icon: Zap },
 ]

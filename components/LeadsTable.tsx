@@ -115,11 +115,22 @@ export function LeadsTable({ leads, teamMembers, currentUserEmail }: LeadsTableP
   const handleDelete = async (id: string) => {
     setDeletingId(id)
     try {
+      console.log(`[LeadsTable] Deleting lead: ${id}`)
       const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' })
-      if (res.ok) router.refresh()
-      else alert('Failed to delete lead')
-    } catch {
-      alert('Error deleting lead')
+      const data = await res.json()
+
+      console.log(`[LeadsTable] Delete response:`, { status: res.status, ok: res.ok, data })
+
+      if (res.ok) {
+        console.log(`[LeadsTable] Delete successful, refreshing page...`)
+        router.refresh()
+      } else {
+        console.error(`[LeadsTable] Delete failed:`, data)
+        alert(`Failed to delete lead: ${data.error || 'Unknown error'}`)
+      }
+    } catch (err) {
+      console.error('[LeadsTable] Error deleting lead:', err)
+      alert(`Error deleting lead: ${err}`)
     } finally {
       setDeletingId(null)
     }

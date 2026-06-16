@@ -155,31 +155,44 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  console.log(`[DELETE] Attempting to delete lead with ID: ${params.id}`)
+
   // Fetch lead to get google_sheet_row_ref
-  const { data: lead } = await supabase
+  const { data: lead, error: fetchError } = await supabase
     .from('leads')
-    .select('google_sheet_row_ref')
+    .select('google_sheet_row_ref, id')
     .eq('id', params.id)
     .single()
 
-  if (!lead) return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
+  if (fetchError || !lead) {
+    console.error(`[DELETE] Lead not found: ${params.id}`, fetchError)
+    return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
+  }
+
+  console.log(`[DELETE] Found lead: ${JSON.stringify(lead)}`)
 
   // Delete from Google Sheets if row ref exists
   if (lead.google_sheet_row_ref) {
     try {
+      console.log(`[DELETE] Deleting from Google Sheets: ${lead.google_sheet_row_ref}`)
       await deleteLeadRow(lead.google_sheet_row_ref)
     } catch (sheetsErr) {
-      console.error('Google Sheets delete failed (non-blocking):', sheetsErr)
+      console.error('[DELETE] Google Sheets delete failed (non-blocking):', sheetsErr)
     }
   }
 
-  // Delete from Supabase
-  const { error } = await supabase.from('leads').delete().eq('id', params.id)
+  // Delete from Supabase - PERMANENTLY
+  console.log(`[DELETE] Executing database DELETE for: ${params.id}`)
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', params.id)
 
   if (error) {
-    console.error('Delete error:', error)
-    return NextResponse.json({ error: 'Failed to delete lead' }, { status: 500 })
+    console.error('[DELETE] Supabase delete error:', error)
+    return NextResponse.json({ error: 'Failed to delete lead', details: error }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true })
+  console.log(`[DELETE] Successfully deleted lead: ${params.id}`)
+  return NextResponse.json({ success: true, message: 'Lead permanently deleted' })
 }

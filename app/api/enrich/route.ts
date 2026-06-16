@@ -3,6 +3,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { fetchAllYouTubeData, YouTubeApiError } from '../../../lib/youtube'
 import { analyzeChannel } from '../../../lib/ai'
 import { computeLeadScore } from '../../../lib/scoring'
+import { logAPIUsage, createAPITimer } from '../../../lib/api/usage-tracker'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -28,9 +29,29 @@ export async function POST(request: NextRequest) {
   }
 
   let ytData
+  const ytTimer = createAPITimer()
   try {
     ytData = await fetchAllYouTubeData(youtube_url)
+    // Log successful YouTube API call
+    logAPIUsage({
+      apiName: 'youtube',
+      userId: user.id,
+      endpoint: 'channels.list,videos.list',
+      status: 'success',
+      quotaUnitsUsed: 3,
+      responseTimeMs: ytTimer(),
+    }).catch(() => {}) // Silently ignore logging errors
   } catch (err) {
+    // Log failed YouTube API call
+    logAPIUsage({
+      apiName: 'youtube',
+      userId: user.id,
+      endpoint: 'channels.list,videos.list',
+      status: 'error',
+      errorMessage: err instanceof Error ? err.message : 'Unknown error',
+      responseTimeMs: ytTimer(),
+    }).catch(() => {})
+
     if (err instanceof YouTubeApiError) {
       const msg =
         err.httpStatus === 404
@@ -43,7 +64,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch YouTube data' }, { status: 500 })
   }
 
-  const aiResult = await analyzeChannel(ytData)
+  const aiTimer = createAPITimer()
+  let aiResult
+  try {
+    aiResult = await analyzeChannel(ytData)
+    // Log successful Groq AI API call
+    logAPIUsage({
+      apiName: 'groq',
+      userId: user.id,
+      endpoint: 'chat.completions',
+      status: 'success',
+      quotaUnitsUsed: 1,
+      responseTimeMs: aiTimer(),
+    }).catch(() => {})
+  } catch (err) {
+    // Log failed Groq AI API call
+    logAPIUsage({
+      apiName: 'groq',
+      userId: user.id,
+      endpoint: 'chat.completions',
+      status: 'error',
+      errorMessage: err instanceof Error ? err.message : 'Unknown error',
+      responseTimeMs: aiTimer(),
+    }).catch(() => {})
+    throw err
+  }
   const { analysis } = aiResult
 
   // Extract instagram and twitter from socialLinks

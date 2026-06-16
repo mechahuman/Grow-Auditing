@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
-import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight } from 'lucide-react'
+import { Avatar } from '../../../components/Avatar'
+import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2 } from 'lucide-react'
 
 interface TeamMember {
   id: string
@@ -14,6 +15,8 @@ interface TeamMember {
   role: 'admin' | 'member'
   active: boolean
   created_at: string
+  user_id?: string
+  last_sign_in_at?: string | null
 }
 
 interface DashboardMetrics {
@@ -22,15 +25,6 @@ interface DashboardMetrics {
   totalLeads: number
 }
 
-interface PerformanceData {
-  memberId: string
-  memberName: string
-  email: string
-  totalLeads: number
-  completedLeads: number
-  avgScore: number
-  completionRate: number
-}
 
 interface DuplicateGroup {
   youtube_channel_id: string
@@ -44,37 +38,424 @@ interface DuplicateGroup {
   }>
 }
 
-interface TrendData {
-  date: string
-  avgScore: number
-  leadsCount: number
+
+
+// Lead Management Interfaces
+interface Lead {
+  id: string
+  lead_name: string
+  youtube_channel_id: string
+  user_id: string
+  assigned_to_member: string
+  lead_score_total: number | null
+  draft: boolean
+  status: string
+  created_at: string
+  category?: string
+  subscriber_count?: number
+  channel_thumbnail_url?: string | null
+  found_by?: string
+  youtube_handle?: string
+  avg_views_last_10?: number
+  total_views?: number
+  video_count?: number
+  channel_created_at?: string
+  last_upload_at?: string
+  s2v_ratio_pct?: number
+  posting_frequency_30d?: number
+  email?: string | null
+  website?: string | null
+  instagram?: string | null
+  twitter?: string | null
+  content_style?: string
+  posting_pattern?: string
+  monetization?: string
+  strengths?: string[]
+  concerns?: string[]
+  data_gaps?: string[]
+  remarks_ai_draft?: string
+  remarks_final?: string
+  yt_score_factor?: number
+  sub_range_factor?: number
+  s2v_factor?: number
+  g_factor_normalized?: number
+  ai_confidence?: number
+  raw_youtube_data?: Record<string, any>
+  raw_ai_response?: Record<string, any>
 }
 
-interface CategoryTrend {
-  category: string
-  avgScore: number
-  count: number
+interface LeadManagementState {
+  allLeads: Lead[]
+  searchQuery: string
+  selectedLeads: Set<string>
 }
 
-interface AdminNote {
+interface LeadAuditLog {
   id: string
   lead_id: string
-  lead_name: string
-  admin_id: string
-  admin_email: string
-  content: string
-  created_at: string
-  updated_at: string
+  action: string
+  previous_assignee: string | null
+  new_assignee: string
+  changed_by: string
+  changed_at: string
 }
 
-interface LowScoringLead {
+interface EnrichedLeadDetails {
   id: string
   lead_name: string
-  lead_score_total: number
+  youtube_channel_id: string
   user_id: string
-  memberName: string
+  assigned_to_member: string
+  lead_score_total: number | null
+  draft: boolean
+  status: string
   created_at: string
-  flagged: boolean
+  category?: string
+  notes?: string
+  enrichment_data?: Record<string, any>
+}
+
+interface APIStatus {
+  id: string
+  name: string
+  displayName: string
+  statusColor: 'green' | 'yellow' | 'red'
+  dailyQuotaUsed: number
+  dailyQuotaMax: number
+  monthlyQuotaUsed: number
+  monthlyQuotaMax: number
+  percentUsed: number
+  lastUsedBy: string | null
+  lastUsedTimestamp: string | null
+  estimatedMonthlyCost: string
+}
+
+interface APIUsageData {
+  summary: {
+    totalCalls: number
+    totalCost: string
+    period: string
+  }
+  byTeamMember: Array<{
+    memberId: string
+    name: string
+    totalCalls: number
+    apiBreakdown: Record<string, number>
+    totalCost: string
+    lastUsed: string
+  }>
+  byApi: Array<{
+    apiName: string
+    displayName: string
+    calls: number
+    cost: string
+    percentOfTotal: number
+  }>
+}
+
+function APIStatusSection() {
+  const [apiStatus, setApiStatus] = useState<APIStatus[]>([])
+  const [usageData, setUsageData] = useState<APIUsageData | null>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'team' | 'activity' | 'costs'>('overview')
+  const [loading, setLoading] = useState(true)
+  const [totalCost, setTotalCost] = useState('$0.00')
+  const [allHealthy, setAllHealthy] = useState(true)
+
+  useEffect(() => {
+    const fetchAPIStatus = async () => {
+      try {
+        const [statusRes, usageRes] = await Promise.all([
+          fetch('/api/admin/api-status'),
+          fetch('/api/admin/api-usage?days=30')
+        ])
+
+        if (statusRes.ok) {
+          const data = await statusRes.json()
+          setApiStatus(data.apis || [])
+          setTotalCost(data.totalMonthlyCost || '$0.00')
+          setAllHealthy(data.allSystemsHealthy || true)
+        }
+
+        if (usageRes.ok) {
+          const data = await usageRes.json()
+          setUsageData(data)
+        }
+      } catch (err) {
+        console.error('Error fetching API status:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAPIStatus()
+    const interval = setInterval(fetchAPIStatus, 7000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const getStatusColor = (color: 'green' | 'yellow' | 'red') => {
+    switch (color) {
+      case 'green':
+        return { bg: 'rgba(76, 175, 80, 0.2)', text: '#4caf50' }
+      case 'yellow':
+        return { bg: 'rgba(255, 193, 7, 0.2)', text: '#ffc107' }
+      case 'red':
+        return { bg: 'rgba(255, 107, 107, 0.2)', text: '#ff6b6b' }
+    }
+  }
+
+  const getStatusIcon = (color: 'green' | 'yellow' | 'red') => {
+    switch (color) {
+      case 'green':
+        return '🟢'
+      case 'yellow':
+        return '🟡'
+      case 'red':
+        return '🔴'
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">API Integration Status</h1>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Real-time monitoring of API usage and quota management
+          </p>
+          <div className="text-right">
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Monthly Cost</p>
+            <p className="text-2xl font-bold" style={{ color: '#a855f7' }}>{totalCost}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Banner */}
+      {!allHealthy && (
+        <div
+          className="p-4 rounded-lg border flex items-center gap-3"
+          style={{ background: 'rgba(255, 193, 7, 0.1)', borderColor: 'rgba(255, 193, 7, 0.3)' }}
+        >
+          <AlertCircle size={20} style={{ color: '#ffc107' }} />
+          <p className="text-sm">
+            <span className="font-semibold">Warning:</span> One or more APIs are approaching quota limits
+          </p>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+        {(['overview', 'team', 'activity', 'costs'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="px-4 py-2 text-sm font-medium transition-colors relative"
+            style={{
+              color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-secondary)',
+            }}
+          >
+            {tab === 'overview' && 'Overview'}
+            {tab === 'team' && 'Team Breakdown'}
+            {tab === 'activity' && 'Activity'}
+            {tab === 'costs' && 'Costs'}
+            {activeTab === tab && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-0.5"
+                style={{ background: 'linear-gradient(90deg, #a855f7, #d946ef)' }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {apiStatus.map((api) => {
+            const colors = getStatusColor(api.statusColor)
+            return (
+              <div
+                key={api.id}
+                className="glass-card p-5 rounded-lg"
+                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-sm font-bold">{api.displayName}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {api.name === 'youtube' && 'Channel data enrichment'}
+                      {api.name === 'groq' && 'AI analysis & insights'}
+                      {api.name === 'google_sheets' && 'Data synchronization'}
+                      {api.name === 'supabase' && 'Database operations'}
+                    </p>
+                  </div>
+                  <span className="text-lg">{getStatusIcon(api.statusColor)}</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        Daily Quota
+                      </p>
+                      <p className="text-xs font-semibold">
+                        {api.dailyQuotaUsed.toLocaleString()} / {api.dailyQuotaMax.toLocaleString()}
+                      </p>
+                    </div>
+                    <div
+                      className="w-full h-2 rounded-full"
+                      style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                    >
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(api.percentUsed, 100)}%`,
+                          background: api.statusColor === 'red'
+                            ? '#ff6b6b'
+                            : api.statusColor === 'yellow'
+                            ? '#ffc107'
+                            : '#4caf50',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Last used</p>
+                    <p className="text-sm font-medium mt-1">
+                      {api.lastUsedBy && api.lastUsedTimestamp
+                        ? `${api.lastUsedBy} · ${new Date(api.lastUsedTimestamp).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}`
+                        : 'Not used yet'}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Est. Monthly Cost</p>
+                    <p className="text-lg font-bold mt-1">{api.estimatedMonthlyCost}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Team Breakdown Tab */}
+      {activeTab === 'team' && usageData && (
+        <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+          <h3 className="text-sm font-bold mb-4">API Usage by Team Member</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th className="text-left py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Member
+                  </th>
+                  <th className="text-right py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Calls
+                  </th>
+                  <th className="text-right py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Cost
+                  </th>
+                  <th className="text-left py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    Top API
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {usageData.byTeamMember.map((member) => {
+                  const topAPI = Object.entries(member.apiBreakdown).sort(
+                    (a, b) => b[1] - a[1]
+                  )[0]
+                  return (
+                    <tr
+                      key={member.memberId}
+                      style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+                    >
+                      <td className="py-3 px-2">{member.name}</td>
+                      <td className="py-3 px-2 text-right">{member.totalCalls}</td>
+                      <td className="py-3 px-2 text-right font-semibold">{member.totalCost}</td>
+                      <td className="py-3 px-2">
+                        <span
+                          className="px-2 py-1 rounded text-xs"
+                          style={{
+                            background: 'rgba(168, 85, 247, 0.15)',
+                            color: '#a855f7',
+                          }}
+                        >
+                          {topAPI ? `${topAPI[0]} (${topAPI[1]})` : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Tab */}
+      {activeTab === 'activity' && (
+        <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+          <h3 className="text-sm font-bold mb-4">Recent API Activity</h3>
+          <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
+            API activity will appear here as team members enrich leads
+          </p>
+        </div>
+      )}
+
+      {/* Costs Tab */}
+      {activeTab === 'costs' && usageData && (
+        <div className="space-y-4">
+          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+            <h3 className="text-sm font-bold mb-4">Cost Breakdown by API</h3>
+            <div className="space-y-3">
+              {usageData.byApi.map((api) => (
+                <div key={api.apiName}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium">{api.displayName}</p>
+                    <p className="text-sm font-bold">{api.cost}</p>
+                  </div>
+                  <div
+                    className="w-full h-2 rounded-full"
+                    style={{ background: 'rgba(255, 255, 255, 0.1)' }}
+                  >
+                    <div
+                      className="h-2 rounded-full"
+                      style={{
+                        width: `${api.percentOfTotal}%`,
+                        background: 'linear-gradient(90deg, #a855f7, #d946ef)',
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    {api.calls} calls · {api.percentOfTotal}% of total
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+            <h3 className="text-sm font-bold mb-3">Monthly Summary</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Calls</p>
+                <p className="text-2xl font-bold mt-1">{usageData.summary.totalCalls}</p>
+              </div>
+              <div>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Cost</p>
+                <p className="text-2xl font-bold mt-1">{usageData.summary.totalCost}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminPage() {
@@ -84,41 +465,184 @@ export default function AdminPage() {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([])
   const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([])
-  const [trends, setTrends] = useState<TrendData[]>([])
-  const [categoryTrends, setCategoryTrends] = useState<CategoryTrend[]>([])
-  const [adminNotes, setAdminNotes] = useState<AdminNote[]>([])
-  const [lowScoringLeads, setLowScoringLeads] = useState<LowScoringLead[]>([])
   const [newFullName, setNewFullName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newRole, setNewRole] = useState<'member' | 'admin'>('member')
-  const [newNote, setNewNote] = useState('')
-  const [selectedLeadForNote, setSelectedLeadForNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sortBy, setSortBy] = useState<'score' | 'leads' | 'completion'>('score')
-  const [sortDesc, setSortDesc] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showDeactivated, setShowDeactivated] = useState(false)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+
+  // Lead Management State
+  const [allLeads, setAllLeads] = useState<Lead[]>([])
+  const [leadsSearchQuery, setLeadsSearchQuery] = useState('')
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set())
+  const [selectedLeadDetail, setSelectedLeadDetail] = useState<Lead | null>(null)
+  const [leadAuditLog, setLeadAuditLog] = useState<LeadAuditLog[]>([])
+  const [leadDetailsLoading, setLeadDetailsLoading] = useState(false)
+  const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null)
+  const [memberLeadsOpen, setMemberLeadsOpen] = useState<string | null>(null)
+  const [reassignmentLoading, setReassignmentLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const leadsPerPage = 25
+
+  // Duplicates State
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteSelectedLead, setDeleteSelectedLead] = useState<{ id: string; memberName: string; channelName: string } | null>(null)
+  const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAdminData()
+    const closeDropdown = () => setOpenDropdown(null)
+    window.addEventListener('click', closeDropdown)
+    return () => window.removeEventListener('click', closeDropdown)
   }, [])
+
+  useEffect(() => {
+    if (teamMembers.length > 0 && section === 'leads') {
+      fetchLeads()
+    }
+  }, [teamMembers, section])
+
+  async function fetchLeads() {
+    try {
+      const response = await fetch('/api/admin/leads')
+      if (!response.ok) {
+        throw new Error(`Failed to fetch leads: ${response.statusText}`)
+      }
+      const leadsData = await response.json()
+      setAllLeads(leadsData)
+    } catch (err: any) {
+      console.error('Error fetching leads:', err.message)
+      setError(err.message || 'Failed to fetch leads')
+    }
+  }
+
+  async function fetchLeadAuditLog(leadId: string) {
+    try {
+      setLeadDetailsLoading(true)
+      // Fetch full lead details and audit log in parallel
+      const [leadRes, auditRes] = await Promise.all([
+        fetch(`/api/admin/leads/${leadId}`),
+        fetch(`/api/admin/leads/${leadId}/audit`)
+      ])
+
+      if (!leadRes.ok || !auditRes.ok) {
+        throw new Error('Failed to fetch lead details or audit log')
+      }
+
+      const fullLeadData = await leadRes.json()
+      const auditData = await auditRes.json()
+
+      console.log('Full lead data fetched:', fullLeadData)
+
+      // Replace with complete lead data (not merge - we want all fields)
+      setSelectedLeadDetail(fullLeadData)
+      setLeadAuditLog(auditData)
+    } catch (err: any) {
+      console.error('Error fetching details:', err.message)
+      setLeadAuditLog([])
+    } finally {
+      setLeadDetailsLoading(false)
+    }
+  }
+
+  async function handleReassignLeads(newAssigneeId: string, leadIdsToReassign: string[]) {
+    if (leadIdsToReassign.length === 0) return
+
+    try {
+      setReassignmentLoading(true)
+      setError(null)
+      setSuccess(null)
+
+      // Get the new assignee info
+      const newAssignee = teamMembers.find(m => m.id === newAssigneeId || m.user_id === newAssigneeId)
+      if (!newAssignee) {
+        setError('Selected team member not found')
+        return
+      }
+
+      // Get the actual user ID (prefer user_id, fallback to id if it's a UUID)
+      const newAssigneeUserId = newAssignee.user_id || newAssignee.id
+
+      // Make API calls to reassign each lead
+      const reassignmentPromises = leadIdsToReassign.map(leadId =>
+        fetch(`/api/admin/leads/${leadId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_assignee_id: newAssigneeUserId }),
+        })
+      )
+
+      const results = await Promise.all(reassignmentPromises)
+
+      // Check if all requests succeeded
+      const allSuccess = results.every(res => res.ok)
+      if (!allSuccess) {
+        const failedCount = results.filter(res => !res.ok).length
+        throw new Error(`Failed to reassign ${failedCount} lead(s)`)
+      }
+
+      // Update local state to reflect the changes
+      const updatedLeads = allLeads.map(lead => {
+        if (leadIdsToReassign.includes(lead.id)) {
+          return {
+            ...lead,
+            user_id: newAssigneeUserId,
+            assigned_to_member: newAssignee.full_name,
+          }
+        }
+        return lead
+      })
+
+      setAllLeads(updatedLeads)
+      setSelectedLeads(new Set())
+      setSuccess(`Successfully reassigned ${leadIdsToReassign.length} lead(s) to ${newAssignee.full_name}`)
+
+      // If details view is open and was affected, refresh it
+      if (selectedLeadDetail && leadIdsToReassign.includes(selectedLeadDetail.id)) {
+        setSelectedLeadDetail({
+          ...selectedLeadDetail,
+          user_id: newAssigneeUserId,
+          assigned_to_member: newAssignee.full_name,
+        })
+        // Refresh audit log to show the new entry
+        await fetchLeadAuditLog(selectedLeadDetail.id)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to reassign leads')
+      console.error('Reassignment error:', err)
+    } finally {
+      setReassignmentLoading(false)
+    }
+  }
 
   async function fetchAdminData() {
     setLoading(true)
     try {
-      const [membersRes, leadsRes] = await Promise.all([
+      const [membersRes, leadsRes, authUsersRes] = await Promise.all([
         supabase.from('team_members').select('id, user_id, email, full_name, initials, role, active, created_at').order('full_name'),
         supabase.from('leads').select('id, user_id, draft, status, lead_score_total'),
+        fetch('/api/admin/users').then(res => res.json()).catch(() => [])
       ])
 
       if (membersRes.error) throw membersRes.error
       if (leadsRes.error) throw leadsRes.error
 
-      setTeamMembers(membersRes.data || [])
+      const authUsersMap = new Map((Array.isArray(authUsersRes) ? authUsersRes : []).map((u: any) => [u.id, u.last_sign_in_at]))
+      
+      const mergedMembers = (membersRes.data || []).map(m => ({
+        ...m,
+        last_sign_in_at: m.user_id ? authUsersMap.get(m.user_id) : null
+      }))
 
-      const members = membersRes.data || []
+      setTeamMembers(mergedMembers)
+
+      const members = mergedMembers
       const leads = leadsRes.data || []
 
       setMetrics({
@@ -127,50 +651,6 @@ export default function AdminPage() {
         totalLeads: leads.length,
       })
 
-      // Calculate performance data
-      const performance: Record<string, PerformanceData & { scoreSum: number; scoreCount: number }> = {}
-
-      ;(membersRes.data || []).forEach((member) => {
-        if (!member.active) return
-        if (!member.email || member.email.trim() === '') return
-        if (member.role === 'admin') return
-
-        const key = member.user_id || member.id
-        performance[key] = {
-          memberId: member.id,
-          memberName: member.full_name,
-          email: member.email,
-          totalLeads: 0,
-          completedLeads: 0,
-          avgScore: 0,
-          completionRate: 0,
-          scoreSum: 0,
-          scoreCount: 0,
-        }
-      })
-
-      leads.forEach((lead) => {
-        if (performance[lead.user_id]) {
-          performance[lead.user_id].totalLeads++
-          if (lead.draft === false && lead.status !== 'new') {
-            performance[lead.user_id].completedLeads++
-          }
-          if (lead.lead_score_total) {
-            performance[lead.user_id].scoreSum += lead.lead_score_total
-            performance[lead.user_id].scoreCount++
-          }
-        }
-      })
-
-      // Calculate averages
-      Object.values(performance).forEach((perf) => {
-        perf.completionRate = perf.totalLeads > 0 ? (perf.completedLeads / perf.totalLeads) * 100 : 0
-        perf.avgScore = perf.scoreCount > 0 ? perf.scoreSum / perf.scoreCount : 0
-      })
-
-      setPerformanceData(
-        Object.values(performance).map(({ scoreSum, scoreCount, ...p }) => p)
-      )
 
       // Calculate duplicate detection
       const allLeadsRes = await supabase
@@ -210,95 +690,7 @@ export default function AdminPage() {
 
       setDuplicates(duplicatesList)
 
-      // Calculate lead scoring trends (last 30 days by week)
-      const leadsWithScore = allLeads.filter((l) => l.lead_score_total !== null && l.lead_score_total !== undefined)
-      const trendMap: Record<string, { scores: number[]; count: number }> = {}
 
-      leadsWithScore.forEach((lead) => {
-        const date = new Date(lead.created_at)
-        const weekStart = new Date(date)
-        weekStart.setDate(date.getDate() - date.getDay())
-        const weekKey = weekStart.toISOString().split('T')[0]
-
-        if (!trendMap[weekKey]) {
-          trendMap[weekKey] = { scores: [], count: 0 }
-        }
-        trendMap[weekKey].scores.push(lead.lead_score_total || 0)
-        trendMap[weekKey].count++
-      })
-
-      const trendList = Object.entries(trendMap)
-        .map(([date, data]) => ({
-          date,
-          avgScore: data.scores.length > 0 ? data.scores.reduce((a, b) => a + b, 0) / data.scores.length : 0,
-          leadsCount: data.count,
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(-4) // Last 4 weeks
-
-      setTrends(trendList)
-
-      // Calculate category trends
-      const categoryMap: Record<string, { scores: number[]; count: number }> = {}
-
-      leadsWithScore.forEach((lead) => {
-        const category = (lead.category as string) || 'Uncategorized'
-        if (!categoryMap[category]) {
-          categoryMap[category] = { scores: [], count: 0 }
-        }
-        categoryMap[category].scores.push(lead.lead_score_total || 0)
-        categoryMap[category].count++
-      })
-
-      const categoryList = Object.entries(categoryMap)
-        .map(([category, data]) => ({
-          category,
-          avgScore: data.scores.length > 0 ? data.scores.reduce((a, b) => a + b, 0) / data.scores.length : 0,
-          count: data.count,
-        }))
-        .sort((a, b) => b.avgScore - a.avgScore)
-
-      setCategoryTrends(categoryList)
-
-      // Fetch admin notes (Phase 5)
-      const notesRes = await supabase
-        .from('lead_admin_notes')
-        .select('id, lead_id, admin_id, content, created_at, updated_at')
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (notesRes.error) throw notesRes.error
-
-      const notesWithDetails = (notesRes.data || []).map((note) => {
-        const lead = allLeads.find((l) => l.id === note.lead_id)
-        const member = membersRes.data?.find((m) => (m.user_id || m.id) === note.admin_id)
-        return {
-          ...note,
-          lead_name: lead?.lead_name || 'Unknown Lead',
-          admin_email: member?.email || 'Unknown Admin',
-        }
-      })
-
-      setAdminNotes(notesWithDetails)
-
-      // Calculate low-scoring leads (Phase 6)
-      const lowScores = allLeads
-        .filter((l) => l.lead_score_total && l.lead_score_total < 2.5)
-        .map((l) => {
-          const member = membersRes.data?.find((m) => (m.user_id || m.id) === l.user_id)
-          return {
-            id: l.id,
-            lead_name: l.lead_name,
-            lead_score_total: l.lead_score_total || 0,
-            user_id: l.user_id,
-            memberName: member?.full_name || 'Unknown',
-            created_at: l.created_at,
-            flagged: false, // Would check from a flagged_for_review status
-          }
-        })
-        .sort((a, b) => a.lead_score_total - b.lead_score_total)
-
-      setLowScoringLeads(lowScores)
       setLoading(false)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch admin data')
@@ -306,86 +698,64 @@ export default function AdminPage() {
     }
   }
 
-  async function handleAddNote(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-
-    if (!newNote.trim()) {
-      setError('Please enter a note')
-      return
-    }
-
-    if (!selectedLeadForNote) {
-      setError('Please select a lead')
-      return
-    }
-
+  async function handleDeleteLead(leadId: string) {
     try {
-      const { data: user } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
-
-      const { error: insertError } = await supabase.from('lead_admin_notes').insert({
-        lead_id: selectedLeadForNote,
-        admin_id: user.user?.id,
-        content: newNote,
+      setDeletingLeadId(leadId)
+      const response = await fetch(`/api/admin/leads/${leadId}`, {
+        method: 'DELETE',
       })
 
-      if (insertError) throw insertError
+      if (!response.ok) {
+        throw new Error('Failed to delete lead')
+      }
 
-      setSuccess('Note added successfully')
-      setNewNote('')
-      setSelectedLeadForNote('')
-      await fetchAdminData()
+      // Remove lead from duplicates state
+      const updatedDuplicates = duplicates
+        .map((group) => ({
+          ...group,
+          leads: group.leads.filter((l) => l.id !== leadId),
+          count: group.leads.filter((l) => l.id !== leadId).length,
+        }))
+        .filter((group) => group.count > 1)
+
+      setDuplicates(updatedDuplicates)
+
+      setSuccess('Lead deleted successfully')
+      setShowDeleteDialog(false)
+      setDeleteSelectedLead(null)
+      setDeletingLeadId(null)
     } catch (err: any) {
-      setError(err.message || 'Failed to add note')
+      setError(err.message || 'Failed to delete lead')
+      setDeletingLeadId(null)
     }
   }
 
-  async function handleDeleteNote(noteId: string) {
-    if (!window.confirm('Delete this note?')) return
-
+  async function handleDeleteLeadFromAdmin(leadId: string, leadName: string) {
     try {
-      const { error } = await supabase.from('lead_admin_notes').delete().eq('id', noteId)
-      if (error) throw error
-      setSuccess('Note deleted')
-      await fetchAdminData()
+      setDeletingLeadId(leadId)
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete lead')
+      }
+
+      // Remove from all leads state
+      setAllLeads(prevLeads => prevLeads.filter(l => l.id !== leadId))
+
+      // Show success message
+      setSuccess(`Lead "${leadName}" deleted permanently`)
+
+      setDeletingLeadId(null)
     } catch (err: any) {
-      setError(err.message || 'Failed to delete note')
+      setError(err.message || `Failed to delete "${leadName}"`)
+      setDeletingLeadId(null)
     }
   }
 
-  function handleExportCSV() {
-    try {
-      const leadsRes = supabase.from('leads').select('*')
 
-      const allLeadsData = teamMembers.map((member) => ({
-        'Member': member.full_name,
-        'Email': member.email,
-        'Leads Added': performanceData.find((p) => p.memberId === member.id)?.totalLeads || 0,
-        'Completed': performanceData.find((p) => p.memberId === member.id)?.completedLeads || 0,
-        'Avg Score': performanceData.find((p) => p.memberId === member.id)?.avgScore.toFixed(2) || 0,
-        'Completion %': performanceData.find((p) => p.memberId === member.id)?.completionRate.toFixed(0) || 0,
-      }))
 
-      const csv = [
-        Object.keys(allLeadsData[0]).join(','),
-        ...allLeadsData.map((row) => Object.values(row).join(',')),
-      ].join('\n')
-
-      const blob = new Blob([csv], { type: 'text/csv' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `leads-report-${new Date().toISOString().split('T')[0]}.csv`
-      a.click()
-      window.URL.revokeObjectURL(url)
-
-      setSuccess('Report exported successfully')
-    } catch (err: any) {
-      setError(err.message || 'Failed to export report')
-    }
-  }
 
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault()
@@ -454,6 +824,31 @@ export default function AdminPage() {
       console.error('Delete failed:', err)
       setError(err.message || 'Failed to delete member')
     }
+  }
+
+  async function handleToggleRole(memberId: string, currentRole: string) {
+    try {
+      const newRole = currentRole === 'admin' ? 'member' : 'admin'
+      const { error } = await supabase.from('team_members').update({ role: newRole }).eq('id', memberId)
+      if (error) throw error
+      setSuccess(`Role updated to ${newRole}`)
+      await fetchAdminData()
+    } catch (err: any) {
+      setError(err.message || 'Failed to update role')
+    }
+    setOpenDropdown(null)
+  }
+
+  async function handleToggleActive(memberId: string, currentActive: boolean) {
+    try {
+      const { error } = await supabase.from('team_members').update({ active: !currentActive }).eq('id', memberId)
+      if (error) throw error
+      setSuccess(`Member ${currentActive ? 'deactivated' : 'reactivated'}`)
+      await fetchAdminData()
+    } catch (err: any) {
+      setError(err.message || 'Failed to update status')
+    }
+    setOpenDropdown(null)
   }
 
   if (loading) {
@@ -578,69 +973,8 @@ export default function AdminPage() {
             </Link>
           </div>
 
-          {/* Bottom Two-Column Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Team Performance Table */}
-            <div 
-              className="glass-card rounded-2xl p-7 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(168,85,247,0.12)]" 
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border-subtle)'
-              }}
-            >
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold">Team Performance</h3>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Leads contributed by members</p>
-              </div>
-              <div className="space-y-2.5">
-                {performanceData.length === 0 ? (
-                  <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No team members yet</p>
-                ) : (
-                  performanceData
-                    .sort((a, b) => b.totalLeads - a.totalLeads)
-                    .map((perf) => {
-                      const member = teamMembers.find((m) => m.id === perf.memberId)
-                      return (
-                        <Link key={perf.memberId} href="/admin?section=leads">
-                          <div
-                            className="group flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-300 hover:-translate-y-0.5"
-                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
-                              e.currentTarget.style.borderColor = 'rgba(168,85,247,0.3)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
-                              e.currentTarget.style.borderColor = 'var(--border-subtle)'
-                            }}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
-                                  <span className="text-xs font-bold" style={{ color: '#a855f7' }}>{perf.memberName.charAt(0)}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium">{perf.memberName}</p>
-                                  <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{perf.email}</p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="ml-4 flex-shrink-0">
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'rgba(168,85,247,0.1)' }}>
-                                <span className="text-sm font-bold" style={{ color: '#a855f7' }}>{perf.totalLeads}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      )
-                    })
-                )}
-              </div>
-            </div>
-
+          {/* Bottom Grid */}
+          <div className="grid grid-cols-1 gap-6">
             {/* Right Column — Activity & API Status Stacked */}
             <div className="space-y-6">
               {/* Recent Activity */}
@@ -749,226 +1083,821 @@ export default function AdminPage() {
 
       {/* Team Members Section */}
       {section === 'members' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Team Members</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Manage access and roles</p>
+        <div className="flex flex-col gap-3">
+
+          {/* Header row */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h1 className="text-2xl font-bold">Team Members</h1>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Manage access and roles</p>
+            </div>
           </div>
 
-          {/* Add Member Form */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Add New Member</h3>
-            <form onSubmit={handleAddMember} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Full Name</label>
-                  <input type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} placeholder="John Doe" className="input-field w-full text-sm h-10" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Gmail</label>
-                  <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="john@gmail.com" className="input-field w-full text-sm h-10" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Role</label>
-                  <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full text-sm h-10" style={{ paddingRight: '1.5rem' }}>
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
+          {/* Add Member Form — always visible, compact horizontal layout */}
+          <div className="glass-card rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border-subtle)' }}>
+            <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-secondary)' }}>Add New Member</p>
+            <form onSubmit={handleAddMember} className="flex flex-wrap gap-2 items-end">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Full Name</label>
+                <input type="text" value={newFullName} onChange={(e) => setNewFullName(e.target.value)} placeholder="John Doe" className="input-field w-full text-xs h-8" />
               </div>
-              <button type="submit" className="btn-primary px-4 py-2 flex items-center gap-1.5 text-sm">
-                <Plus size={14} />
+              <div className="flex-1 min-w-[180px]">
+                <label className="block text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Gmail</label>
+                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="john@gmail.com" className="input-field w-full text-xs h-8" />
+              </div>
+              <div className="min-w-[110px]">
+                <label className="block text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Role</label>
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full text-xs h-8">
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <button type="submit" className="btn-primary px-4 h-8 flex items-center gap-1.5 text-xs flex-shrink-0">
+                <Plus size={12} />
                 Add Member
               </button>
             </form>
           </div>
 
-          {/* Members List */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Active Members ({teamMembers.filter((m) => m.active).length})</h3>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {teamMembers.filter((m) => m.active).length === 0 ? (
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No members yet.</p>
-              ) : (
-                teamMembers
-                  .filter((m) => m.active)
-                  .map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border" style={{ background: 'rgba(255, 255, 255, 0.03)', borderColor: 'var(--border-subtle)' }}>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{member.full_name}</p>
-                        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                          {member.email}
-                        </p>
-                        {member.role === 'admin' && (
-                          <span className="inline-block text-xs px-2 py-0.5 mt-1 rounded" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' }}>
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      {member.role !== 'admin' && (
-                        <button onClick={() => handleRemoveMember(member.id)} className="p-1.5 flex-shrink-0 hover:opacity-80 ml-4" style={{ color: '#ff6b6b' }}>
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                  ))
-              )}
+          {/* Filter row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+              <input
+                type="text"
+                placeholder="Search members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-field pl-8 h-8 text-xs w-44"
+              />
             </div>
+            <label className="flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={showDeactivated}
+                onChange={(e) => setShowDeactivated(e.target.checked)}
+                className="rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500"
+              />
+              <span style={{ color: 'var(--text-secondary)' }}>Show Deactivated</span>
+            </label>
           </div>
+
+          {/* Members Grid by Role */}
+          {['admin', 'member'].map((roleType) => {
+            const filteredMembers = teamMembers.filter((m) => {
+              if (m.role !== roleType) return false
+              if (!showDeactivated && !m.active) return false
+              if (searchQuery) {
+                const query = searchQuery.toLowerCase()
+                return m.full_name.toLowerCase().includes(query) || m.email.toLowerCase().includes(query)
+              }
+              return true
+            })
+
+            if (filteredMembers.length === 0) return null
+
+            return (
+              <div key={roleType} className="flex flex-col gap-2">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  {roleType === 'admin' ? <ShieldCheck size={15} style={{ color: '#a855f7' }} /> : <Users size={15} style={{ color: '#4caf50' }} />}
+                  {roleType === 'admin' ? 'Administrators' : 'Team Members'}
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-secondary)' }}>
+                    {filteredMembers.length}
+                  </span>
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {filteredMembers.map((member) => {
+                    // Determine Status
+                    let statusColor = '#ff6b6b'
+                    let statusText = 'Deactivated'
+                    if (member.active) {
+                      if (member.last_sign_in_at) {
+                        const hoursSince = (Date.now() - new Date(member.last_sign_in_at).getTime()) / (1000 * 60 * 60)
+                        statusColor = hoursSince < 24 ? '#4caf50' : '#f5a623'
+                        statusText = hoursSince < 24 ? 'Online' : 'Offline'
+                      } else {
+                        statusColor = '#f5a623'
+                        statusText = 'Offline'
+                      }
+                    }
+
+                    // Format relative time
+                    const relativeTime = member.last_sign_in_at
+                      ? (() => {
+                          const hours = Math.floor((Date.now() - new Date(member.last_sign_in_at!).getTime()) / (1000 * 60 * 60))
+                          if (hours < 1) return 'Just now'
+                          if (hours < 24) return `${hours}h ago`
+                          return `${Math.floor(hours / 24)}d ago`
+                        })()
+                      : 'Never'
+
+                    const regDate = new Date(member.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+                    return (
+                      <div key={member.id} className="glass-card px-4 py-3 rounded-xl relative transition-all hover:-translate-y-0.5 hover:shadow-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative flex-shrink-0">
+                              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: roleType === 'admin' ? 'rgba(168,85,247,0.15)' : 'rgba(76,175,80,0.15)' }}>
+                                <span className="text-xs font-bold" style={{ color: roleType === 'admin' ? '#a855f7' : '#4caf50' }}>{member.initials}</span>
+                              </div>
+                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2" style={{ background: statusColor, borderColor: '#0f0f1a' }} title={statusText} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold leading-tight truncate max-w-[150px]">{member.full_name}</p>
+                              <p className="text-[11px] truncate max-w-[150px]" style={{ color: 'var(--text-muted)' }}>{member.email}</p>
+                            </div>
+                          </div>
+
+                          {/* Quick Actions */}
+                          <div className="relative flex-shrink-0">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === member.id ? null : member.id) }}
+                              className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                            >
+                              <MoreVertical size={14} style={{ color: 'var(--text-secondary)' }} />
+                            </button>
+                            {openDropdown === member.id && (
+                              <div className="absolute right-0 mt-1 w-36 rounded-lg shadow-xl overflow-hidden z-20" style={{ background: '#1e1e2d', border: '1px solid var(--border-subtle)' }}>
+                                <button onClick={() => handleToggleRole(member.id, member.role)} className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 transition-colors flex items-center gap-2">
+                                  <Edit2 size={11} /> Make {member.role === 'admin' ? 'Member' : 'Admin'}
+                                </button>
+                                <button onClick={() => handleToggleActive(member.id, member.active)} className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 transition-colors flex items-center gap-2" style={{ color: member.active ? '#ff6b6b' : '#4caf50' }}>
+                                  <Activity size={11} /> {member.active ? 'Deactivate' : 'Reactivate'}
+                                </button>
+                                <button onClick={() => handleRemoveMember(member.id)} className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 transition-colors flex items-center gap-2" style={{ color: '#ff6b6b' }}>
+                                  <Trash2 size={11} /> Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Stats row */}
+                        <div className="mt-3 pt-2.5 border-t flex items-center justify-between gap-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                          <div>
+                            <p className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Last Active</p>
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{relativeTime}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] uppercase font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>Registered</p>
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{regDate}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
-      {/* Lead Management Section */}
+      {/* Lead Management Section — Split Panel Layout */}
       {section === 'leads' && (
         <div className="space-y-6">
+          {/* Header */}
           <div>
             <h1 className="text-3xl font-bold">Lead Management</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>View and manage all leads</p>
-          </div>
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Lead management interface coming soon.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Performance Insights Section */}
-      {section === 'performance' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Performance Insights</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Team member performance based on lead quality</p>
-          </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
-          </div>
-        </div>
-      )}
-
-      {/* Placeholder for the rest of performance section — kept for future */}
-      {false && section === 'performance' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Performance Insights</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Team member performance based on lead quality</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Manage global leads and team assignments</p>
           </div>
 
-          {/* Top Performers Cards */}
-          {performanceData.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {performanceData
-                .sort((a, b) => b.avgScore - a.avgScore)
-                .slice(0, 3)
-                .map((perf, idx) => (
-                  <div key={perf.memberId} className="glass-card p-5 rounded-lg relative overflow-hidden" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-                    {idx === 0 && (
-                      <div className="absolute top-3 right-3 p-1.5 rounded-lg" style={{ background: 'rgba(255, 215, 0, 0.2)' }}>
-                        <Trophy size={16} style={{ color: '#ffd700' }} />
-                      </div>
-                    )}
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {idx === 0 ? '🥇 Top Performer' : idx === 1 ? '🥈 2nd Place' : '🥉 3rd Place'}
-                    </p>
-                    <p className="text-sm font-bold mt-2">{perf.memberName}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {perf.email}
-                    </p>
-                    <div className="mt-4 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Avg Score</span>
-                        <span className="text-lg font-bold text-gradient-primary">{perf.avgScore.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Leads</span>
-                        <span className="text-sm font-medium">{perf.totalLeads}</span>
+          {/* Split Panel Layout */}
+          <div className="flex flex-col gap-6">
+            {/* TOP PANEL: Global Leads View (Full width) */}
+            <div className="w-full">
+              <div
+                className="glass-card rounded-2xl p-6 h-full"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}
+              >
+                <div className="space-y-4">
+                  {/* Left Panel Header */}
+                  <div>
+                    <h2 className="text-xl font-semibold">Global Leads</h2>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>All leads in the system</p>
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Search leads by name..."
+                      value={leadsSearchQuery}
+                      onChange={(e) => {
+                        setLeadsSearchQuery(e.target.value)
+                        setCurrentPage(1)
+                      }}
+                      className="input-field w-full pl-9 h-9 text-sm"
+                    />
+                  </div>
+
+                  {/* Leads Count Badge */}
+                  {allLeads.length > 0 && (
+                    <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      Found {allLeads.filter(lead => {
+                        const query = leadsSearchQuery.toLowerCase()
+                        return lead.lead_name.toLowerCase().includes(query)
+                      }).length} of {allLeads.length} leads
+                    </div>
+                  )}
+
+                  {/* Leads List */}
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                          <th className="py-3 px-4 w-8">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedLeads.size === allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase())).length && allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase())).length > 0}
+                                onChange={(e) => {
+                                  const filteredLeads = allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase()))
+                                  if (e.target.checked) {
+                                    setSelectedLeads(new Set(filteredLeads.map(l => l.id)))
+                                  } else {
+                                    setSelectedLeads(new Set())
+                                  }
+                                }}
+                                className="sr-only peer"
+                              />
+                              <div className="w-5 h-5 rounded border-2 transition-all peer-checked:bg-gradient-to-br peer-checked:from-purple-500 peer-checked:to-purple-600 peer-checked:border-purple-500" style={{ borderColor: 'var(--border-subtle)', background: 'rgba(168,85,247,0.05)' }}>
+                                <svg className="w-3.5 h-3.5 text-white absolute top-0.5 left-0.5 hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            </label>
+                          </th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Lead</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Found By</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Subscribers</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Score</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Status</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Date Added</th>
+                          <th className="py-3 px-4 text-[10px] font-bold uppercase tracking-wider text-right" style={{ color: 'var(--text-muted)' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allLeads.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-16 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                              No leads found
+                            </td>
+                          </tr>
+                        ) : (
+                          allLeads
+                            .filter(lead => {
+                              const query = leadsSearchQuery.toLowerCase()
+                              return lead.lead_name.toLowerCase().includes(query)
+                            })
+                            .slice((currentPage - 1) * leadsPerPage, currentPage * leadsPerPage)
+                            .map(lead => (
+                              <tr
+                                key={lead.id}
+                                className="border-b transition-all hover:bg-white/5 group"
+                                style={{ borderColor: 'var(--border-subtle)' }}
+                              >
+                                {/* Checkbox */}
+                                <td className="py-4 px-4">
+                                  <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedLeads.has(lead.id)}
+                                      onChange={(e) => {
+                                        e.stopPropagation()
+                                        const newSelected = new Set(selectedLeads)
+                                        if (e.target.checked) {
+                                          newSelected.add(lead.id)
+                                        } else {
+                                          newSelected.delete(lead.id)
+                                        }
+                                        setSelectedLeads(newSelected)
+                                      }}
+                                      className="sr-only peer"
+                                    />
+                                    <div className="w-5 h-5 rounded border-2 transition-all peer-checked:bg-gradient-to-br peer-checked:from-purple-500 peer-checked:to-purple-600 peer-checked:border-purple-500" style={{ borderColor: 'var(--border-subtle)', background: 'rgba(168,85,247,0.05)' }}>
+                                      <svg className="w-3.5 h-3.5 text-white absolute top-0.5 left-0.5 hidden peer-checked:block" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  </label>
+                                </td>
+
+                                {/* Lead */}
+                                <td className="py-4 px-4 cursor-pointer" onClick={() => {setSelectedLeadDetail(lead); fetchLeadAuditLog(lead.id)}}>
+                                  <div className="flex items-center gap-3">
+                                    <Avatar
+                                      thumbnailUrl={lead.channel_thumbnail_url ?? null}
+                                      initials={lead.lead_name.substring(0, 2).toUpperCase()}
+                                      name={lead.lead_name}
+                                      size="md"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-semibold truncate text-white">{lead.lead_name}</p>
+                                      <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                                        {lead.youtube_channel_id && lead.youtube_channel_id.startsWith('@')
+                                          ? lead.youtube_channel_id
+                                          : lead.youtube_channel_id ? `@${lead.youtube_channel_id}` : `${lead.id.slice(0, 8)}...`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Found By */}
+                                <td className="py-4 px-4">
+                                  <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                                    <span className="text-[11px] font-bold" style={{ color: '#a855f7' }}>{(lead.found_by || 'N').substring(0, 1).toUpperCase()}</span>
+                                  </div>
+                                </td>
+
+                                {/* Subscribers */}
+                                <td className="py-4 px-4">
+                                  <div className="flex items-center gap-2">
+                                    <Users size={14} style={{ color: 'var(--text-muted)' }} />
+                                    <span className="text-sm font-bold text-white">
+                                      {lead.subscriber_count ? 
+                                        (lead.subscriber_count >= 1000000 
+                                          ? (lead.subscriber_count / 1000000).toFixed(1) + 'M' 
+                                          : lead.subscriber_count >= 1000 
+                                            ? (lead.subscriber_count / 1000).toFixed(1) + 'K' 
+                                            : lead.subscriber_count.toLocaleString())
+                                        : 'N/A'}
+                                    </span>
+                                  </div>
+                                </td>
+
+                                {/* Score */}
+                                <td className="py-4 px-4">
+                                  {lead.lead_score_total !== null ? (
+                                    <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', color: '#d8b4fe' }}>
+                                      {lead.lead_score_total.toFixed(1)} • {lead.lead_score_total >= 4.5 ? 'Strong fit' : 'Fit'}
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Not Scored</span>
+                                  )}
+                                </td>
+
+                                {/* Status */}
+                                <td className="py-4 px-4">
+                                  <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium capitalize" style={{ background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', color: '#f472b6' }}>
+                                    {lead.status === 'new' ? 'New' : lead.status}
+                                  </div>
+                                </td>
+
+                                {/* Date Added */}
+                                <td className="py-4 px-4">
+                                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                                    {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  </span>
+                                </td>
+
+                                {/* Actions */}
+                                <td className="py-4 px-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {/* Reassign Dropdown */}
+                                    <div className="relative group/action">
+                                      <button
+                                        className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                        style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', color: '#d8b4fe' }}
+                                        onClick={(e) => { e.stopPropagation(); setMemberLeadsOpen(memberLeadsOpen === lead.id ? null : lead.id) }}
+                                      >
+                                        Reassign
+                                      </button>
+                                      {memberLeadsOpen === lead.id && (
+                                        <div className="absolute right-0 top-full mt-2 w-40 rounded-lg shadow-xl overflow-hidden z-30 text-left" style={{ background: '#1e1e2d', border: '1px solid var(--border-subtle)' }}>
+                                          <div className="max-h-48 overflow-y-auto">
+                                            {teamMembers
+                                              .filter(m => m.active && m.role !== 'admin')
+                                              .map(member => (
+                                                <button
+                                                  key={member.id}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleReassignLeads(member.id, [lead.id])
+                                                    setMemberLeadsOpen(null)
+                                                  }}
+                                                  disabled={reassignmentLoading}
+                                                  className="w-full text-left px-3 py-2 text-xs hover:bg-white/5 transition-colors disabled:opacity-50 border-b"
+                                                  style={{ borderColor: 'var(--border-subtle)' }}
+                                                >
+                                                  <p className="font-medium text-white">{member.full_name}</p>
+                                                  <p style={{ color: 'var(--text-muted)' }}>{member.email}</p>
+                                                </button>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* View Details Button */}
+                                    <button
+                                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)' }}
+                                      onClick={(e) => { e.stopPropagation(); setSelectedLeadDetail(lead); fetchLeadAuditLog(lead.id) }}
+                                    >
+                                      View
+                                    </button>
+
+                                    {/* Delete Button */}
+                                    <button
+                                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:opacity-80"
+                                      style={{ background: 'rgba(255, 107, 107, 0.15)', border: '1px solid rgba(255, 107, 107, 0.3)', color: '#ff6b6b' }}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (confirm(`Permanently delete "${lead.lead_name}"? This cannot be undone.`)) {
+                                          handleDeleteLeadFromAdmin(lead.id, lead.lead_name)
+                                        }
+                                      }}
+                                      disabled={deletingLeadId === lead.id}
+                                    >
+                                      {deletingLeadId === lead.id ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase())).length > leadsPerPage && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        Page {currentPage} of {Math.ceil(allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase())).length / leadsPerPage)}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)' }}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(prev => prev + 1)}
+                          disabled={currentPage >= Math.ceil(allLeads.filter(lead => lead.lead_name.toLowerCase().includes(leadsSearchQuery.toLowerCase())).length / leadsPerPage)}
+                          className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)' }}
+                        >
+                          Next
+                        </button>
                       </div>
                     </div>
-                  </div>
-                ))}
-            </div>
-          )}
-
-          {/* Performance Leaderboard */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold">Performance Leaderboard</h3>
-              <div className="flex gap-2">
-                {[
-                  { value: 'score', label: 'Score' },
-                  { value: 'leads', label: 'Leads' },
-                  { value: 'completion', label: 'Completion' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      if (sortBy === option.value) {
-                        setSortDesc(!sortDesc)
-                      } else {
-                        setSortBy(option.value as any)
-                        setSortDesc(true)
-                      }
-                    }}
-                    className="px-2 py-1 rounded text-xs"
-                    style={{
-                      background: sortBy === option.value ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-                      color: sortBy === option.value ? '#a855f7' : 'var(--text-secondary)',
-                      border: `1px solid ${sortBy === option.value ? 'rgba(168, 85, 247, 0.3)' : 'var(--border-subtle)'}`,
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {performanceData
-                .sort((a, b) => {
-                  let compareVal = 0
-                  if (sortBy === 'score') {
-                    compareVal = a.avgScore - b.avgScore
-                  } else if (sortBy === 'leads') {
-                    compareVal = a.totalLeads - b.totalLeads
-                  } else if (sortBy === 'completion') {
-                    compareVal = a.completionRate - b.completionRate
-                  }
-                  return sortDesc ? -compareVal : compareVal
-                })
-                .map((perf, idx) => (
-                  <div key={perf.memberId} className="flex items-center justify-between p-3 rounded-lg border" style={{ background: 'rgba(255, 255, 255, 0.03)', borderColor: 'var(--border-subtle)' }}>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>
-                          #{idx + 1}
-                        </span>
-                        <div>
-                          <p className="text-sm font-medium">{perf.memberName}</p>
-                          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            {perf.email}
-                          </p>
-                        </div>
+            {/* BOTTOM PANEL: Team & Reassignment View */}
+            <div className="w-full">
+              <div
+                className="glass-card rounded-2xl p-6 h-full"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}
+              >
+                <div className="space-y-4">
+                  {/* Right Panel Header */}
+                  <div>
+                    <h2 className="text-xl font-semibold">Team Members</h2>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Active team and workload</p>
+                  </div>
+
+                  {/* Bulk Reassignment Controls */}
+                  {selectedLeads.size > 0 && (
+                    <div className="p-3 rounded-lg border-2" style={{ background: 'rgba(168,85,247,0.1)', border: '2px solid rgba(168,85,247,0.4)' }}>
+                      <p className="text-xs font-semibold mb-2">
+                        {selectedLeads.size} lead{selectedLeads.size !== 1 ? 's' : ''} selected
+                      </p>
+                      <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Reassign to:</p>
+                      <div className="space-y-1">
+                        {teamMembers
+                          .filter(m => m.active && m.role !== 'admin')
+                          .map(member => (
+                            <button
+                              key={member.id}
+                              onClick={() => handleReassignLeads(member.id, Array.from(selectedLeads))}
+                              disabled={reassignmentLoading}
+                              className="w-full text-left px-2 py-1 rounded text-xs transition-all hover:bg-white/10 disabled:opacity-50"
+                              style={{ background: 'rgba(255,255,255,0.05)' }}
+                            >
+                              {member.full_name}
+                            </button>
+                          ))}
                       </div>
                     </div>
-                    <div className="flex gap-6 ml-4 flex-shrink-0 text-right">
-                      <div>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Score</p>
-                        <p className="text-sm font-bold text-gradient-primary">{perf.avgScore.toFixed(2)}</p>
+                  )}
+
+                  {/* Team Members List */}
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    {teamMembers.filter(m => m.active && m.role !== 'admin').length === 0 ? (
+                      <div className="flex items-center justify-center py-16 text-center" style={{ color: 'var(--text-muted)' }}>
+                        <p className="text-sm">No active team members</p>
                       </div>
-                      <div>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Leads</p>
-                        <p className="text-sm font-bold">{perf.totalLeads}</p>
+                    ) : (
+                      teamMembers
+                        .filter(m => m.active && m.role !== 'admin')
+                        .sort((a, b) => {
+                          const aLeads = allLeads.filter(l => (l.user_id || '') === (a.user_id || a.id)).length
+                          const bLeads = allLeads.filter(l => (l.user_id || '') === (b.user_id || b.id)).length
+                          return bLeads - aLeads
+                        })
+                        .map(member => {
+                          const memberLeads = allLeads.filter(l => (l.user_id || '') === (member.user_id || member.id))
+                          const isExpanded = selectedTeamMemberId === member.id
+                          return (
+                            <div key={member.id} className="space-y-2">
+                              <div
+                                className="p-3 rounded-lg border cursor-pointer transition-all hover:bg-white/5"
+                                style={{ background: isExpanded ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.03)', border: isExpanded ? '1px solid rgba(168,85,247,0.4)' : '1px solid var(--border-subtle)' }}
+                                onClick={() => setSelectedTeamMemberId(isExpanded ? null : member.id)}
+                                onMouseEnter={(e) => {
+                                  if (!isExpanded) {
+                                    e.currentTarget.style.borderColor = 'rgba(168,85,247,0.4)'
+                                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isExpanded) {
+                                    e.currentTarget.style.borderColor = 'var(--border-subtle)'
+                                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                                    <span className="text-xs font-bold" style={{ color: '#a855f7' }}>{member.initials}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{member.full_name}</p>
+                                    <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{member.email}</p>
+                                  </div>
+                                  <span className="px-2 py-1 rounded-full text-xs font-bold flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)', color: '#a855f7' }}>
+                                    {memberLeads.length}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Member Lead Queue (Expanded) */}
+                              {isExpanded && memberLeads.length > 0 && (
+                                <div className="ml-2 space-y-1 pl-3 border-l" style={{ borderColor: 'rgba(168,85,247,0.3)' }}>
+                                  {memberLeads.slice(0, 5).map(lead => (
+                                    <div
+                                      key={lead.id}
+                                      className="p-2 rounded text-xs truncate cursor-pointer transition-all hover:bg-white/5"
+                                      style={{ background: 'rgba(168,85,247,0.08)' }}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setSelectedLeadDetail(lead)
+                                        fetchLeadAuditLog(lead.id)
+                                      }}
+                                      title={lead.lead_name}
+                                    >
+                                      <p className="truncate">{lead.lead_name}</p>
+                                      {lead.lead_score_total !== null && (
+                                        <p className="text-xs mt-0.5" style={{ color: '#a855f7' }}>Score: {lead.lead_score_total.toFixed(1)}</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {memberLeads.length > 5 && (
+                                    <p className="text-xs px-2 py-1" style={{ color: 'var(--text-muted)' }}>
+                                      +{memberLeads.length - 5} more
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Lead Details Modal — Professional Full View */}
+          {selectedLeadDetail && (
+            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+              <div
+                className="rounded-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto"
+                style={{ background: '#0f0f1a', border: '1px solid rgba(168, 85, 247, 0.3)' }}
+              >
+                {/* Close Button */}
+                <button
+                  onClick={() => {
+                    setSelectedLeadDetail(null)
+                    setLeadAuditLog([])
+                  }}
+                  className="absolute top-4 right-4 text-2xl font-light hover:opacity-70 transition-opacity"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  ×
+                </button>
+
+                {/* Header */}
+                <div className="flex items-start gap-4 p-6 border-b" style={{ borderColor: 'rgba(168, 85, 247, 0.2)' }}>
+                  <Avatar
+                    thumbnailUrl={selectedLeadDetail.channel_thumbnail_url ?? null}
+                    initials={selectedLeadDetail.lead_name.substring(0, 2).toUpperCase()}
+                    name={selectedLeadDetail.lead_name}
+                    size="lg"
+                  />
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-bold mb-2" style={{ color: '#c084fc' }}>{selectedLeadDetail.lead_name}</h1>
+                    <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>@{selectedLeadDetail.youtube_channel_id?.replace('@', '') || 'N/A'}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc' }}>
+                        Status: {selectedLeadDetail.status || 'new'}
+                      </span>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{ background: 'rgba(241, 91, 181, 0.15)', color: '#f472b6' }}>
+                        Assigned: {selectedLeadDetail.assigned_to_member}
+                      </span>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}>
+                        Found by: {selectedLeadDetail.found_by || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Two-Column Layout */}
+                <div className="grid grid-cols-2 gap-6 p-6">
+                  {/* LEFT COLUMN */}
+                  <div className="space-y-5">
+                    {/* Score Card */}
+                    <div style={{ background: '#1a1a2e', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p className="text-xs font-bold uppercase mb-4" style={{ color: '#a855f7', letterSpacing: '1px' }}>Lead Score</p>
+                      <p className="text-5xl font-black mb-2" style={{ color: selectedLeadDetail.lead_score_total ? '#a855f7' : '#666' }}>
+                        {selectedLeadDetail.lead_score_total?.toFixed(1) || '—'}
+                      </p>
+                      <p className="text-sm mb-4" style={{ color: selectedLeadDetail.lead_score_total ? '#a855f7' : '#666' }}>
+                        {selectedLeadDetail.lead_score_total ? (selectedLeadDetail.lead_score_total >= 4 ? 'Strong Fit' : selectedLeadDetail.lead_score_total >= 3 ? 'Solid Fit' : 'Fit') : 'Not Scored'}
+                      </p>
+                      {selectedLeadDetail.lead_score_total && (
+                        <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${((selectedLeadDetail.lead_score_total - 1) / 4) * 100}%`,
+                              background: 'linear-gradient(90deg, #a855f7, #c084fc)'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Channel Stats */}
+                    <div style={{ background: '#1a1a2e', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p className="text-xs font-bold uppercase mb-4" style={{ color: '#a855f7', letterSpacing: '1px' }}>Channel Stats</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          ['Subscribers', selectedLeadDetail.subscriber_count ? (selectedLeadDetail.subscriber_count >= 1000000 ? (selectedLeadDetail.subscriber_count / 1000000).toFixed(1) + 'M' : selectedLeadDetail.subscriber_count >= 1000 ? (selectedLeadDetail.subscriber_count / 1000).toFixed(1) + 'K' : selectedLeadDetail.subscriber_count) : '—'],
+                          ['Total Views', selectedLeadDetail.total_views ? selectedLeadDetail.total_views.toLocaleString() : '—'],
+                          ['Videos', selectedLeadDetail.video_count || '—'],
+                          ['Channel Age', selectedLeadDetail.channel_created_at ? Math.floor((Date.now() - new Date(selectedLeadDetail.channel_created_at).getTime()) / (86400000 * 30.44)) + 'm' : '—'],
+                          ['Last Upload', selectedLeadDetail.last_upload_at ? Math.floor((Date.now() - new Date(selectedLeadDetail.last_upload_at).getTime()) / 86400000) + 'd ago' : '—'],
+                          ['S2V Ratio', selectedLeadDetail.s2v_ratio_pct ? selectedLeadDetail.s2v_ratio_pct + '%' : '—'],
+                          ['Posts (30d)', selectedLeadDetail.posting_frequency_30d || '—'],
+                          ['Avg Views (10)', selectedLeadDetail.avg_views_last_10 ? selectedLeadDetail.avg_views_last_10.toLocaleString() : '—']
+                        ].map(([label, val]) => (
+                          <div key={label}>
+                            <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                            <p className="text-sm font-bold">{val}</p>
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Completion</p>
-                        <p className="text-sm font-bold">{perf.completionRate.toFixed(0)}%</p>
+                    </div>
+
+                    {/* Recent Videos */}
+                    {selectedLeadDetail.raw_youtube_data?.recentVideos?.length > 0 && (
+                      <div style={{ background: '#1a1a2e', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                        <p className="text-xs font-bold uppercase mb-4" style={{ color: '#a855f7', letterSpacing: '1px' }}>Latest Content</p>
+                        <ul className="space-y-3">
+                          {(selectedLeadDetail.raw_youtube_data?.recentVideos || []).slice(0, 5).map((v: any, i: number) => (
+                            <li key={i} className="flex items-center justify-between text-sm p-2 rounded" style={{ background: 'rgba(255, 255, 255, 0.03)' }}>
+                              <span className="flex-1">{v.title}</span>
+                              <span className="ml-2 font-semibold" style={{ color: '#a855f7' }}>{v.viewCount?.toLocaleString()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* RIGHT COLUMN */}
+                  <div className="space-y-5">
+                    {/* AI Analysis */}
+                    <div style={{ background: '#1a1a2e', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p className="text-xs font-bold uppercase mb-4" style={{ color: '#a855f7', letterSpacing: '1px' }}>AI Analysis</p>
+                      <div className="space-y-3">
+                        {[
+                          ['Category', selectedLeadDetail.category],
+                          ['Content Style', selectedLeadDetail.content_style],
+                          ['Monetization', selectedLeadDetail.monetization],
+                          ['Posting Pattern', selectedLeadDetail.posting_pattern]
+                        ].map(([label, val]) => (
+                          <div key={label}>
+                            <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                            <p className="text-sm font-semibold">{val || '—'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Confidence */}
+                    <div style={{ background: '#1a1a2e', border: '1px solid rgba(241, 91, 181, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p className="text-xs font-bold uppercase mb-3" style={{ color: '#f15bb5', letterSpacing: '1px' }}>AI Confidence</p>
+                      <p className="text-sm font-semibold mb-3">{selectedLeadDetail.ai_confidence || 'Unknown'}</p>
+                      <div className="text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+                        <p className="font-semibold mb-2">Data Gaps:</p>
+                        {selectedLeadDetail.data_gaps ? (
+                          <div>• {selectedLeadDetail.data_gaps}</div>
+                        ) : (
+                          <div>• None</div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Strengths & Considerations */}
+                <div className="grid grid-cols-2 gap-6 px-6" style={{ marginBottom: '24px' }}>
+                  <div style={{ background: '#1a1a2e', border: '1px solid rgba(164, 244, 201, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                    <p className="text-xs font-bold uppercase mb-3" style={{ color: '#A4F4C9', letterSpacing: '1px' }}>Strengths</p>
+                    <ul className="text-sm space-y-2">
+                      {(selectedLeadDetail.strengths?.length ?? 0) > 0 ? selectedLeadDetail.strengths?.slice(0, 4).map((s: string, i: number) => (
+                        <li key={i} className="flex gap-2">
+                          <span style={{ color: '#A4F4C9' }}>•</span>
+                          <span>{s}</span>
+                        </li>
+                      )) : <li className="text-xs" style={{ color: 'var(--text-muted)' }}>—</li>}
+                    </ul>
+                  </div>
+                  <div style={{ background: '#1a1a2e', border: '1px solid rgba(255, 107, 107, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                    <p className="text-xs font-bold uppercase mb-3" style={{ color: '#FF6B6B', letterSpacing: '1px' }}>Considerations</p>
+                    <ul className="text-sm space-y-2">
+                      {(selectedLeadDetail.concerns?.length ?? 0) > 0 ? selectedLeadDetail.concerns?.slice(0, 4).map((c: string, i: number) => (
+                        <li key={i} className="flex gap-2">
+                          <span style={{ color: '#FF6B6B' }}>•</span>
+                          <span>{c}</span>
+                        </li>
+                      )) : <li className="text-xs" style={{ color: 'var(--text-muted)' }}>—</li>}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Final Notes */}
+                <div className="px-6 mb-6">
+                  <div style={{ background: '#1a1a2e', border: '1px solid rgba(241, 91, 181, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                    <p className="text-xs font-bold uppercase mb-4" style={{ color: '#f15bb5', letterSpacing: '1px' }}>Final Notes & Recommendations</p>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>{selectedLeadDetail.remarks_final || '—'}</p>
+                  </div>
+                </div>
+
+                {/* Reassignment History */}
+                {!leadDetailsLoading && leadAuditLog.length > 0 && (
+                  <div className="px-6 mb-6">
+                    <div style={{ background: '#1a1a2e', border: '1px solid rgba(168, 85, 247, 0.2)', borderRadius: '12px', padding: '16px' }}>
+                      <p className="text-xs font-bold uppercase mb-3" style={{ color: '#a855f7', letterSpacing: '1px' }}>Reassignment History</p>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {leadAuditLog.map((log) => (
+                          <div key={log.id} className="text-sm p-2 rounded" style={{ background: 'rgba(168, 85, 247, 0.1)' }}>
+                            <p style={{ color: '#c084fc' }}>
+                              {log.previous_assignee ? `${log.previous_assignee} → ${log.new_assignee}` : `→ ${log.new_assignee}`}
+                            </p>
+                            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                              {new Date(log.changed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} by {log.changed_by}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t flex justify-end" style={{ borderColor: 'rgba(168, 85, 247, 0.2)' }}>
+                  <button
+                    onClick={() => {
+                      setSelectedLeadDetail(null)
+                      setLeadAuditLog([])
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/10"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
+
 
       {/* Duplicate Detection Section */}
       {section === 'duplicates' && (
@@ -977,9 +1906,167 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold">Duplicate Detection</h1>
             <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Identify and manage duplicate YouTube channels</p>
           </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
+
+          {duplicates.length === 0 ? (
+            <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No duplicates found. All channels are unique! ✨</p>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-subtle)' }}>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Channel Name</th>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Channel ID</th>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Count</th>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Members</th>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Added</th>
+                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {duplicates.map((group) => {
+                      const isExpanded = expandedGroups.has(group.youtube_channel_id)
+                      const uniqueMembers = [...new Set(group.leads.map((l) => l.memberName))].join(', ')
+                      const oldestDate = new Date(Math.min(...group.leads.map((l) => new Date(l.created_at).getTime())))
+                      const daysAgo = Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24))
+
+                      return (
+                        <tbody key={group.youtube_channel_id}>
+                          {/* Parent Row - Channel Group */}
+                          <tr
+                            onClick={() => {
+                              const newExpanded = new Set(expandedGroups)
+                              if (isExpanded) {
+                                newExpanded.delete(group.youtube_channel_id)
+                              } else {
+                                newExpanded.add(group.youtube_channel_id)
+                              }
+                              setExpandedGroups(newExpanded)
+                            }}
+                            className="cursor-pointer hover:bg-opacity-5 transition-colors"
+                            style={{ background: 'rgba(168, 85, 247, 0.04)', borderBottom: '1px solid var(--border-subtle)' }}
+                          >
+                            <td className="px-4 py-3 flex items-center gap-2">
+                              <span style={{ color: '#a855f7' }}>{isExpanded ? '▼' : '▶'}</span>
+                              <span className="font-medium">{group.lead_name}</span>
+                            </td>
+                            <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {group.youtube_channel_id}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span
+                                className="px-2 py-1 rounded text-xs font-bold"
+                                style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
+                              >
+                                {group.count}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs">{uniqueMembers || 'Unknown'}</td>
+                            <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {daysAgo}d ago
+                            </td>
+                            <td></td>
+                          </tr>
+
+                          {/* Child Rows - Individual Leads */}
+                          {isExpanded &&
+                            group.leads.map((lead, idx) => {
+                              const leadDate = new Date(lead.created_at)
+                              const leadDaysAgo = Math.floor((Date.now() - leadDate.getTime()) / (1000 * 60 * 60 * 24))
+
+                              return (
+                                <tr
+                                  key={lead.id}
+                                  style={{ background: 'rgba(255, 255, 255, 0.01)', borderBottom: '1px solid var(--border-subtle)' }}
+                                >
+                                  <td className="px-4 py-3 pl-12 text-xs">
+                                    <span style={{ color: 'var(--text-muted)' }}>Lead {idx + 1}</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                    {lead.id.substring(0, 8)}...
+                                  </td>
+                                  <td></td>
+                                  <td className="px-4 py-3 text-xs">{lead.memberName}</td>
+                                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                                    {leadDaysAgo}d ago
+                                  </td>
+                                  <td className="px-4 py-3 flex items-center gap-2">
+                                    <Link href={`/admin?section=leads`}>
+                                      <button
+                                        className="px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity"
+                                        style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        View
+                                      </button>
+                                    </Link>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setDeleteSelectedLead({
+                                          id: lead.id,
+                                          memberName: lead.memberName,
+                                          channelName: group.lead_name,
+                                        })
+                                        setShowDeleteDialog(true)
+                                      }}
+                                      disabled={deletingLeadId === lead.id}
+                                      className="px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50"
+                                      style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
+                                    >
+                                      {deletingLeadId === lead.id ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                        </tbody>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && deleteSelectedLead && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div
+            className="rounded-xl w-full max-w-md p-6"
+            style={{ background: '#0f0f1a', border: '1px solid rgba(255, 107, 107, 0.3)' }}
+          >
+            <h2 className="text-xl font-bold mb-2">Delete Lead Permanently?</h2>
+            <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+              This action cannot be undone. The lead "<span className="font-semibold">{deleteSelectedLead.channelName}</span>" assigned to{' '}
+              <span className="font-semibold">{deleteSelectedLead.memberName}</span> will be permanently removed from the database.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteDialog(false)
+                  setDeleteSelectedLead(null)
+                }}
+                disabled={deletingLeadId !== null}
+                className="flex-1 px-4 py-2 rounded text-sm font-medium transition-colors hover:opacity-80 disabled:opacity-50"
+                style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-primary)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteLead(deleteSelectedLead.id)}
+                disabled={deletingLeadId !== null}
+                className="flex-1 px-4 py-2 rounded text-sm font-medium text-white transition-colors hover:opacity-80 disabled:opacity-50"
+                style={{ background: '#ff6b6b' }}
+              >
+                {deletingLeadId ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1035,78 +2122,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Lead Scoring Trends Section */}
-      {section === 'trends' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Scoring Trends</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Analyze team performance over time</p>
-          </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
-          </div>
-        </div>
-      )}
-
-      {/* Placeholder — kept for future */}
-      {false && section === 'trends' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Scoring Trends</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Analyze team performance over time</p>
-          </div>
-
-          {/* Weekly Trend Data */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Weekly Average Scores (Last 4 Weeks)</h3>
-            {trends.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No trend data available yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {trends.map((trend) => (
-                  <div key={trend.date} className="flex items-center justify-between p-3 rounded-lg border" style={{ background: 'rgba(255, 255, 255, 0.03)', borderColor: 'var(--border-subtle)' }}>
-                    <div>
-                      <p className="text-sm font-medium">Week of {new Date(trend.date).toLocaleDateString()}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{trend.leadsCount} leads added</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-gradient-primary">{trend.avgScore.toFixed(2)}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Avg Score</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Category Breakdown */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Category Performance</h3>
-            {categoryTrends.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No category data available yet.</p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {categoryTrends.map((cat) => (
-                  <div key={cat.category} className="p-4 rounded-lg border" style={{ background: 'rgba(255, 255, 255, 0.03)', borderColor: 'var(--border-subtle)' }}>
-                    <p className="text-sm font-medium mb-2">{cat.category}</p>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Avg Score</p>
-                        <p className="text-lg font-bold text-gradient-primary">{cat.avgScore.toFixed(2)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Leads</p>
-                        <p className="text-lg font-bold">{cat.count}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Internal Notes Section */}
       {section === 'notes' && (
@@ -1122,142 +2137,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Placeholder — kept for future */}
-      {false && section === 'notes' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Internal Notes</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Admin-only notes on leads</p>
-          </div>
 
-          {/* Add Note Form */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Add Note to Lead</h3>
-            <form onSubmit={handleAddNote} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Select Lead</label>
-                <select
-                  value={selectedLeadForNote}
-                  onChange={(e) => setSelectedLeadForNote(e.target.value)}
-                  className="input-field w-full text-sm h-9"
-                >
-                  <option value="">Choose a lead...</option>
-                  {teamMembers.length > 0 && (
-                    <optgroup label="Available Leads">
-                      {/* Would populate from actual leads list */}
-                    </optgroup>
-                  )}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase mb-1.5" style={{ color: 'var(--text-secondary)' }}>Note</label>
-                <textarea
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="Add internal note..."
-                  className="input-field w-full text-sm p-2 rounded"
-                  rows={3}
-                />
-              </div>
-              <button type="submit" className="btn-primary px-4 py-2 text-sm">
-                Add Note
-              </button>
-            </form>
-          </div>
-
-          {/* Recent Notes */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Recent Notes ({adminNotes.length})</h3>
-            {adminNotes.length === 0 ? (
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No notes yet.</p>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {adminNotes.map((note) => (
-                  <div key={note.id} className="p-3 rounded-lg border" style={{ background: 'rgba(255, 255, 255, 0.03)', borderColor: 'var(--border-subtle)' }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-sm font-medium">{note.lead_name}</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>By {note.admin_email}</p>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="text-xs px-2 py-1 rounded hover:opacity-80"
-                        style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <p className="text-sm mb-2">{note.content}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {new Date(note.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Lead Scoring Audit Section */}
-      {section === 'audit' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Scoring Audit</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Review low-scoring leads for quality assurance</p>
-          </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
-          </div>
-        </div>
-      )}
-
-      {/* Placeholder — kept for future */}
-      {false && section === 'audit' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Lead Scoring Audit</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Review low-scoring leads for quality assurance</p>
-          </div>
-
-          {lowScoringLeads.length === 0 ? (
-            <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>All leads are of good quality! No leads scoring below 2.5</p>
-            </div>
-          ) : (
-            <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-4">Low-Scoring Leads ({lowScoringLeads.length})</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {lowScoringLeads.map((lead) => (
-                  <div key={lead.id} className="flex items-center justify-between p-3 rounded-lg border" style={{ background: 'rgba(255, 107, 107, 0.08)', borderColor: 'rgba(255, 107, 107, 0.3)' }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{lead.lead_name}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Added by {lead.memberName} • {new Date(lead.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                      <div className="text-right">
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Score</p>
-                        <p className="text-lg font-bold" style={{ color: '#ff6b6b' }}>
-                          {lead.lead_score_total.toFixed(2)}
-                        </p>
-                      </div>
-                      <button
-                        className="px-2 py-1 rounded text-xs hover:opacity-80"
-                        style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
-                      >
-                        Review
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Export & Reporting Section */}
       {section === 'export' && (
@@ -1333,18 +2213,7 @@ export default function AdminPage() {
       )}
 
       {/* API Integration Status Section */}
-      {section === 'api' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">API Integration Status</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Monitor system health and API usage</p>
-          </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
-          </div>
-        </div>
-      )}
+      {section === 'api' && <APIStatusSection />}
 
       {/* Placeholder — kept for future */}
       {false && section === 'api' && (
@@ -1458,6 +2327,29 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      <style>{`
+        /* Custom Checkbox Styling */
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border-width: 0;
+        }
+
+        label:has(input[type="checkbox"]:focus-visible) div {
+          ring: 2px rgba(168, 85, 247, 0.5);
+        }
+
+        .peer:checked ~ div svg {
+          display: block;
+        }
+      `}</style>
     </div>
   )
 }
