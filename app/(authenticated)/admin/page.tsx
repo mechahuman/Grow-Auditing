@@ -851,6 +851,37 @@ export default function AdminPage() {
     setOpenDropdown(null)
   }
 
+  function handleExportCSV() {
+    if (teamMembers.length === 0) {
+      setError('No team members to export')
+      return
+    }
+
+    const headers = ['Name', 'Email', 'Role', 'Status', 'Leads Assigned', 'Joined Date']
+    const rows = teamMembers.map(member => [
+      member.full_name,
+      member.email,
+      member.role,
+      member.active ? 'Active' : 'Inactive',
+      allLeads.filter(l => l.assigned_to_member === member.id).length,
+      new Date(member.created_at).toLocaleDateString()
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `team-performance-${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    setSuccess('CSV exported successfully')
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -1928,7 +1959,7 @@ export default function AdminPage() {
                   <tbody>
                     {duplicates.map((group) => {
                       const isExpanded = expandedGroups.has(group.youtube_channel_id)
-                      const uniqueMembers = [...new Set(group.leads.map((l) => l.memberName))].join(', ')
+                      const uniqueMembers = Array.from(new Set(group.leads.map((l) => l.memberName))).join(', ')
                       const oldestDate = new Date(Math.min(...group.leads.map((l) => new Date(l.created_at).getTime())))
                       const daysAgo = Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24))
 
