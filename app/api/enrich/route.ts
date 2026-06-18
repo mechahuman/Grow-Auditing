@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
   let ytData
   const ytTimer = createAPITimer()
   try {
+    console.log('[Enrich] Starting YouTube data fetch for:', youtube_url)
     ytData = await fetchAllYouTubeData(youtube_url)
+    console.log('[Enrich] YouTube data fetched successfully')
     // Log successful YouTube API call
     logAPIUsage({
       apiName: 'youtube',
@@ -42,6 +44,7 @@ export async function POST(request: NextRequest) {
       responseTimeMs: ytTimer(),
     }).catch(() => {}) // Silently ignore logging errors
   } catch (err) {
+    console.error('[Enrich] YouTube fetch failed:', err instanceof Error ? err.message : err)
     // Log failed YouTube API call
     logAPIUsage({
       apiName: 'youtube',
@@ -61,6 +64,7 @@ export async function POST(request: NextRequest) {
           : `YouTube API error: ${err.message}`
       return NextResponse.json({ error: msg }, { status: 400 })
     }
+    console.error('[Enrich] Non-YouTubeApiError caught:', err)
     return NextResponse.json({ error: 'Failed to fetch YouTube data' }, { status: 500 })
   }
 
