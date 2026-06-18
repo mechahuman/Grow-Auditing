@@ -26,7 +26,7 @@ interface Lead {
   // Group B: from channels.list
   channel_country: string | null; channel_keywords: string[] | null; is_verified: boolean | null
   // Group C: promoted from socialLinks
-  tiktok: string | null; linkedin: string | null; facebook: string | null
+  tiktok: string | null; linkedin: string | null; facebook: string | null; merch: string | null
   // Group D: community posts
   has_community_posts: boolean | null
   // Group E: AI-generated
@@ -145,7 +145,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
     lead_name: lead.lead_name, found_by: lead.found_by,
     email: lead.email ?? '', website: lead.website ?? '',
     instagram: lead.instagram ?? '', twitter: lead.twitter ?? '',
-    tiktok: lead.tiktok ?? '', linkedin: lead.linkedin ?? '', facebook: lead.facebook ?? '',
+    tiktok: lead.tiktok ?? '', linkedin: lead.linkedin ?? '', facebook: lead.facebook ?? '', merch: lead.merch ?? '',
     category: lead.category ?? '', content_style: lead.content_style ?? '',
     monetization: lead.monetization ?? '', posting_pattern: lead.posting_pattern ?? '',
     remarks_final: lead.remarks_final ?? '', outreach_email_draft: lead.outreach_email_draft ?? '',
@@ -615,7 +615,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             {/* Contact Details */}
             <div className="pt-3" style={{ borderTop: '1px solid var(--border)' }}>
               <SectionTitle>Contact Details</SectionTitle>
-              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Camera], ['twitter', 'Twitter / X', MessageSquare], ['tiktok', 'TikTok', Camera], ['linkedin', 'LinkedIn', Globe], ['facebook', 'Facebook', MessageSquare]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
+              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Camera], ['twitter', 'Twitter / X', MessageSquare], ['tiktok', 'TikTok', Camera], ['linkedin', 'LinkedIn', Globe], ['facebook', 'Facebook', MessageSquare], ['merch', 'Merch / Store', Globe]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
                 <div key={key} className="mb-3">
                   <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>
                     <Icon size={11} className="inline mr-1" />{label}

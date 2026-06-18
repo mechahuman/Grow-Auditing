@@ -156,6 +156,7 @@ export async function POST(request: NextRequest) {
       tiktok: ytData.tiktok,
       linkedin: ytData.linkedin,
       facebook: ytData.facebook,
+      merch: ytData.merch,
       // Group D: community posts
       has_community_posts: ytData.hasCommunityPosts,
       // Group E: AI-generated

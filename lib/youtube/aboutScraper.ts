@@ -64,7 +64,46 @@ function findStringValue(obj: unknown, key: string): string | null {
   return null
 }
 
-// Collect all external URLs from navigationEndpoint.urlEndpoint.url patterns.
+// Extract links from channelExternalLinkViewModel nodes (current YouTube structure).
+// Returns { title, url } for each link found.
+function findChannelExternalLinks(obj: unknown, out: Array<{ title: string; url: string }> = []): Array<{ title: string; url: string }> {
+  if (!obj || typeof obj !== 'object') return out
+
+  const o = obj as Record<string, unknown>
+
+  // Check if this node is a channelExternalLinkViewModel
+  if (o['channelExternalLinkViewModel']) {
+    const vm = o['channelExternalLinkViewModel'] as Record<string, unknown>
+    const titleObj = vm['title'] as Record<string, unknown> | undefined
+    const titleContent = titleObj?.['content']
+    const linkObj = vm['link'] as Record<string, unknown> | undefined
+    const commandRuns = linkObj?.['commandRuns'] as Array<Record<string, unknown>> | undefined
+
+    if (typeof titleContent === 'string' && commandRuns && commandRuns.length > 0) {
+      for (const run of commandRuns) {
+        const onTap = run['onTap'] as Record<string, unknown> | undefined
+        const innertubeCommand = onTap?.['innertubeCommand'] as Record<string, unknown> | undefined
+        const urlEndpoint = innertubeCommand?.['urlEndpoint'] as Record<string, unknown> | undefined
+        const rawUrl = urlEndpoint?.['url']
+        if (typeof rawUrl === 'string') {
+          const decoded = decodeYtRedirect(rawUrl)
+          if (decoded.startsWith('http')) {
+            out.push({ title: titleContent, url: decoded })
+            break
+          }
+        }
+      }
+    }
+  }
+
+  for (const v of Object.values(o)) {
+    if (typeof v === 'object') findChannelExternalLinks(v, out)
+  }
+
+  return out
+}
+
+// Collect all external URLs from navigationEndpoint.urlEndpoint.url patterns (fallback for old structure).
 function collectExternalLinks(obj: unknown, out: string[] = []): string[] {
   if (!obj || typeof obj !== 'object') return out
 
@@ -76,6 +115,16 @@ function collectExternalLinks(obj: unknown, out: string[] = []): string[] {
   const rawUrl = urlEndpoint?.['url']
   if (typeof rawUrl === 'string') {
     const decoded = decodeYtRedirect(rawUrl)
+    if (decoded.startsWith('http') && !decoded.includes('youtube.com')) {
+      out.push(decoded)
+    }
+  }
+
+  // Also check for direct urlEndpoint.url pattern (catches more edge cases)
+  const directUrlEndpoint = o['urlEndpoint'] as Record<string, unknown> | undefined
+  const directUrl = directUrlEndpoint?.['url']
+  if (typeof directUrl === 'string') {
+    const decoded = decodeYtRedirect(directUrl)
     if (decoded.startsWith('http') && !decoded.includes('youtube.com')) {
       out.push(decoded)
     }
@@ -106,7 +155,7 @@ export async function scrapeAboutPage(handleOrChannelId: string, isChannelId = f
 
     if (!res.ok) {
       console.warn(`[AboutScraper] HTTP ${res.status} for ${url} — skipping`)
-      return { email: null, website: null, socialLinks: [] }
+      return { email: null, website: null, socialLinks: [], merch: null }
     }
 
     const html = await res.text()
@@ -123,35 +172,61 @@ export async function scrapeAboutPage(handleOrChannelId: string, isChannelId = f
 
     if (!ytData) {
       console.warn(`[AboutScraper] Could not parse ytInitialData for ${url}`)
-      return { email: null, website: null, socialLinks: [] }
+      return { email: null, website: null, socialLinks: [], merch: null }
     }
 
     const email = findStringValue(ytData, 'businessEmail')
 
+    // Extract links from new YouTube structure (channelExternalLinkViewModel)
+    const newStructureLinks = findChannelExternalLinks(ytData)
+
+    // Fall back to old structure
     const rawLinks = collectExternalLinks(ytData)
     const seen = new Set<string>()
     const deduped = rawLinks.filter(u => { if (seen.has(u)) return false; seen.add(u); return true })
 
     const socialPlatforms = new Set(Object.values(SOCIAL_DOMAINS))
     let website: string | null = null
+    let merch: string | null = null
     const socialLinks: Array<{ platform: string; url: string }> = []
 
+    // Process new structure links first (they have reliable titles)
+    for (const link of newStructureLinks) {
+      const title = link.title.toLowerCase()
+      try {
+        const host = new URL(link.url).hostname.replace(/^www\./, '')
+        const platform = SOCIAL_DOMAINS[host]
+        if (platform && socialPlatforms.has(platform)) {
+          socialLinks.push({ platform, url: link.url })
+        } else if (title.includes('merch') || title.includes('store') || title.includes('shop')) {
+          if (!merch) merch = link.url
+        } else if (!website) {
+          website = link.url
+        }
+      } catch { /* invalid URL — skip */ }
+    }
+
+    // Then process old structure links, skip if already captured
     for (const link of deduped) {
+      const alreadyCaptured = newStructureLinks.some(l => l.url === link)
+      if (alreadyCaptured) continue
+
       try {
         const host = new URL(link).hostname.replace(/^www\./, '')
         const platform = SOCIAL_DOMAINS[host]
         if (platform && socialPlatforms.has(platform)) {
-          socialLinks.push({ platform, url: link })
+          const exists = socialLinks.some(s => s.url === link)
+          if (!exists) socialLinks.push({ platform, url: link })
         } else if (!website) {
           website = link
         }
       } catch { /* invalid URL — skip */ }
     }
 
-    return { email, website, socialLinks }
+    return { email, website, socialLinks, merch }
 
   } catch (err) {
     console.warn(`[AboutScraper] Failed for ${url}:`, err instanceof Error ? err.message : err)
-    return { email: null, website: null, socialLinks: [] }
+    return { email: null, website: null, socialLinks: [], merch: null }
   }
 }

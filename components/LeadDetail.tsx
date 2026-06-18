@@ -360,7 +360,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           </div>
 
           {/* Contact Details - Expanded */}
-          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook) && (
+          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
             <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
               <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
               <div className="space-y-4">
@@ -404,6 +404,12 @@ export default function LeadDetail({ lead, statusLabel }: any) {
                   <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
                     <MessageSquare size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
                     <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>Facebook</span>
+                  </a>
+                )}
+                {lead.merch && (
+                  <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>Merch / Store</span>
                   </a>
                 )}
               </div>

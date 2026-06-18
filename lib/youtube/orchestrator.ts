@@ -130,6 +130,7 @@ export async function fetchAllYouTubeData(youtubeUrl: string): Promise<YouTubeEn
   const tiktok = about.socialLinks.find(l => l.platform === 'tiktok')?.url ?? null
   const linkedin = about.socialLinks.find(l => l.platform === 'linkedin')?.url ?? null
   const facebook = about.socialLinks.find(l => l.platform === 'facebook')?.url ?? null
+  const merch = about.merch ?? null
 
   // Step 10: Assemble
   return {
@@ -169,6 +170,7 @@ export async function fetchAllYouTubeData(youtubeUrl: string): Promise<YouTubeEn
     tiktok,
     linkedin,
     facebook,
+    merch,
 
     // Group D: community posts
     hasCommunityPosts,

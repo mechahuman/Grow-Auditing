@@ -36,6 +36,7 @@ export interface AboutData {
   email: string | null
   website: string | null
   socialLinks: Array<{ platform: string; url: string }>
+  merch: string | null
 }
 
 export interface YouTubeEnrichmentResult {
@@ -75,6 +76,7 @@ export interface YouTubeEnrichmentResult {
   tiktok: string | null
   linkedin: string | null
   facebook: string | null
+  merch: string | null
 
   // Group D: community posts
   hasCommunityPosts: boolean

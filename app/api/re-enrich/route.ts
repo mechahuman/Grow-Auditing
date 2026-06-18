@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     const tiktok = ytData.tiktok || null
     const linkedin = ytData.linkedin || null
     const facebook = ytData.facebook || null
+    const merch = ytData.merch || null
 
     // Build smart merge payload
     const updatePayload = {
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
       tiktok,
       linkedin,
       facebook,
+      merch,
       // Group D: community posts
       has_community_posts: ytData.hasCommunityPosts,
       raw_youtube_data: {
