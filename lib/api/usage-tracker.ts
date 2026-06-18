@@ -19,9 +19,20 @@ export interface APIUsageLog {
 export async function logAPIUsage(log: APIUsageLog): Promise<void> {
   try {
     // Get the base URL for fetch - handle both client and server
-    const baseUrl = typeof window !== 'undefined'
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    let baseUrl: string
+    if (typeof window !== 'undefined') {
+      baseUrl = window.location.origin
+    } else {
+      // On server: use NEXT_PUBLIC_APP_URL, fallback to Vercel URL, then localhost
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL
+        || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+        || 'http://localhost:3000'
+    }
+
+    // Skip logging if we can't determine a valid URL
+    if (!baseUrl || baseUrl === 'http://localhost:3000') {
+      return
+    }
 
     const response = await fetch(`${baseUrl}/api/track-api-usage`, {
       method: 'POST',
