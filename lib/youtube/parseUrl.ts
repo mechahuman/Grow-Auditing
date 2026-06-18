@@ -33,5 +33,11 @@ export function parseYouTubeUrl(url: string): ParsedYouTubeUrl {
     return { type: 'legacy', value: legacyMatch[1] }
   }
 
+  // /CustomName (plain custom URL, legacy format without @ or c/ prefix)
+  const plainCustomMatch = path.match(/^\/([a-zA-Z0-9_-]+)(?:\/|$)/)
+  if (plainCustomMatch) {
+    return { type: 'legacy', value: plainCustomMatch[1] }
+  }
+
   throw new Error(`Unrecognized YouTube URL format: ${url}`)
 }
