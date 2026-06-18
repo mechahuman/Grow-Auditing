@@ -40,6 +40,40 @@ export default function LeadDetail({ lead, statusLabel }: any) {
     return m < 1 ? '<1 month' : `${m} month${m > 1 ? 's' : ''}`
   }
 
+  const formatDuration = (sec: number | null): string => {
+    if (sec == null) return '—'
+    const m = Math.floor(sec / 60)
+    const s = sec % 60
+    return `${m}m${s > 0 ? `${s}s` : ''}`
+  }
+
+  const getEngagementBadge = (value: number | null, type: 'like' | 'comment' | 'shorts' | 'duration') => {
+    if (value == null) return { label: 'Unknown', color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.04)' }
+
+    if (type === 'like') {
+      if (value >= 2) return { label: 'Strong', color: '#A4F4C9', bg: 'rgba(164,244,201,0.12)' }
+      if (value >= 0.5) return { label: 'Good', color: '#6EB498', bg: 'rgba(110,180,152,0.12)' }
+      return { label: 'Low', color: '#FFB347', bg: 'rgba(255,179,71,0.12)' }
+    }
+    if (type === 'comment') {
+      if (value >= 0.2) return { label: 'Strong', color: '#A4F4C9', bg: 'rgba(164,244,201,0.12)' }
+      if (value >= 0.05) return { label: 'Good', color: '#6EB498', bg: 'rgba(110,180,152,0.12)' }
+      return { label: 'Low', color: '#FFB347', bg: 'rgba(255,179,71,0.12)' }
+    }
+    if (type === 'shorts') {
+      if (value > 70) return { label: 'Mostly Shorts', color: '#FFB347', bg: 'rgba(255,179,71,0.12)' }
+      if (value > 30) return { label: 'Mixed Content', color: '#6EB498', bg: 'rgba(110,180,152,0.12)' }
+      return { label: 'Long-form Focus', color: '#A4F4C9', bg: 'rgba(164,244,201,0.12)' }
+    }
+    if (type === 'duration') {
+      if (value >= 15 * 60) return { label: 'Long-form', color: '#A4F4C9', bg: 'rgba(164,244,201,0.12)' }
+      if (value < 3 * 60) return { label: 'Short-form', color: '#FFB347', bg: 'rgba(255,179,71,0.12)' }
+      return { label: 'Medium-form', color: '#6EB498', bg: 'rgba(110,180,152,0.12)' }
+    }
+
+    return { label: 'Unknown', color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.04)' }
+  }
+
   const { label: scoreLabel, color: scoreColor } = getScore(lead.lead_score_total)
   const recentVideos = lead.raw_youtube_data?.recentVideos?.slice(0, 5) ?? []
 
@@ -169,6 +203,78 @@ export default function LeadDetail({ lead, statusLabel }: any) {
             </div>
           </div>
 
+          {/* Engagement Breakdown */}
+          {(lead.avg_like_rate_pct !== null || lead.avg_comment_rate_pct !== null || lead.shorts_pct !== null || lead.avg_duration_sec !== null) && (
+            <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(164,244,201,0.08) 0%, rgba(110,180,152,0.05) 100%)', border: '1px solid rgba(164,244,201,0.15)' }}>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 pb-3" style={{ color: '#A4F4C9', borderBottom: '1px solid rgba(164,244,201,0.2)', letterSpacing: '1px' }}>Engagement Breakdown</h3>
+              <div className="space-y-3">
+                {lead.avg_like_rate_pct !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Avg Like Rate</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lead.avg_like_rate_pct.toFixed(2)}%</p>
+                    </div>
+                    <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: getEngagementBadge(lead.avg_like_rate_pct, 'like').bg, color: getEngagementBadge(lead.avg_like_rate_pct, 'like').color, border: `1px solid ${getEngagementBadge(lead.avg_like_rate_pct, 'like').color}40` }}>
+                      {getEngagementBadge(lead.avg_like_rate_pct, 'like').label}
+                    </div>
+                  </div>
+                )}
+                {lead.avg_comment_rate_pct !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Avg Comment Rate</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lead.avg_comment_rate_pct.toFixed(2)}%</p>
+                    </div>
+                    <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: getEngagementBadge(lead.avg_comment_rate_pct, 'comment').bg, color: getEngagementBadge(lead.avg_comment_rate_pct, 'comment').color, border: `1px solid ${getEngagementBadge(lead.avg_comment_rate_pct, 'comment').color}40` }}>
+                      {getEngagementBadge(lead.avg_comment_rate_pct, 'comment').label}
+                    </div>
+                  </div>
+                )}
+                {lead.shorts_pct !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Shorts Content</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lead.shorts_pct.toFixed(1)}%</p>
+                    </div>
+                    <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: getEngagementBadge(lead.shorts_pct, 'shorts').bg, color: getEngagementBadge(lead.shorts_pct, 'shorts').color, border: `1px solid ${getEngagementBadge(lead.shorts_pct, 'shorts').color}40` }}>
+                      {getEngagementBadge(lead.shorts_pct, 'shorts').label}
+                    </div>
+                  </div>
+                )}
+                {lead.avg_duration_sec !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <div>
+                      <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Avg Video Duration</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{formatDuration(lead.avg_duration_sec)}</p>
+                    </div>
+                    <div className="text-xs px-2.5 py-1 rounded-lg" style={{ background: getEngagementBadge(lead.avg_duration_sec, 'duration').bg, color: getEngagementBadge(lead.avg_duration_sec, 'duration').color, border: `1px solid ${getEngagementBadge(lead.avg_duration_sec, 'duration').color}40` }}>
+                      {getEngagementBadge(lead.avg_duration_sec, 'duration').label}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Top Recent Video */}
+          {lead.top_video_title && lead.top_video_url && (
+            <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(164,244,201,0.08) 0%, rgba(110,180,152,0.05) 100%)', border: '1px solid rgba(164,244,201,0.15)' }}>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 pb-3" style={{ color: '#A4F4C9', borderBottom: '1px solid rgba(164,244,201,0.2)', letterSpacing: '1px' }}>Top Recent Video</h3>
+              <div className="space-y-3">
+                <a href={lead.top_video_url} target="_blank" rel="noopener noreferrer"
+                  className="text-sm font-semibold hover:opacity-70 transition-opacity line-clamp-2"
+                  style={{ color: '#A4F4C9' }}>
+                  {lead.top_video_title}
+                </a>
+                <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Views</span>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{fmt(lead.top_video_views)}</span>
+                </div>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Best performing video from last 15 uploads</p>
+              </div>
+            </div>
+          )}
+
           {/* Recent Videos */}
           {recentVideos.length > 0 && (
             <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
@@ -181,6 +287,50 @@ export default function LeadDetail({ lead, statusLabel }: any) {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Channel Profile */}
+          {(lead.channel_country !== null || lead.is_verified !== null || lead.has_community_posts !== null || (lead.channel_keywords && lead.channel_keywords.length > 0)) && (
+            <div className="glass-card p-6" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 pb-3" style={{ color: '#a855f7', borderBottom: '1px solid rgba(168, 85, 247, 0.2)', letterSpacing: '1px' }}>Channel Profile</h3>
+              <div className="space-y-3">
+                {lead.channel_country && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Country</span>
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.channel_country}</span>
+                  </div>
+                )}
+                {lead.is_verified !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Verification</span>
+                    <span className="text-sm font-semibold" style={{ color: lead.is_verified ? '#A4F4C9' : 'var(--text-muted)' }}>
+                      {lead.is_verified ? '✓ Verified' : '— Not verified'}
+                    </span>
+                  </div>
+                )}
+                {lead.has_community_posts !== null && (
+                  <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Community Posts</span>
+                    <span className="text-sm font-semibold" style={{ color: lead.has_community_posts ? '#A4F4C9' : 'var(--text-muted)' }}>
+                      {lead.has_community_posts ? '✓ Active' : '— Not detected'}
+                    </span>
+                  </div>
+                )}
+                {lead.channel_keywords && lead.channel_keywords.length > 0 && (
+                  <div className="p-3">
+                    <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Keywords</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {lead.channel_keywords.slice(0, 10).map((kw: string, i: number) => (
+                        <div key={i} className="text-xs px-2 py-1 rounded-full"
+                          style={{ background: 'rgba(164,244,201,0.12)', border: '1px solid rgba(164,244,201,0.2)', color: '#A4F4C9' }}>
+                          {kw}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -210,7 +360,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           </div>
 
           {/* Contact Details - Expanded */}
-          {(lead.email || lead.website || lead.instagram || lead.twitter) && (
+          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook) && (
             <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
               <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
               <div className="space-y-4">
@@ -236,6 +386,24 @@ export default function LeadDetail({ lead, statusLabel }: any) {
                   <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
                     <MessageSquare size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
                     <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
+                  </a>
+                )}
+                {lead.tiktok && (
+                  <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>TikTok</span>
+                  </a>
+                )}
+                {lead.linkedin && (
+                  <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>LinkedIn</span>
+                  </a>
+                )}
+                {lead.facebook && (
+                  <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 py-3.5 px-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg" style={{ background: 'rgba(241,91,181,0.08)', border: '1.5px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={20} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>Facebook</span>
                   </a>
                 )}
               </div>
@@ -310,8 +478,30 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           )}
         </div>
 
+        {/* AI Red Flags */}
+        {(lead.ai_red_flags && lead.ai_red_flags.length > 0) ? (
+          <div className="rounded-xl p-4 mt-6" style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.3)' }}>
+            <p className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: '#FF6B6B' }}>
+              ⚠️ Red Flags
+            </p>
+            <ul className="space-y-2">
+              {lead.ai_red_flags.map((flag: string, i: number) => (
+                <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--text-primary)' }}>
+                  <span style={{ color: '#FF6B6B' }}>⚠️</span>{flag}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-xl p-4 mt-6" style={{ background: 'rgba(164,244,201,0.08)', border: '1px solid rgba(164,244,201,0.3)' }}>
+            <p className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#A4F4C9' }}>
+              ✓ No red flags detected
+            </p>
+          </div>
+        )}
+
         {/* AI Confidence */}
-        {(lead.ai_confidence || (lead.data_gaps ?? []).length > 0) && (
+        {(lead.ai_confidence || lead.ai_confidence_reason || (lead.data_gaps ?? []).length > 0) && (
           <div className="rounded-xl p-4" style={{ background: 'rgba(241, 91, 181, 0.08)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
             <div className="flex items-start gap-3">
               <Info size={16} style={{ color: '#f15bb5', marginTop: '2px' }} className="flex-shrink-0" />
@@ -319,6 +509,11 @@ export default function LeadDetail({ lead, statusLabel }: any) {
                 <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#f15bb5' }}>
                   AI Confidence: {lead.ai_confidence ?? 'Unknown'}
                 </p>
+                {lead.ai_confidence_reason && (
+                  <p className="text-xs mb-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)' }}>
+                    {lead.ai_confidence_reason}
+                  </p>
+                )}
                 {(lead.data_gaps ?? []).length > 0 && (
                   <ul className="space-y-1.5">
                     {(lead.data_gaps ?? []).map((d: string, i: number) => (
@@ -362,6 +557,25 @@ export default function LeadDetail({ lead, statusLabel }: any) {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Outreach Email Draft */}
+      {lead.outreach_email_draft && (
+        <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(164,244,201,0.1) 0%, rgba(110,180,152,0.06) 100%)', border: '1px solid rgba(164,244,201,0.2)' }}>
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#A4F4C9', borderBottom: '1px solid rgba(164,244,201,0.3)', letterSpacing: '1.5px' }}>📧 Outreach Email Draft</h3>
+          <div className="text-sm leading-relaxed p-6 rounded-xl whitespace-pre-wrap font-mono" style={{ background: 'rgba(164,244,201,0.08)', border: '1px solid rgba(164,244,201,0.2)', color: 'var(--text-primary)', lineHeight: '1.8' }}>
+            {lead.outreach_email_draft}
+          </div>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(lead.outreach_email_draft)
+              showToast('Email copied to clipboard!')
+            }}
+            className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+            style={{ background: 'rgba(164,244,201,0.15)', border: '1px solid rgba(164,244,201,0.3)', color: '#A4F4C9' }}>
+            Copy Email
+          </button>
         </div>
       )}
     </div>
