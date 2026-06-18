@@ -66,8 +66,8 @@ function findStringValue(obj: unknown, key: string): string | null {
 
 // Extract links from channelExternalLinkViewModel nodes (current YouTube structure).
 // Returns { title, url } for each link found.
-function findChannelExternalLinks(obj: unknown, out: Array<{ title: string; url: string }> = []): Array<{ title: string; url: string }> {
-  if (!obj || typeof obj !== 'object') return out
+function findChannelExternalLinks(obj: unknown, out: Array<{ title: string; url: string }> = [], depth = 0): Array<{ title: string; url: string }> {
+  if (!obj || typeof obj !== 'object' || depth > 50) return out
 
   const o = obj as Record<string, unknown>
 
@@ -79,8 +79,9 @@ function findChannelExternalLinks(obj: unknown, out: Array<{ title: string; url:
     const linkObj = vm['link'] as Record<string, unknown> | undefined
     const commandRuns = linkObj?.['commandRuns'] as Array<Record<string, unknown>> | undefined
 
-    if (typeof titleContent === 'string' && commandRuns && commandRuns.length > 0) {
+    if (typeof titleContent === 'string' && Array.isArray(commandRuns) && commandRuns.length > 0) {
       for (const run of commandRuns) {
+        if (typeof run !== 'object' || run === null) continue
         const onTap = run['onTap'] as Record<string, unknown> | undefined
         const innertubeCommand = onTap?.['innertubeCommand'] as Record<string, unknown> | undefined
         const urlEndpoint = innertubeCommand?.['urlEndpoint'] as Record<string, unknown> | undefined
@@ -97,7 +98,7 @@ function findChannelExternalLinks(obj: unknown, out: Array<{ title: string; url:
   }
 
   for (const v of Object.values(o)) {
-    if (typeof v === 'object') findChannelExternalLinks(v, out)
+    if (typeof v === 'object' && v !== null) findChannelExternalLinks(v, out, depth + 1)
   }
 
   return out
