@@ -68,6 +68,16 @@ export function buildUserPrompt(data: YouTubeEnrichmentResult): string {
 ## Recent videos (last ${Math.min(data.recentVideos.length, 10)})
 ${videosSection || 'No recent videos available'}
 
+## Extended channel data
+- Country: ${data.channelCountry ?? 'Not specified'}
+- Channel keywords: ${data.channelKeywords.slice(0, 10).join(', ') || 'None'}
+- Shorts percentage: ${data.shortsPct !== null ? data.shortsPct + '%' : 'Unknown'}
+- Avg like rate (last 10): ${data.avgLikeRatePct !== null ? data.avgLikeRatePct + '%' : 'Unknown'}
+- Avg comment rate (last 10): ${data.avgCommentRatePct !== null ? data.avgCommentRatePct + '%' : 'Unknown'}
+- Avg video duration (last 10): ${data.avgDurationSec !== null ? formatDuration(data.avgDurationSec) : 'Unknown'}
+- Community posts active: ${data.hasCommunityPosts ? 'Yes' : 'No'}
+- Top recent video: "${data.topVideoTitle ?? 'N/A'}" — ${data.topVideoViews?.toLocaleString() ?? 'N/A'} views
+
 ## External context
 - Website: ${data.website ?? 'Not found'}
 - Social links: ${socialStr}

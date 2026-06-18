@@ -8,6 +8,9 @@ export interface ChannelAnalysis {
   remarks_draft: string
   ai_confidence: 'low' | 'medium' | 'high'
   data_gaps: string[]
+  ai_red_flags: string[]
+  ai_confidence_reason: string
+  outreach_email_draft: string
 }
 
 export interface AnalysisResult {

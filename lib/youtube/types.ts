@@ -18,6 +18,7 @@ export interface ChannelData {
   keywords: string[]
   country: string | null
   thumbnailUrl: string | null
+  isVerified: boolean         // status.isLinked from channels.list
 }
 
 export interface VideoData {
@@ -55,6 +56,29 @@ export interface YouTubeEnrichmentResult {
   website: string | null
   socialLinks: Array<{ platform: string; url: string }>
   thumbnailUrl: string | null
+
+  // Group A: computed from video data
+  shortsPct: number | null
+  avgLikeRatePct: number | null
+  avgCommentRatePct: number | null
+  avgDurationSec: number | null
+  topVideoTitle: string | null
+  topVideoUrl: string | null
+  topVideoViews: number | null
+
+  // Group B: from channels.list (already fetched)
+  channelCountry: string | null
+  channelKeywords: string[]
+  isVerified: boolean
+
+  // Group C: promoted from socialLinks
+  tiktok: string | null
+  linkedin: string | null
+  facebook: string | null
+
+  // Group D: community posts
+  hasCommunityPosts: boolean
+
   rawApiResponses: {
     channel: unknown
     videoIds: unknown

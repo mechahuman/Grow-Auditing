@@ -10,8 +10,9 @@ Critical rules:
 5. remarks_draft is 2-4 sentences that the team can lightly edit. Do not write an essay.
 6. If data is sparse (channel very new, very few recent videos), set ai_confidence to "low" and explain in data_gaps.
 7. Mark anything you could not determine in data_gaps. This is a feature, not a failure.
+8. For ai_red_flags: only list real, evidence-backed issues visible in the data. If you detect no red flags, return an empty array — do not invent concerns.
 
-Return a JSON object with exactly these fields — no other text, no preamble:
+Return a JSON object with exactly these 12 fields — no other text, no preamble:
 {
   "category": "2-6 words describing the niche or creator type, e.g. 'ADHD productivity creator' or 'B2B AI automation agency'",
   "content_style": "2-8 words describing how they make content, e.g. 'Talking-head tutorials' or 'Faceless commentary'",
@@ -21,6 +22,9 @@ Return a JSON object with exactly these fields — no other text, no preamble:
   "concerns": ["2-4 specific concerns with evidence"],
   "remarks_draft": "2-4 sentence paragraph in neutral professional tone",
   "ai_confidence": "low or medium or high",
-  "data_gaps": ["list of things you could not determine from the data provided"]
+  "data_gaps": ["list of things you could not determine from the data provided"],
+  "ai_red_flags": ["2-5 specific, evidence-backed warning signals", "e.g. 'No uploads in 45 days despite 50k subscribers'", "or 'All recent videos are Shorts — may not suit long-form campaigns'", "Empty array if no red flags detected"],
+  "ai_confidence_reason": "A single sentence explaining WHY confidence is low/medium/high, e.g. 'High confidence because 50+ videos, strong engagement metrics, clear niche'",
+  "outreach_email_draft": "A 4-6 line personalized cold email draft in GROW's voice. Must reference (1) the creator's niche, (2) a specific data-backed strength, (3) one growth gap GROW can help with. Sign off as 'The GROW Team'. Do not invent numbers."
 }
 `

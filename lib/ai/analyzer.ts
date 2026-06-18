@@ -17,15 +17,18 @@ function validateAnalysis(raw: unknown): ChannelAnalysis {
     Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []
 
   return {
-    category:        typeof r.category === 'string'        ? r.category        : 'Unknown',
-    content_style:   typeof r.content_style === 'string'   ? r.content_style   : 'Unknown',
-    monetization:    typeof r.monetization === 'string'    ? r.monetization    : 'Not visible',
-    posting_pattern: typeof r.posting_pattern === 'string' ? r.posting_pattern : 'Unknown',
-    strengths:       toStringArray(r.strengths),
-    concerns:        toStringArray(r.concerns),
-    remarks_draft:   typeof r.remarks_draft === 'string'   ? r.remarks_draft   : '',
-    ai_confidence:   validConfidence,
-    data_gaps:       toStringArray(r.data_gaps),
+    category:              typeof r.category === 'string'              ? r.category              : 'Unknown',
+    content_style:         typeof r.content_style === 'string'         ? r.content_style         : 'Unknown',
+    monetization:          typeof r.monetization === 'string'          ? r.monetization          : 'Not visible',
+    posting_pattern:       typeof r.posting_pattern === 'string'       ? r.posting_pattern       : 'Unknown',
+    strengths:             toStringArray(r.strengths),
+    concerns:              toStringArray(r.concerns),
+    remarks_draft:         typeof r.remarks_draft === 'string'         ? r.remarks_draft         : '',
+    ai_confidence:         validConfidence,
+    data_gaps:             toStringArray(r.data_gaps),
+    ai_red_flags:          toStringArray(r.ai_red_flags),
+    ai_confidence_reason:  typeof r.ai_confidence_reason === 'string'  ? r.ai_confidence_reason  : '',
+    outreach_email_draft:  typeof r.outreach_email_draft === 'string'  ? r.outreach_email_draft  : '',
   }
 }
 

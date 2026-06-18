@@ -2,7 +2,7 @@ import { buildUrl, ytFetch, YouTubeApiError } from './client'
 import type { ChannelData } from './types'
 
 // contentDetails needed for uploads playlist ID (playlistItems.list approach, 1 quota unit)
-const PARTS = 'snippet,statistics,brandingSettings,contentDetails'
+const PARTS = 'snippet,statistics,brandingSettings,contentDetails,status'
 
 type RawChannelItem = {
   id: string
@@ -25,6 +25,7 @@ type RawChannelItem = {
   }
   brandingSettings?: { channel?: { keywords?: string } }
   contentDetails?: { relatedPlaylists?: { uploads?: string } }
+  status?: { isLinked?: boolean }
 }
 
 function parseKeywords(raw: string | undefined): string[] {
@@ -49,6 +50,7 @@ function parseItem(item: RawChannelItem): ChannelData {
     keywords: parseKeywords(item.brandingSettings?.channel?.keywords),
     country: item.snippet.country ?? null,
     thumbnailUrl,
+    isVerified: item.status?.isLinked ?? false,
   }
 }
 

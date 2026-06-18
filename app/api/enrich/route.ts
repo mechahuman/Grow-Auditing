@@ -36,9 +36,9 @@ export async function POST(request: NextRequest) {
     logAPIUsage({
       apiName: 'youtube',
       userId: user.id,
-      endpoint: 'channels.list,videos.list',
+      endpoint: 'channels.list,videos.list,activities.list',
       status: 'success',
-      quotaUnitsUsed: 3,
+      quotaUnitsUsed: 4,
       responseTimeMs: ytTimer(),
     }).catch(() => {}) // Silently ignore logging errors
   } catch (err) {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     logAPIUsage({
       apiName: 'youtube',
       userId: user.id,
-      endpoint: 'channels.list,videos.list',
+      endpoint: 'channels.list,videos.list,activities.list',
       status: 'error',
       errorMessage: err instanceof Error ? err.message : 'Unknown error',
       responseTimeMs: ytTimer(),
@@ -140,6 +140,28 @@ export async function POST(request: NextRequest) {
       lead_score_total: score.leadScoreTotal,
       ai_confidence: analysis.ai_confidence,
       channel_thumbnail_url: ytData.thumbnailUrl,
+      // Group A: computed from video data
+      shorts_pct: ytData.shortsPct,
+      avg_like_rate_pct: ytData.avgLikeRatePct,
+      avg_comment_rate_pct: ytData.avgCommentRatePct,
+      avg_duration_sec: ytData.avgDurationSec,
+      top_video_title: ytData.topVideoTitle,
+      top_video_url: ytData.topVideoUrl,
+      top_video_views: ytData.topVideoViews,
+      // Group B: from channels.list (already fetched)
+      channel_country: ytData.channelCountry,
+      channel_keywords: ytData.channelKeywords,
+      is_verified: ytData.isVerified,
+      // Group C: promoted from socialLinks
+      tiktok: ytData.tiktok,
+      linkedin: ytData.linkedin,
+      facebook: ytData.facebook,
+      // Group D: community posts
+      has_community_posts: ytData.hasCommunityPosts,
+      // Group E: AI-generated
+      ai_red_flags: analysis.ai_red_flags,
+      ai_confidence_reason: analysis.ai_confidence_reason,
+      outreach_email_draft: analysis.outreach_email_draft,
       draft: true,
       status: 'new',
       enriched_by: user.email,

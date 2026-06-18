@@ -32,6 +32,7 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
   const [monetization, setMonetization] = useState(lead.monetization || '')
   const [postingPattern, setPostingPattern] = useState(lead.posting_pattern || '')
   const [remarksFinal, setRemarksFinal] = useState(lead.remarks_final || '')
+  const [outreachEmailDraft, setOutreachEmailDraft] = useState(lead.outreach_email_draft || '')
   const [status, setStatus] = useState(lead.status || 'new')
   const [statusNotes, setStatusNotes] = useState(lead.status_notes || '')
   const [gFactor, setGFactor] = useState<number>(lead.g_factor || 3)
@@ -93,6 +94,7 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
           monetization,
           posting_pattern: postingPattern,
           remarks_final: remarksFinal,
+          outreach_email_draft: outreachEmailDraft || null,
           status,
           status_notes: statusNotes || null,
         }),
@@ -341,6 +343,31 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
                     rows={4}
                     className="w-full rounded-md border border-gray-300 px-3 py-2"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    📧 Outreach Email Draft
+                  </label>
+                  <textarea
+                    value={outreachEmailDraft}
+                    onChange={(e) => setOutreachEmailDraft(e.target.value)}
+                    rows={6}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
+                    placeholder="AI-generated email draft — edit as needed before sending"
+                  />
+                  {outreachEmailDraft && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(outreachEmailDraft)
+                        setToast({ message: 'Email copied to clipboard', type: 'success' })
+                        setTimeout(() => setToast(null), 2000)
+                      }}
+                      className="mt-2 px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Copy Email
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

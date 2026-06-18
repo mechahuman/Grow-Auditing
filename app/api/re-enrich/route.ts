@@ -59,6 +59,11 @@ export async function POST(request: NextRequest) {
     const instagram = instagramLink?.url || null
     const twitter = twitterLink?.url || null
 
+    // Extract social links
+    const tiktok = ytData.tiktok || null
+    const linkedin = ytData.linkedin || null
+    const facebook = ytData.facebook || null
+
     // Build smart merge payload
     const updatePayload = {
       // Always overwrite with fresh YouTube stats
@@ -70,6 +75,24 @@ export async function POST(request: NextRequest) {
       avg_views_last_10: ytData.avgViewsLast10,
       s2v_ratio_pct: ytData.s2vRatioPct,
       posting_frequency_30d: ytData.postingFrequency30d,
+      // Group A: computed from video data
+      shorts_pct: ytData.shortsPct,
+      avg_like_rate_pct: ytData.avgLikeRatePct,
+      avg_comment_rate_pct: ytData.avgCommentRatePct,
+      avg_duration_sec: ytData.avgDurationSec,
+      top_video_title: ytData.topVideoTitle,
+      top_video_url: ytData.topVideoUrl,
+      top_video_views: ytData.topVideoViews,
+      // Group B: from channels.list (already fetched)
+      channel_country: ytData.channelCountry,
+      channel_keywords: ytData.channelKeywords,
+      is_verified: ytData.isVerified,
+      // Group C: promoted from socialLinks
+      tiktok,
+      linkedin,
+      facebook,
+      // Group D: community posts
+      has_community_posts: ytData.hasCommunityPosts,
       raw_youtube_data: {
         recentVideos: ytData.recentVideos.map(v => ({
           title: v.title,
@@ -104,6 +127,10 @@ export async function POST(request: NextRequest) {
       ])),
       data_gaps: aiAnalysis.analysis.data_gaps,
       ai_confidence: aiAnalysis.analysis.ai_confidence,
+      // Group E: AI-generated
+      ai_red_flags: aiAnalysis.analysis.ai_red_flags,
+      ai_confidence_reason: aiAnalysis.analysis.ai_confidence_reason,
+      outreach_email_draft: aiAnalysis.analysis.outreach_email_draft,
       remarks_ai_draft: aiAnalysis.analysis.remarks_draft,
 
       // Always overwrite with recomputed scores
