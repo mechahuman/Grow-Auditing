@@ -176,13 +176,25 @@ export async function scrapeAboutPage(handleOrChannelId: string, isChannelId = f
       return { email: null, website: null, socialLinks: [], merch: null }
     }
 
+    console.log(`[AboutScraper] Successfully parsed ytInitialData for ${url}`)
+
     const email = findStringValue(ytData, 'businessEmail')
 
     // Extract links from new YouTube structure (channelExternalLinkViewModel)
-    const newStructureLinks = findChannelExternalLinks(ytData)
+    let newStructureLinks: Array<{ title: string; url: string }> = []
+    try {
+      newStructureLinks = findChannelExternalLinks(ytData)
+    } catch (e) {
+      console.warn(`[AboutScraper] Error extracting new-structure links for ${url}:`, e instanceof Error ? e.message : e)
+    }
 
     // Fall back to old structure
-    const rawLinks = collectExternalLinks(ytData)
+    let rawLinks: string[] = []
+    try {
+      rawLinks = collectExternalLinks(ytData)
+    } catch (e) {
+      console.warn(`[AboutScraper] Error extracting old-structure links for ${url}:`, e instanceof Error ? e.message : e)
+    }
     const seen = new Set<string>()
     const deduped = rawLinks.filter(u => { if (seen.has(u)) return false; seen.add(u); return true })
 
