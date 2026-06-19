@@ -45,17 +45,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If authenticated and on login page, redirect to leads
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/leads', request.url))
-  }
-
   // If not authenticated, allow access to public auth pages
   if (!user) {
     return response
   }
 
-  // User is authenticated — check whitelist (team_members table)
+  // User is authenticated — fetch role immediately
   const { data: teamMember, error } = await supabase
     .from('team_members')
     .select('role')
@@ -68,12 +63,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
-  // User is whitelisted — check role-based access
-  const isAdminRoute = pathname.startsWith('/admin')
   const isAdminUser = teamMember.role === 'admin'
 
-  // If non-admin tries to access /admin, redirect to /leads
-  if (isAdminRoute && !isAdminUser) {
+  // If authenticated and on login page, redirect based on role
+  if (isLoginPage) {
+    const redirectUrl = isAdminUser ? '/admin' : '/leads'
+    return NextResponse.redirect(new URL(redirectUrl, request.url))
+  }
+
+  // Strict role isolation
+  const isAdminRoute = pathname.startsWith('/admin')
+
+  // If admin tries to access non-admin route, redirect to /admin
+  if (isAdminUser && !isAdminRoute) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
+
+  // If member tries to access /admin, redirect to /leads
+  if (!isAdminUser && isAdminRoute) {
     return NextResponse.redirect(new URL('/leads', request.url))
   }
 

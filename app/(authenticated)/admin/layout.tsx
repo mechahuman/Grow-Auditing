@@ -82,33 +82,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        {/* Footer */}
-        <div
-          className="p-3 border-t space-y-2 flex-shrink-0"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <Link
-            href="/leads"
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all duration-200"
-            style={{
-              color: 'var(--text-secondary)',
-              background: 'transparent',
-              justifyContent: sidebarExpanded ? 'flex-start' : 'center',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)'
-              e.currentTarget.style.color = '#a855f7'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = 'var(--text-secondary)'
-            }}
-            title={!sidebarExpanded ? 'Back to Leads' : ''}
-          >
-            <ArrowLeft size={20} className="flex-shrink-0" />
-            {sidebarExpanded && <span className="truncate">Back to Leads</span>}
-          </Link>
-        </div>
       </div>
 
       {/* Main Content Area */}
