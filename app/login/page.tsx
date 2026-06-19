@@ -453,24 +453,6 @@ export default function LoginPage() {
         </div>
 
       </div>
-
-      {/* Footer - positioned absolutely in main */}
-      <p
-        className="text-center"
-        style={{
-          position: 'fixed',
-          bottom: '30px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 50,
-          color: 'rgba(255,255,255,.38)',
-          fontWeight: 500,
-          fontSize: '12px',
-          letterSpacing: '.02em',
-        }}
-      >
-        Internal tool — authorized users only
-      </p>
     </main>
   )
 }
