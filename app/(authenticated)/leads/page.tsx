@@ -14,7 +14,7 @@ export default async function LeadsPage() {
       .from('leads')
       .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle, channel_thumbnail_url')
       .eq('draft', false)
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .order('created_at', { ascending: false }),
     supabase
       .from('team_members')
