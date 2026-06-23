@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
 import { Avatar } from '../../../components/Avatar'
-import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2 } from 'lucide-react'
+import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink } from 'lucide-react'
 
 interface TeamMember {
   id: string
@@ -154,306 +154,98 @@ interface APIUsageData {
 }
 
 function APIStatusSection() {
-  const [apiStatus, setApiStatus] = useState<APIStatus[]>([])
-  const [usageData, setUsageData] = useState<APIUsageData | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'team' | 'activity' | 'costs'>('overview')
-  const [loading, setLoading] = useState(true)
-  const [totalCost, setTotalCost] = useState('$0.00')
-  const [allHealthy, setAllHealthy] = useState(true)
-
-  useEffect(() => {
-    const fetchAPIStatus = async () => {
-      try {
-        const [statusRes, usageRes] = await Promise.all([
-          fetch('/api/admin/api-status'),
-          fetch('/api/admin/api-usage?days=30')
-        ])
-
-        if (statusRes.ok) {
-          const data = await statusRes.json()
-          setApiStatus(data.apis || [])
-          setTotalCost(data.totalMonthlyCost || '$0.00')
-          setAllHealthy(data.allSystemsHealthy || true)
-        }
-
-        if (usageRes.ok) {
-          const data = await usageRes.json()
-          setUsageData(data)
-        }
-      } catch (err) {
-        console.error('Error fetching API status:', err)
-      } finally {
-        setLoading(false)
-      }
+  const providers = [
+    {
+      id: 'groq',
+      name: 'Groq AI API',
+      description: 'AI analysis & insights',
+      url: 'https://console.groq.com/usage',
+      color: '#f97316', // Orange
+      bg: 'rgba(249, 115, 22, 0.1)',
+      border: 'rgba(249, 115, 22, 0.3)'
+    },
+    {
+      id: 'youtube',
+      name: 'YouTube Data API',
+      description: 'Channel data enrichment',
+      url: 'https://console.cloud.google.com/apis/dashboard',
+      color: '#ef4444', // Red
+      bg: 'rgba(239, 68, 68, 0.1)',
+      border: 'rgba(239, 68, 68, 0.3)'
+    },
+    {
+      id: 'sheets',
+      name: 'Google Sheets API',
+      description: 'Data synchronization',
+      url: 'https://console.cloud.google.com/apis/dashboard',
+      color: '#10b981', // Green
+      bg: 'rgba(16, 185, 129, 0.1)',
+      border: 'rgba(16, 185, 129, 0.3)'
+    },
+    {
+      id: 'supabase',
+      name: 'Supabase PostgreSQL',
+      description: 'Database operations',
+      url: 'https://supabase.com/dashboard/projects',
+      color: '#3b82f6', // Blue
+      bg: 'rgba(59, 130, 246, 0.1)',
+      border: 'rgba(59, 130, 246, 0.3)'
     }
-
-    fetchAPIStatus()
-    const interval = setInterval(fetchAPIStatus, 7000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const getStatusColor = (color: 'green' | 'yellow' | 'red') => {
-    switch (color) {
-      case 'green':
-        return { bg: 'rgba(76, 175, 80, 0.2)', text: '#4caf50' }
-      case 'yellow':
-        return { bg: 'rgba(255, 193, 7, 0.2)', text: '#ffc107' }
-      case 'red':
-        return { bg: 'rgba(255, 107, 107, 0.2)', text: '#ff6b6b' }
-    }
-  }
-
-  const getStatusIcon = (color: 'green' | 'yellow' | 'red') => {
-    switch (color) {
-      case 'green':
-        return '🟢'
-      case 'yellow':
-        return '🟡'
-      case 'red':
-        return '🔴'
-    }
-  }
+  ]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">API Integration Status</h1>
-        <div className="flex items-center justify-between mt-2">
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Real-time monitoring of API usage and quota management
-          </p>
-          <div className="text-right">
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Monthly Cost</p>
-            <p className="text-2xl font-bold" style={{ color: '#a855f7' }}>{totalCost}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Status Banner */}
-      {!allHealthy && (
-        <div
-          className="p-4 rounded-lg border flex items-center gap-3"
-          style={{ background: 'rgba(255, 193, 7, 0.1)', borderColor: 'rgba(255, 193, 7, 0.3)' }}
-        >
-          <AlertCircle size={20} style={{ color: '#ffc107' }} />
-          <p className="text-sm">
-            <span className="font-semibold">Warning:</span> One or more APIs are approaching quota limits
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="space-y-8 w-full max-w-4xl px-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">API Status</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+            Direct access to provider usage dashboards for real-time monitoring and quota management.
           </p>
         </div>
-      )}
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-        {(['overview', 'team', 'activity', 'costs'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="px-4 py-2 text-sm font-medium transition-colors relative"
-            style={{
-              color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-secondary)',
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        {providers.map((provider) => (
+          <div
+            key={provider.id}
+            className="glass-card p-6 rounded-xl relative overflow-hidden transition-all duration-300 hover:scale-[1.02]"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.03)', 
+              border: `1px solid ${provider.border}`,
+              boxShadow: `0 4px 20px -2px ${provider.bg}`
             }}
           >
-            {tab === 'overview' && 'Overview'}
-            {tab === 'team' && 'Team Breakdown'}
-            {tab === 'activity' && 'Activity'}
-            {tab === 'costs' && 'Costs'}
-            {activeTab === tab && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ background: 'linear-gradient(90deg, #a855f7, #d946ef)' }}
-              />
-            )}
-          </button>
-        ))}
-      </div>
+            {/* Background Accent Glow */}
+            <div 
+              className="absolute -right-8 -top-8 w-24 h-24 rounded-full blur-2xl opacity-50 pointer-events-none"
+              style={{ background: provider.color }}
+            />
+            
+            <div className="flex flex-col h-full justify-between relative z-10 space-y-6">
+              <div>
+                <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{provider.name}</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  {provider.description}
+                </p>
+              </div>
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {apiStatus.map((api) => {
-            const colors = getStatusColor(api.statusColor)
-            return (
-              <div
-                key={api.id}
-                className="glass-card p-5 rounded-lg"
-                style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}
+              <a
+                href={provider.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between w-full p-3 rounded-lg transition-all group"
+                style={{ 
+                  background: provider.bg,
+                  border: `1px solid ${provider.border}`
+                }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="text-sm font-bold">{api.displayName}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                      {api.name === 'youtube' && 'Channel data enrichment'}
-                      {api.name === 'groq' && 'AI analysis & insights'}
-                      {api.name === 'google_sheets' && 'Data synchronization'}
-                      {api.name === 'supabase' && 'Database operations'}
-                    </p>
-                  </div>
-                  <span className="text-lg">{getStatusIcon(api.statusColor)}</span>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Daily Quota
-                      </p>
-                      <p className="text-xs font-semibold">
-                        {api.dailyQuotaUsed.toLocaleString()} / {api.dailyQuotaMax.toLocaleString()}
-                      </p>
-                    </div>
-                    <div
-                      className="w-full h-2 rounded-full"
-                      style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-                    >
-                      <div
-                        className="h-2 rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(api.percentUsed, 100)}%`,
-                          background: api.statusColor === 'red'
-                            ? '#ff6b6b'
-                            : api.statusColor === 'yellow'
-                            ? '#ffc107'
-                            : '#4caf50',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Last used</p>
-                    <p className="text-sm font-medium mt-1">
-                      {api.lastUsedBy && api.lastUsedTimestamp
-                        ? `${api.lastUsedBy} · ${new Date(api.lastUsedTimestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}`
-                        : 'Not used yet'}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Est. Monthly Cost</p>
-                    <p className="text-lg font-bold mt-1">{api.estimatedMonthlyCost}</p>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Team Breakdown Tab */}
-      {activeTab === 'team' && usageData && (
-        <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-          <h3 className="text-sm font-bold mb-4">API Usage by Team Member</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th className="text-left py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                    Member
-                  </th>
-                  <th className="text-right py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                    Calls
-                  </th>
-                  <th className="text-right py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                    Cost
-                  </th>
-                  <th className="text-left py-2 px-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                    Top API
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {usageData.byTeamMember.map((member) => {
-                  const topAPI = Object.entries(member.apiBreakdown).sort(
-                    (a, b) => b[1] - a[1]
-                  )[0]
-                  return (
-                    <tr
-                      key={member.memberId}
-                      style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
-                    >
-                      <td className="py-3 px-2">{member.name}</td>
-                      <td className="py-3 px-2 text-right">{member.totalCalls}</td>
-                      <td className="py-3 px-2 text-right font-semibold">{member.totalCost}</td>
-                      <td className="py-3 px-2">
-                        <span
-                          className="px-2 py-1 rounded text-xs"
-                          style={{
-                            background: 'rgba(168, 85, 247, 0.15)',
-                            color: '#a855f7',
-                          }}
-                        >
-                          {topAPI ? `${topAPI[0]} (${topAPI[1]})` : '—'}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Activity Tab */}
-      {activeTab === 'activity' && (
-        <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-          <h3 className="text-sm font-bold mb-4">Recent API Activity</h3>
-          <p className="text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-            API activity will appear here as team members enrich leads
-          </p>
-        </div>
-      )}
-
-      {/* Costs Tab */}
-      {activeTab === 'costs' && usageData && (
-        <div className="space-y-4">
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Cost Breakdown by API</h3>
-            <div className="space-y-3">
-              {usageData.byApi.map((api) => (
-                <div key={api.apiName}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-medium">{api.displayName}</p>
-                    <p className="text-sm font-bold">{api.cost}</p>
-                  </div>
-                  <div
-                    className="w-full h-2 rounded-full"
-                    style={{ background: 'rgba(255, 255, 255, 0.1)' }}
-                  >
-                    <div
-                      className="h-2 rounded-full"
-                      style={{
-                        width: `${api.percentOfTotal}%`,
-                        background: 'linear-gradient(90deg, #a855f7, #d946ef)',
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                    {api.calls} calls · {api.percentOfTotal}% of total
-                  </p>
-                </div>
-              ))}
+                <span className="text-sm font-semibold" style={{ color: provider.color }}>Open Provider Dashboard</span>
+                <ExternalLink size={18} style={{ color: provider.color }} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </a>
             </div>
           </div>
-
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-3">Monthly Summary</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Calls</p>
-                <p className="text-2xl font-bold mt-1">{usageData.summary.totalCalls}</p>
-              </div>
-              <div>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Total Cost</p>
-                <p className="text-2xl font-bold mt-1">{usageData.summary.totalCost}</p>
-              </div>
-            </div>
-          </div>
+        ))}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -1028,9 +820,26 @@ export default function AdminPage() {
                 <div className="space-y-2.5">
                   {teamMembers
                     .filter((m) => m.active)
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .sort((a, b) => {
+                      const timeA = a.last_sign_in_at ? new Date(a.last_sign_in_at).getTime() : 0;
+                      const timeB = b.last_sign_in_at ? new Date(b.last_sign_in_at).getTime() : 0;
+                      return timeB - timeA;
+                    })
                     .slice(0, 6)
-                    .map((member) => (
+                    .map((member) => {
+                      let loginText = 'Never logged in';
+                      if (member.last_sign_in_at) {
+                        const daysAgo = Math.floor((Date.now() - new Date(member.last_sign_in_at).getTime()) / (1000 * 60 * 60 * 24));
+                        if (daysAgo === 0) {
+                          loginText = 'Logged in today';
+                        } else if (daysAgo === 1) {
+                          loginText = 'Logged in 1d ago';
+                        } else {
+                          loginText = `Logged in ${daysAgo}d ago`;
+                        }
+                      }
+                      
+                      return (
                       <div key={member.id} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)' }}>
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.15)' }}>
                           <span className="text-xs font-bold" style={{ color: '#a855f7' }}>
@@ -1040,11 +849,11 @@ export default function AdminPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium">{member.full_name}</p>
                           <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                            Joined {Math.floor((Date.now() - new Date(member.created_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
+                            {loginText}
                           </p>
                         </div>
                       </div>
-                    ))}
+                    )})}
                 </div>
               </div>
 

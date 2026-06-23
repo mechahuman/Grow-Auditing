@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { ThemeToggle } from '../../../components/ThemeToggle'
 import { SignOutButton } from '../../../components/SignOutButton'
 import { Home, Users, List, ArrowLeft, Copy, Download, Zap } from 'lucide-react'
 import Link from 'next/link'
@@ -40,18 +39,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             minHeight: '80px',
           }}
         >
-          <div className="flex items-center gap-3 w-full">
+          {sidebarExpanded ? (
             <img
-              src="/favicon.png"
+              src="/logo-light.png"
               alt="GROW Logo"
-              width={32}
-              height={32}
+              className="flex-shrink-0 max-h-12"
+              style={{ maxWidth: '100%' }}
+            />
+          ) : (
+            <img
+              src="/apple-touch-icon.png"
+              alt="GROW Logo"
+              width={40}
+              height={40}
               className="flex-shrink-0"
             />
-            {sidebarExpanded && (
-              <span className="text-2xl font-bold text-gradient-brand whitespace-nowrap">GROW</span>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -82,16 +85,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
+        {/* Sign Out Button at Bottom */}
+        <div className="flex-shrink-0 border-t p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+          <SignOutButton hideText={!sidebarExpanded} />
+        </div>
+
       </div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Floating Top Right Utilities */}
-        <div className="absolute top-6 right-6 z-10 flex items-center gap-4">
-          <ThemeToggle />
-          <SignOutButton />
-        </div>
-
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           {children}

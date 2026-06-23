@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, Shield } from 'lucide-react'
 import { SignOutButton } from './SignOutButton'
-import { ThemeToggle } from './ThemeToggle'
 
 export function NavbarWrapper({ userEmail, isAdmin }: { userEmail: string; isAdmin: boolean }) {
   const pathname = usePathname()
@@ -52,7 +51,6 @@ export function NavbarWrapper({ userEmail, isAdmin }: { userEmail: string; isAdm
           <span className="text-xs px-3 hidden md:block" style={{ color: 'var(--text-secondary)' }}>
             {userEmail}
           </span>
-          <ThemeToggle />
           <SignOutButton />
         </div>
       </div>
