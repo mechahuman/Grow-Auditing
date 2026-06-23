@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
 import { Avatar } from '../../../components/Avatar'
-import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink } from 'lucide-react'
+import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink, Download, FileText } from 'lucide-react'
 
 interface TeamMember {
   id: string
@@ -244,7 +244,7 @@ function APIStatusSection() {
             </div>
           </div>
         ))}
-        </div>
+      </div>
       </div>
     </div>
   )
@@ -1981,77 +1981,183 @@ export default function AdminPage() {
 
       {/* Export & Reporting Section */}
       {section === 'export' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Export & Reporting</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Generate reports and export data</p>
-          </div>
-          <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-lg font-semibold">🚀 Feature Coming Soon</p>
-            <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>We're building this feature. Stay tuned!</p>
+        <div className="flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="space-y-8 w-full max-w-6xl px-6">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold">Export & Reporting</h1>
+              <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Generate PDF reports and export data</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Executive Summary */}
+            <div className="glass-card p-6 rounded-xl flex flex-col justify-between" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <div>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: 'rgba(168, 85, 247, 0.15)' }}>
+                  <FileText size={20} style={{ color: '#a855f7' }} />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Executive Summary</h3>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
+                  High-level snapshot of the platform's current state. Includes total leads, team members, and a score breakdown.
+                </p>
+              </div>
+              <button 
+                onClick={async () => {
+                  const { default: jsPDF } = await import('jspdf');
+                  const autoTable = (await import('jspdf-autotable')).default;
+                  const doc = new jsPDF();
+                  
+                  doc.setFontSize(20);
+                  doc.text('Executive Summary Report', 14, 22);
+                  doc.setFontSize(11);
+                  doc.setTextColor(100);
+                  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+                  
+                  const totalLeadsCount = allLeads.length;
+                  const activeMembersCount = teamMembers.filter(m => m.active).length;
+                  
+                  const scoreCategories = {
+                    'Strong Fit (4.0+)': allLeads.filter(l => (l.lead_score_total || 0) >= 4.0).length,
+                    'Solid Fit (3.0 - 3.9)': allLeads.filter(l => (l.lead_score_total || 0) >= 3.0 && (l.lead_score_total || 0) < 4.0).length,
+                    'Fit (< 3.0)': allLeads.filter(l => (l.lead_score_total || 0) > 0 && (l.lead_score_total || 0) < 3.0).length,
+                    'Not Scored': allLeads.filter(l => !l.lead_score_total).length,
+                  };
+
+                  autoTable(doc, {
+                    startY: 40,
+                    head: [['Metric', 'Count']],
+                    body: [
+                      ['Total Leads', totalLeadsCount],
+                      ['Active Team Members', activeMembersCount],
+                      ['---', '---'],
+                      ['Strong Fit (4.0+)', scoreCategories['Strong Fit (4.0+)']],
+                      ['Solid Fit (3.0 - 3.9)', scoreCategories['Solid Fit (3.0 - 3.9)']],
+                      ['Fit (< 3.0)', scoreCategories['Fit (< 3.0)']],
+                      ['Not Scored', scoreCategories['Not Scored']]
+                    ],
+                    theme: 'grid',
+                    headStyles: { fillColor: [168, 85, 247] }
+                  });
+                  doc.save('Executive_Summary.pdf');
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+            </div>
+
+            {/* Top Leads Report */}
+            <div className="glass-card p-6 rounded-xl flex flex-col justify-between" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <div>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
+                  <Trophy size={20} style={{ color: '#10b981' }} />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Top Leads Report</h3>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
+                  A minimalist, table-based list of the best leads currently in the system (Score 3.5+).
+                </p>
+              </div>
+              <button 
+                onClick={async () => {
+                  const { default: jsPDF } = await import('jspdf');
+                  const autoTable = (await import('jspdf-autotable')).default;
+                  const doc = new jsPDF();
+                  
+                  doc.setFontSize(20);
+                  doc.text('Top Leads Report (Score 3.5+)', 14, 22);
+                  doc.setFontSize(11);
+                  doc.setTextColor(100);
+                  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+                  const topLeadsList = allLeads
+                    .filter(l => (l.lead_score_total || 0) >= 3.5)
+                    .sort((a, b) => (b.lead_score_total || 0) - (a.lead_score_total || 0));
+
+                  const tableData = topLeadsList.map(lead => [
+                    lead.lead_name,
+                    lead.youtube_channel_id || 'N/A',
+                    lead.lead_score_total?.toFixed(1) || 'N/A',
+                    lead.subscriber_count ? lead.subscriber_count.toLocaleString() : 'N/A',
+                    lead.assigned_to_member || 'Unassigned'
+                  ]);
+
+                  autoTable(doc, {
+                    startY: 40,
+                    head: [['Channel Name', 'Channel ID', 'Score', 'Subscribers', 'Assigned To']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [16, 185, 129] }
+                  });
+                  doc.save('Top_Leads_Report.pdf');
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+            </div>
+
+            {/* Team Activity Report */}
+            <div className="glass-card p-6 rounded-xl flex flex-col justify-between" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+              <div>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
+                  <Users size={20} style={{ color: '#3b82f6' }} />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Team Activity Report</h3>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>
+                  A clean breakdown of team engagement. Includes team member name, leads assigned, and last login date.
+                </p>
+              </div>
+              <button 
+                onClick={async () => {
+                  const { default: jsPDF } = await import('jspdf');
+                  const autoTable = (await import('jspdf-autotable')).default;
+                  const doc = new jsPDF();
+                  
+                  doc.setFontSize(20);
+                  doc.text('Team Activity Report', 14, 22);
+                  doc.setFontSize(11);
+                  doc.setTextColor(100);
+                  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+                  const tableData = teamMembers
+                    .filter(m => m.active)
+                    .map(member => {
+                      const memberLeadsCount = allLeads.filter(l => (l.user_id || '') === (member.user_id || member.id)).length;
+                      let lastLogin = 'Never';
+                      if (member.last_sign_in_at) {
+                        lastLogin = new Date(member.last_sign_in_at).toLocaleDateString();
+                      }
+                      return [
+                        member.full_name,
+                        member.role,
+                        memberLeadsCount,
+                        lastLogin
+                      ];
+                    });
+
+                  autoTable(doc, {
+                    startY: 40,
+                    head: [['Team Member', 'Role', 'Leads Assigned', 'Last Login Date']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [59, 130, 246] }
+                  });
+                  doc.save('Team_Activity_Report.pdf');
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all hover:opacity-90"
+                style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}
+              >
+                <Download size={16} />
+                Download PDF
+              </button>
+            </div>
           </div>
         </div>
+      </div>
       )}
-
-      {/* Placeholder — kept for future */}
-      {false && section === 'export' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Export & Reporting</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Generate reports and export data</p>
-          </div>
-
-          {/* Export Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* CSV Export */}
-            <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-2">CSV Export</h3>
-              <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Export team performance data as CSV</p>
-              <button onClick={handleExportCSV} className="btn-primary w-full px-3 py-2 text-sm">
-                Download CSV
-              </button>
-            </div>
-
-            {/* Monthly Summary */}
-            <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-2">Monthly Summary</h3>
-              <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Performance summary for current month</p>
-              <button
-                disabled
-                className="w-full px-3 py-2 text-sm rounded-lg"
-                style={{ background: 'rgba(168, 85, 247, 0.1)', color: 'var(--text-muted)', opacity: 0.5 }}
-              >
-                Coming Soon
-              </button>
-            </div>
-
-            {/* Scheduled Reports */}
-            <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-2">Scheduled Reports</h3>
-              <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Email reports on schedule</p>
-              <button
-                disabled
-                className="w-full px-3 py-2 text-sm rounded-lg"
-                style={{ background: 'rgba(168, 85, 247, 0.1)', color: 'var(--text-muted)', opacity: 0.5 }}
-              >
-                Coming Soon
-              </button>
-            </div>
-          </div>
-
-          {/* Recent Exports */}
-          <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-bold mb-4">Export Information</h3>
-            <div className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-              <p>✓ CSV format supported</p>
-              <p>✓ Includes team performance metrics</p>
-              <p>✓ Timestamped downloads</p>
-              <p>⚙ PDF and scheduled reports coming in Phase 7.2</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* API Integration Status Section */}
       {section === 'api' && <APIStatusSection />}
 
