@@ -125,10 +125,10 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           yPosition = 15
         }
         pdf.setFontSize(12)
-        pdf.setFont(undefined, 'bold')
+        pdf.setFont('Helvetica', 'bold')
         pdf.text(title, margin, yPosition)
         yPosition += 8
-        pdf.setFont(undefined, 'normal')
+        pdf.setFont('Helvetica', 'normal')
       }
 
       const addText = (text: string, fontSize = 10) => {
@@ -137,7 +137,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           yPosition = 15
         }
         pdf.setFontSize(fontSize)
-        pdf.setFont(undefined, 'normal')
+        pdf.setFont('Helvetica', 'normal')
         const lines = pdf.splitTextToSize(text, maxWidth)
         pdf.text(lines, margin, yPosition)
         yPosition += lines.length * 5 + 2
@@ -149,9 +149,9 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           yPosition = 15
         }
         pdf.setFontSize(10)
-        pdf.setFont(undefined, 'bold')
+        pdf.setFont('Helvetica', 'bold')
         pdf.text(`${key}:`, margin, yPosition)
-        pdf.setFont(undefined, 'normal')
+        pdf.setFont('Helvetica', 'normal')
         const lines = pdf.splitTextToSize(value, maxWidth - 50)
         pdf.text(lines, margin + 45, yPosition)
         yPosition += Math.max(lines.length * 5, 5) + 2
@@ -159,12 +159,12 @@ export default function LeadDetail({ lead, statusLabel }: any) {
 
       // Header with channel image and name
       pdf.setFontSize(16)
-      pdf.setFont(undefined, 'bold')
+      pdf.setFont('Helvetica', 'bold')
       pdf.text(lead.lead_name, margin, yPosition)
       yPosition += 8
 
       pdf.setFontSize(10)
-      pdf.setFont(undefined, 'normal')
+      pdf.setFont('Helvetica', 'normal')
       pdf.setTextColor(150, 150, 150)
       pdf.text(`@${lead.youtube_handle || 'YouTube Channel'}`, margin, yPosition)
       yPosition += 8
@@ -172,7 +172,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       // Found by badge
       pdf.setTextColor(0, 0, 0)
       pdf.setFontSize(9)
-      pdf.setFont(undefined, 'bold')
+      pdf.setFont('Helvetica', 'bold')
       pdf.text(`Found by: ${lead.found_by}`, margin, yPosition)
       yPosition += 1
       pdf.text(`Status: ${statusLabel}`, margin + 60, yPosition)
@@ -287,10 +287,10 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       if ((lead.strengths ?? []).length > 0) {
         yPosition += 2
         pdf.setFontSize(11)
-        pdf.setFont(undefined, 'bold')
+        pdf.setFont('Helvetica', 'bold')
         pdf.text('Strengths:', margin, yPosition)
         yPosition += 5
-        pdf.setFont(undefined, 'normal')
+        pdf.setFont('Helvetica', 'normal')
         lead.strengths.forEach((s: string) => {
           addText(`• ${s}`)
         })
@@ -300,10 +300,10 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       if ((lead.concerns ?? []).length > 0) {
         yPosition += 2
         pdf.setFontSize(11)
-        pdf.setFont(undefined, 'bold')
+        pdf.setFont('Helvetica', 'bold')
         pdf.text('Considerations:', margin, yPosition)
         yPosition += 5
-        pdf.setFont(undefined, 'normal')
+        pdf.setFont('Helvetica', 'normal')
         lead.concerns.forEach((c: string) => {
           addText(`• ${c}`)
         })
@@ -329,10 +329,10 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         if (lead.ai_confidence) addKeyValue('Confidence Level', lead.ai_confidence)
         if (lead.ai_confidence_reason) addText(lead.ai_confidence_reason)
         if ((lead.data_gaps ?? []).length > 0) {
-          pdf.setFont(undefined, 'bold')
+          pdf.setFont('Helvetica', 'bold')
           pdf.text('Data Gaps:', margin, yPosition)
           yPosition += 5
-          pdf.setFont(undefined, 'normal')
+          pdf.setFont('Helvetica', 'normal')
           lead.data_gaps.forEach((d: string) => {
             addText(`○ ${d}`)
           })
@@ -348,10 +348,10 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         }
         if (lead.remarks_ai_draft) {
           yPosition += 2
-          pdf.setFont(undefined, 'bold')
+          pdf.setFont('Helvetica', 'bold')
           pdf.text('AI Summary:', margin, yPosition)
           yPosition += 5
-          pdf.setFont(undefined, 'normal')
+          pdf.setFont('Helvetica', 'normal')
           addText(lead.remarks_ai_draft)
         }
       }
