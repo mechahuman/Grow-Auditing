@@ -112,12 +112,57 @@ export default function LeadDetail({ lead, statusLabel }: any) {
   async function handleDownloadPDF() {
     setIsDownloadingPdf(true)
     try {
+      // Load logo first
+      const loadLogo = (): Promise<string | null> => {
+        return new Promise((resolve) => {
+          const logo = new Image()
+          logo.crossOrigin = 'anonymous'
+          logo.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = logo.width
+            canvas.height = logo.height
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(logo, 0, 0)
+              resolve(canvas.toDataURL('image/png'))
+            } else {
+              resolve(null)
+            }
+          }
+          logo.onerror = () => resolve(null)
+          logo.src = '/apple-touch-icon.png'
+        })
+      }
+
+      const logoData = await loadLogo()
+
       const pdf = new jsPDF('p', 'mm', 'a4')
       let yPosition = 15
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
       const margin = 15
       const maxWidth = pageWidth - 2 * margin
+
+      // Add logo to top left
+      if (logoData) {
+        try {
+          pdf.addImage(logoData, 'PNG', margin, 8, 12, 12)
+        } catch (e) {
+          // Logo failed to add, continue without it
+        }
+      }
+
+      // Add download date to top right
+      const today = new Date()
+      const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      pdf.setFontSize(9)
+      pdf.setFont('Helvetica', 'normal')
+      pdf.setTextColor(100, 100, 100)
+      const dateWidth = pdf.getTextWidth(dateStr)
+      pdf.text(dateStr, pageWidth - margin - dateWidth, 12)
+      pdf.setTextColor(0, 0, 0)
+
+      yPosition = 25
 
       const addSection = (title: string) => {
         if (yPosition > pageHeight - 30) {
