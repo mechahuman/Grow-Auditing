@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp, RefreshCw, Loader2, Check } from 'lucide-react'
+import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp, RefreshCw, Loader2, Check, Download } from 'lucide-react'
 import { Avatar } from './Avatar'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 export default function LeadDetail({ lead, statusLabel }: any) {
   const router = useRouter()
@@ -12,6 +14,8 @@ export default function LeadDetail({ lead, statusLabel }: any) {
   const [re_enriching, setReEnriching] = useState(false)
   const [showReEnrichModal, setShowReEnrichModal] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+  const reportRef = useRef<HTMLDivElement>(null)
 
   const initials = lead.lead_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -107,6 +111,68 @@ export default function LeadDetail({ lead, statusLabel }: any) {
     }
   }
 
+  async function handleDownloadPDF() {
+    if (!reportRef.current) return
+    setIsDownloadingPdf(true)
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: '#0a0a0f',
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+
+      const imgWidth = pdfWidth - 20
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+      let position = 10
+
+      const logo = new Image()
+      logo.src = '/apple-touch-icon.png'
+      logo.onload = () => {
+        pdf.addImage(logo, 'PNG', 10, 8, 12, 12)
+
+        pdf.addImage(imgData, 'PNG', 10, position + 20, imgWidth, imgHeight)
+        heightLeft -= pdfHeight - 40
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 10, position + 20, imgWidth, imgHeight)
+          heightLeft -= pdfHeight - 20
+        }
+
+        pdf.save(`${lead.lead_name}-Audit.pdf`)
+        showToast('PDF downloaded successfully!')
+        setIsDownloadingPdf(false)
+      }
+
+      logo.onerror = () => {
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
+        heightLeft -= pdfHeight - 20
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
+          heightLeft -= pdfHeight - 20
+        }
+
+        pdf.save(`${lead.lead_name}-Audit.pdf`)
+        showToast('PDF downloaded successfully!')
+        setIsDownloadingPdf(false)
+      }
+    } catch (error) {
+      console.error('PDF download failed:', error)
+      showToast('Failed to download PDF', false)
+      setIsDownloadingPdf(false)
+    }
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Toast */}
@@ -166,6 +232,13 @@ export default function LeadDetail({ lead, statusLabel }: any) {
               <RefreshCw size={16} /> Re-Enrich
             </>}
           </button>
+          <button onClick={handleDownloadPDF} disabled={isDownloadingPdf} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50" style={{ background: 'rgba(164, 244, 201, 0.12)', color: '#A4F4C9', border: '1px solid rgba(164, 244, 201, 0.3)' }}>
+            {isDownloadingPdf ? <>
+              <Loader2 size={16} className="animate-spin" />Generating…
+            </> : <>
+              <Download size={16} />
+            </>}
+          </button>
           <button onClick={() => router.push(`/leads/${lead.id}/edit`)} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #a855f7 0%, #d946ef 100%)', color: '#fff', border: '1px solid rgba(168, 85, 247, 0.5)' }}>
             <Pencil size={16} /> Edit
           </button>
@@ -175,6 +248,8 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         </div>
       </div>
 
+      {/* Report Content */}
+      <div ref={reportRef} className="space-y-6">
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -584,6 +659,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           </button>
         </div>
       )}
+      </div>
     </div>
   )
 }
