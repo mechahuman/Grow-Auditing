@@ -470,7 +470,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
               <RefreshCw size={16} /> Re-Enrich
             </>}
           </button>
-          <button onClick={handleDownloadPDF} disabled={isDownloadingPdf} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50" style={{ background: 'rgba(164, 244, 201, 0.12)', color: '#A4F4C9', border: '1px solid rgba(164, 244, 201, 0.3)' }}>
+          <button onClick={handleDownloadPDF} disabled={isDownloadingPdf} className="px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-50" style={{ background: 'rgba(96, 165, 250, 0.12)', color: '#60A5FA', border: '1px solid rgba(96, 165, 250, 0.3)' }}>
             {isDownloadingPdf ? <>
               <Loader2 size={16} className="animate-spin" />Generating…
             </> : <>
