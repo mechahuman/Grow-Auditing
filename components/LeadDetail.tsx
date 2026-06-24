@@ -359,12 +359,12 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         yPosition += 3
         addSection('RED FLAGS')
         lead.ai_red_flags.forEach((flag: string) => {
-          addText(`⚠️ ${flag}`)
+          addText(`${flag}`)
         })
       } else {
         yPosition += 3
         addSection('RED FLAGS')
-        addText('✓ No red flags detected')
+        addText('No red flags detected')
       }
 
       // AI Confidence
@@ -799,12 +799,12 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         {(lead.ai_red_flags && lead.ai_red_flags.length > 0) ? (
           <div className="rounded-xl p-4 mt-6" style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.3)' }}>
             <p className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5" style={{ color: '#FF6B6B' }}>
-              ⚠️ Red Flags
+              Red Flags
             </p>
             <ul className="space-y-2">
               {lead.ai_red_flags.map((flag: string, i: number) => (
                 <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <span style={{ color: '#FF6B6B' }}>⚠️</span>{flag}
+                  <span style={{ color: '#FF6B6B' }}>•</span> {flag}
                 </li>
               ))}
             </ul>
@@ -812,7 +812,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         ) : (
           <div className="rounded-xl p-4 mt-6" style={{ background: 'rgba(164,244,201,0.08)', border: '1px solid rgba(164,244,201,0.3)' }}>
             <p className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: '#A4F4C9' }}>
-              ✓ No red flags detected
+              No red flags detected
             </p>
           </div>
         )}
@@ -850,7 +850,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       {/* Final Notes - Elongated and Detailed */}
       {(lead.remarks_final || lead.remarks_ai_draft) && (
         <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.1) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>📌 Final Notes & Recommendations</h3>
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Final Notes & Recommendations</h3>
 
           {lead.remarks_final && (
             <div className="mb-8 p-6 rounded-xl" style={{ background: 'rgba(241, 91, 181, 0.08)', border: '2px solid rgba(241, 91, 181, 0.3)' }}>
@@ -880,7 +880,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       {/* Outreach Email Draft */}
       {lead.outreach_email_draft && (
         <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(164,244,201,0.1) 0%, rgba(110,180,152,0.06) 100%)', border: '1px solid rgba(164,244,201,0.2)' }}>
-          <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#A4F4C9', borderBottom: '1px solid rgba(164,244,201,0.3)', letterSpacing: '1.5px' }}>📧 Outreach Email Draft</h3>
+          <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#A4F4C9', borderBottom: '1px solid rgba(164,244,201,0.3)', letterSpacing: '1.5px' }}>Outreach Email Draft</h3>
           <div className="text-sm leading-relaxed p-6 rounded-xl whitespace-pre-wrap font-mono" style={{ background: 'rgba(164,244,201,0.08)', border: '1px solid rgba(164,244,201,0.2)', color: 'var(--text-primary)', lineHeight: '1.8' }}>
             {lead.outreach_email_draft}
           </div>
