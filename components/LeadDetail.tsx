@@ -421,11 +421,14 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         </div>
       )}
 
-      {/* Re-Enrich confirmation modal */}
+      {/* Re-Enrich confirmation notification */}
       {showReEnrichModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="glass-card p-6 max-w-sm w-full mx-4" style={{ background: 'rgba(20, 20, 30, 0.9)', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
-            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Re-enrich this channel?</h3>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm mx-4" style={{ animation: 'slideDownIn 0.2s ease-out' }}>
+          <div className="glass-card p-6" style={{ background: 'rgba(20, 20, 30, 0.9)', border: '1px solid rgba(164, 244, 201, 0.3)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <RefreshCw size={18} style={{ color: '#A4F4C9' }} />
+              <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Re-enrich this channel?</h3>
+            </div>
             <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>We'll fetch fresh YouTube data and re-run AI analysis. Your edited remarks and G-Factor will be preserved.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowReEnrichModal(false)} className="btn-ghost flex-1" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>Cancel</button>
