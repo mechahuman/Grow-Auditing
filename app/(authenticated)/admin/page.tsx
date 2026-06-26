@@ -1749,7 +1749,7 @@ export default function AdminPage() {
 
           {duplicates.length === 0 ? (
             <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No duplicates found. All channels are unique! ✨</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No duplicates found. All channels are unique!</p>
             </div>
           ) : (
             <div className="glass-card overflow-hidden rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
