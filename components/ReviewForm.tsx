@@ -213,18 +213,18 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
 
       {/* Score info modal */}
       {showScoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowScoreModal(false)}>
-          <div className="glass-card p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold mb-3 text-gradient">How the Score Works</h3>
-            <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>Score = 1 + (YT + Sub Range + S2V + G-Factor normalized)</p>
-            <ul className="text-sm space-y-2" style={{ color: 'var(--text-primary)' }}>
-              <li><span style={{ color: 'var(--text-secondary)' }}>YT Factor:</span> 1 if channel exists, 0 if not</li>
-              <li><span style={{ color: 'var(--text-secondary)' }}>Sub Range:</span> 0 (&lt;1k) · 0.5 (1k–4.9k) · 1 (5k+)</li>
-              <li><span style={{ color: 'var(--text-secondary)' }}>S2V:</span> 1 if avg views / subs ≥ 10%, else 0</li>
-              <li><span style={{ color: 'var(--text-secondary)' }}>G-Factor:</span> (G − 1) / 4 → maps 1–5 to 0–1</li>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xl" onClick={() => setShowScoreModal(false)}>
+          <div className="p-5 max-w-xs w-full mx-4 rounded-2xl" style={{ background: 'rgba(12,12,18,0.98)', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold mb-2 text-gradient">How the Score is Calculated</h3>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Score = 1 + (YT + Sub Range + S2V + G-Factor norm)</p>
+            <ul className="text-xs space-y-2">
+              <li className="flex justify-between gap-2"><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>YT Factor</span><span style={{ color: 'var(--text-muted)' }}>1 if YouTube exists, else 0</span></li>
+              <li className="flex justify-between gap-2"><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Sub Range</span><span style={{ color: 'var(--text-muted)' }}>0 · 0.5 · 1 by sub count</span></li>
+              <li className="flex justify-between gap-2"><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>S2V Factor</span><span style={{ color: 'var(--text-muted)' }}>1 if views/subs ≥ 10%, else 0</span></li>
+              <li className="flex justify-between gap-2"><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>G-Factor</span><span style={{ color: 'var(--text-muted)' }}>(G − 1) / 4 → 0.0 to 1.0</span></li>
             </ul>
-            <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>Range: 1.0 (min) — 5.0 (max)</p>
-            <button onClick={() => setShowScoreModal(false)} className="btn-ghost w-full mt-4 text-sm">Close</button>
+            <p className="text-xs mt-3 pb-3" style={{ color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>Range: 1.0 (min) — 5.0 (max)</p>
+            <button onClick={() => setShowScoreModal(false)} className="btn-ghost w-full mt-3 text-xs">Dismiss</button>
           </div>
         </div>
       )}
@@ -571,10 +571,9 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
                 onClick={() => setShowScoreModal(true)}
                 className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-black transition-all hover:scale-110 self-start mt-0.5"
                 style={{
-                  background: `${scoreColor}18`,
-                  border: `1.5px solid ${scoreColor}50`,
-                  color: scoreColor,
-                  boxShadow: `0 0 8px ${scoreColor}25`,
+                  background: 'rgba(120,120,135,0.12)',
+                  border: '1.5px solid rgba(120,120,135,0.3)',
+                  color: 'rgba(155,155,170,0.85)',
                   lineHeight: 1,
                 }}
                 title="How the score is calculated"
