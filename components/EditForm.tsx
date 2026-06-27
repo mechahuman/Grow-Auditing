@@ -19,6 +19,7 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [copiedEmail, setCopiedEmail] = useState(false)
 
   // Form state
   const [leadName, setLeadName] = useState(lead.lead_name || '')
@@ -360,12 +361,16 @@ export function EditForm({ lead, teamMembers, statusOptions }: EditFormProps) {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(outreachEmailDraft)
-                        setToast({ message: 'Email copied to clipboard', type: 'success' })
-                        setTimeout(() => setToast(null), 2000)
+                        setCopiedEmail(true)
+                        setTimeout(() => setCopiedEmail(false), 2000)
                       }}
-                      className="mt-2 px-3 py-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="mt-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors"
+                      style={copiedEmail
+                        ? { borderColor: '#86efac', color: '#16a34a', background: '#f0fdf4' }
+                        : { borderColor: '#d1d5db', color: '#374151', background: 'white' }
+                      }
                     >
-                      Copy Email
+                      {copiedEmail ? 'Copied!' : 'Copy Email'}
                     </button>
                   )}
                 </div>

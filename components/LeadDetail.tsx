@@ -16,6 +16,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
   const [showScoreModal, setShowScoreModal] = useState(false)
+  const [copiedEmail, setCopiedEmail] = useState(false)
 
   const initials = lead.lead_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -924,11 +925,15 @@ export default function LeadDetail({ lead, statusLabel }: any) {
           <button
             onClick={() => {
               navigator.clipboard.writeText(lead.outreach_email_draft)
-              showToast('Email copied to clipboard!')
+              setCopiedEmail(true)
+              setTimeout(() => setCopiedEmail(false), 2000)
             }}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
-            style={{ background: 'rgba(164,244,201,0.15)', border: '1px solid rgba(164,244,201,0.3)', color: '#A4F4C9' }}>
-            Copy Email
+            style={copiedEmail
+              ? { background: 'rgba(164,244,201,0.25)', border: '1px solid rgba(164,244,201,0.5)', color: '#A4F4C9' }
+              : { background: 'rgba(164,244,201,0.15)', border: '1px solid rgba(164,244,201,0.3)', color: '#A4F4C9' }
+            }>
+            {copiedEmail ? 'Copied!' : 'Copy Email'}
           </button>
         </div>
       )}
