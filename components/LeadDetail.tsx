@@ -14,6 +14,7 @@ export default function LeadDetail({ lead, statusLabel }: any) {
   const [showReEnrichModal, setShowReEnrichModal] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+  const [showScoreModal, setShowScoreModal] = useState(false)
 
   const initials = lead.lead_name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -421,6 +422,24 @@ export default function LeadDetail({ lead, statusLabel }: any) {
         </div>
       )}
 
+      {/* Score breakdown modal */}
+      {showScoreModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowScoreModal(false)}>
+          <div className="glass-card p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold mb-3 text-gradient">How the Score is Calculated</h3>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>Score = 1 + (YT Factor + Sub Range + S2V Factor + G-Factor norm)</p>
+            <ul className="text-sm space-y-3">
+              <li><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>YT Factor</span><span style={{ color: 'var(--text-muted)' }}> — 1 if a YouTube channel exists, 0 if not</span></li>
+              <li><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>Sub Range</span><span style={{ color: 'var(--text-muted)' }}> — 0 (&lt;1k subs) · 0.5 (1k–4.9k) · 1 (5k+)</span></li>
+              <li><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>S2V Factor</span><span style={{ color: 'var(--text-muted)' }}> — 1 if avg views / subscribers ≥ 10%, else 0</span></li>
+              <li><span className="font-semibold" style={{ color: 'var(--text-primary)' }}>G-Factor</span><span style={{ color: 'var(--text-muted)' }}> — (G − 1) / 4 → maps 1–5 to 0.0–1.0</span></li>
+            </ul>
+            <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>Range: 1.0 (min) — 5.0 (max)</p>
+            <button onClick={() => setShowScoreModal(false)} className="btn-ghost w-full mt-5 text-sm">Close</button>
+          </div>
+        </div>
+      )}
+
       {/* Re-Enrich confirmation notification */}
       {showReEnrichModal && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm mx-4" style={{ animation: 'slideDownIn 0.2s ease-out' }}>
@@ -654,11 +673,25 @@ export default function LeadDetail({ lead, statusLabel }: any) {
 
           {/* Score Card */}
           <div className="glass-card p-5" style={{ borderColor: `${scoreColor}40` }}>
-            <div className="flex items-end justify-between mb-3">
+            <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="text-4xl font-black" style={{ color: scoreColor }}>{lead.lead_score_total?.toFixed(2) || '—'}</div>
                 <div className="text-sm font-semibold mt-0.5" style={{ color: scoreColor }}>{scoreLabel}</div>
               </div>
+              <button
+                onClick={() => setShowScoreModal(true)}
+                className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-black transition-all hover:scale-110 mt-0.5"
+                style={{
+                  background: `${scoreColor}18`,
+                  border: `1.5px solid ${scoreColor}50`,
+                  color: scoreColor,
+                  boxShadow: `0 0 8px ${scoreColor}25`,
+                  lineHeight: 1,
+                }}
+                title="How the score is calculated"
+              >
+                !
+              </button>
             </div>
             <div className="w-full h-2 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
               <div className="h-full rounded-full transition-all duration-500" style={{ width: `${((lead.lead_score_total - 1) / 4) * 100}%`, background: `linear-gradient(90deg, ${scoreColor}, ${scoreColor}99)` }} />

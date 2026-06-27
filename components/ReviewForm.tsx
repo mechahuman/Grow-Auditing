@@ -567,8 +567,19 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
                 <div className="text-4xl font-black" style={{ color: scoreColor }}>{total.toFixed(2)}</div>
                 <div className="text-sm font-semibold mt-0.5" style={{ color: scoreColor }}>{scoreLabel}</div>
               </div>
-              <button onClick={() => setShowScoreModal(true)} className="btn-ghost text-xs px-2 py-1 flex items-center gap-1">
-                <Info size={12} /> How it's scored
+              <button
+                onClick={() => setShowScoreModal(true)}
+                className="flex items-center justify-center w-6 h-6 rounded-full text-xs font-black transition-all hover:scale-110 self-start mt-0.5"
+                style={{
+                  background: `${scoreColor}18`,
+                  border: `1.5px solid ${scoreColor}50`,
+                  color: scoreColor,
+                  boxShadow: `0 0 8px ${scoreColor}25`,
+                  lineHeight: 1,
+                }}
+                title="How the score is calculated"
+              >
+                !
               </button>
             </div>
             <div className="w-full h-2 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
