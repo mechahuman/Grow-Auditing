@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp, RefreshCw, Loader2, Check, Download } from 'lucide-react'
 import { Avatar } from './Avatar'
@@ -423,8 +424,8 @@ export default function LeadDetail({ lead, statusLabel }: any) {
       )}
 
       {/* Score breakdown modal */}
-      {showScoreModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xl" onClick={() => setShowScoreModal(false)}>
+      {showScoreModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-xl" onClick={() => setShowScoreModal(false)}>
           <div className="p-5 max-w-xs w-full mx-4 rounded-2xl" style={{ background: 'rgba(12,12,18,0.98)', border: '1px solid rgba(255,255,255,0.08)' }} onClick={e => e.stopPropagation()}>
             <h3 className="font-bold mb-2 text-gradient">How the Score is Calculated</h3>
             <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Score = 1 + (YT + Sub Range + S2V + G-Factor norm)</p>
@@ -437,7 +438,8 @@ export default function LeadDetail({ lead, statusLabel }: any) {
             <p className="text-xs mt-3 pb-3" style={{ color: 'var(--text-muted)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>Range: 1.0 (min) — 5.0 (max)</p>
             <button onClick={() => setShowScoreModal(false)} className="btn-ghost w-full mt-3 text-xs">Dismiss</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Re-Enrich confirmation notification */}
