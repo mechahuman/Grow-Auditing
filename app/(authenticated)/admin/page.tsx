@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
 import { Avatar } from '../../../components/Avatar'
 import EnrichForm from '../../../components/EnrichForm'
-import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink, Download, FileText } from 'lucide-react'
+import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink, Download, FileText, Pencil, RefreshCw, LayoutGrid, LayoutList, X, TrendingUp, TrendingDown, Minus, Play } from 'lucide-react'
 
 interface TeamMember {
   id: string
@@ -91,6 +91,10 @@ interface AdminLead {
   created_at: string
   lead_score_total: number | null
   status: string
+  found_by: string
+  subscriber_count: number | null
+  youtube_handle: string | null
+  channel_thumbnail_url: string | null
 }
 
 interface LeadManagementState {
@@ -299,6 +303,14 @@ export default function AdminPage() {
   // Enrich Section State
   const [adminLeads, setAdminLeads] = useState<AdminLead[]>([])
   const [adminLeadsLoading, setAdminLeadsLoading] = useState(false)
+  const [enrichView, setEnrichView] = useState<'table' | 'grid'>('table')
+  const [enrichSearchName, setEnrichSearchName] = useState('')
+  const [enrichSubRange, setEnrichSubRange] = useState<'all' | 'under1k' | '1k-5k' | '5k-10k' | '10k-50k' | 'over50k'>('all')
+  const [enrichScoreRange, setEnrichScoreRange] = useState<'all' | 'strong' | 'solid' | 'weak' | 'poor'>('all')
+  const [enrichFoundBy, setEnrichFoundBy] = useState('all')
+  const [showEnrichForm, setShowEnrichForm] = useState(false)
+  const [enrichDeletingId, setEnrichDeletingId] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetchAdminData()
@@ -327,7 +339,7 @@ export default function AdminPage() {
 
       const { data, error } = await supabase
         .from('leads')
-        .select('id, lead_name, created_at, lead_score_total, status')
+        .select('id, lead_name, found_by, subscriber_count, lead_score_total, status, created_at, youtube_handle, channel_thumbnail_url')
         .eq('user_id', user.id)
         .eq('draft', false)
         .order('created_at', { ascending: false })
@@ -341,6 +353,37 @@ export default function AdminPage() {
       setAdminLeadsLoading(false)
     }
   }
+
+  const enrichFilteredLeads = useMemo(() => {
+    let result = adminLeads
+    if (enrichSearchName) {
+      const q = enrichSearchName.toLowerCase()
+      result = result.filter((l) => l.lead_name.toLowerCase().includes(q))
+    }
+    if (enrichSubRange !== 'all') {
+      result = result.filter((l) => {
+        const c = l.subscriber_count ?? 0
+        if (enrichSubRange === 'under1k') return c < 1000
+        if (enrichSubRange === '1k-5k') return c >= 1000 && c < 5000
+        if (enrichSubRange === '5k-10k') return c >= 5000 && c < 10000
+        if (enrichSubRange === '10k-50k') return c >= 10000 && c < 50000
+        if (enrichSubRange === 'over50k') return c >= 50000
+        return true
+      })
+    }
+    if (enrichScoreRange !== 'all') {
+      result = result.filter((l) => {
+        const s = l.lead_score_total ?? 0
+        if (enrichScoreRange === 'strong') return s >= 4.0
+        if (enrichScoreRange === 'solid') return s >= 3.0 && s < 4.0
+        if (enrichScoreRange === 'weak') return s >= 2.0 && s < 3.0
+        if (enrichScoreRange === 'poor') return s < 2.0
+        return true
+      })
+    }
+    if (enrichFoundBy !== 'all') result = result.filter((l) => l.found_by === enrichFoundBy)
+    return result
+  }, [adminLeads, enrichSearchName, enrichSubRange, enrichScoreRange, enrichFoundBy])
 
   async function fetchLeads() {
     try {
@@ -744,68 +787,328 @@ export default function AdminPage() {
 
       {/* Enrich Section */}
       {section === 'enrich' && (
-        <div className="space-y-8">
-          <EnrichForm progressPath="/admin/enrich/progress" />
-
-          {/* Admin's Enriched Leads */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold">My Leads</h2>
-              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Leads you've enriched</p>
+        showEnrichForm ? (
+          <div className="animate-fade-in">
+            <button
+              onClick={() => setShowEnrichForm(false)}
+              className="mb-6 text-sm font-medium transition-colors"
+              style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}
+            >
+              ← Back to Leads
+            </button>
+            <EnrichForm progressPath="/admin/enrich/progress" />
+          </div>
+        ) : (
+          <div className="animate-fade-in">
+            {/* Page header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-gradient-primary mb-1">Saved Leads</h1>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {adminLeadsLoading ? 'Loading...' : `${enrichFilteredLeads.length} leads in your pipeline`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowEnrichForm(true)}
+                className="btn-primary inline-flex items-center gap-2"
+              >
+                <Plus size={16} /> New Lead
+              </button>
             </div>
 
+            {/* Toolbar */}
+            <div className="card-glass px-5 py-4 mb-6">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                {/* Search */}
+                <div className="relative flex-1 max-w-xs">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                          style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search leads…"
+                    value={enrichSearchName}
+                    onChange={(e) => setEnrichSearchName(e.target.value)}
+                    className="input-field pl-9 text-sm py-2"
+                  />
+                </div>
+
+                {/* Right-side controls */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Subscriber filter */}
+                  <select
+                    value={enrichSubRange}
+                    onChange={(e) => setEnrichSubRange(e.target.value as any)}
+                    style={{
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '0.625rem',
+                      padding: '0.5rem 0.875rem',
+                      fontSize: '0.8125rem',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      minWidth: '120px',
+                    }}
+                  >
+                    <option value="all">All subs</option>
+                    <option value="under1k">&lt; 1K</option>
+                    <option value="1k-5k">1K – 5K</option>
+                    <option value="5k-10k">5K – 10K</option>
+                    <option value="10k-50k">10K – 50K</option>
+                    <option value="over50k">50K+</option>
+                  </select>
+
+                  {/* Score filter */}
+                  <select
+                    value={enrichScoreRange}
+                    onChange={(e) => setEnrichScoreRange(e.target.value as any)}
+                    style={{
+                      background: 'var(--bg-surface)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '0.625rem',
+                      padding: '0.5rem 0.875rem',
+                      fontSize: '0.8125rem',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      minWidth: '120px',
+                    }}
+                  >
+                    <option value="all">All scores</option>
+                    <option value="strong">Strong fit (≥4.0)</option>
+                    <option value="solid">Solid fit (3–3.99)</option>
+                    <option value="weak">Weak fit (2–2.99)</option>
+                    <option value="poor">Poor fit (&lt;2)</option>
+                  </select>
+
+                  {/* View toggle */}
+                  <div
+                    className="flex rounded-lg overflow-hidden"
+                    style={{ border: '1px solid var(--border-subtle)' }}
+                  >
+                    <button
+                      onClick={() => setEnrichView('table')}
+                      title="Table view"
+                      className="px-3 py-2 transition-all"
+                      style={{
+                        background: enrichView === 'table' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
+                        color: enrichView === 'table' ? 'var(--text-primary)' : 'var(--text-muted)',
+                      }}
+                    >
+                      <LayoutList size={16} />
+                    </button>
+                    <button
+                      onClick={() => setEnrichView('grid')}
+                      title="Grid view"
+                      className="px-3 py-2 transition-all"
+                      style={{
+                        background: enrichView === 'grid' ? 'rgba(168, 85, 247, 0.2)' : 'transparent',
+                        color: enrichView === 'grid' ? 'var(--text-primary)' : 'var(--text-muted)',
+                        borderLeft: '1px solid var(--border-subtle)',
+                      }}
+                    >
+                      <LayoutGrid size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Result count */}
+              <p className="text-xs mt-3" style={{ color: 'var(--text-muted)' }}>
+                Showing <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{enrichFilteredLeads.length}</span> of{' '}
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{adminLeads.length}</span> leads
+              </p>
+            </div>
+
+            {/* Leads display */}
             {adminLeadsLoading ? (
-              <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+              <div className="card-glass p-16 text-center">
+                <div className="inline-block mb-4 w-8 h-8 border-4 border-transparent border-t-purple-500 rounded-full animate-spin"></div>
+                <p style={{ color: 'var(--text-secondary)' }}>Loading leads...</p>
               </div>
-            ) : adminLeads.length === 0 ? (
-              <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>You haven't enriched any leads yet. Start by filling out the form above!</p>
+            ) : enrichFilteredLeads.length === 0 && adminLeads.length === 0 ? (
+              <div className="card-glass p-16 text-center">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                     style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+                  <Play size={26} style={{ color: 'var(--text-secondary)' }} />
+                </div>
+                <p className="text-base font-semibold mb-1">No leads yet</p>
+                <p className="text-sm mb-5" style={{ color: 'var(--text-secondary)' }}>Enrich your first YouTube lead to get started</p>
+                <button
+                  onClick={() => setShowEnrichForm(true)}
+                  className="btn-primary inline-flex"
+                >
+                  + Enrich a Lead
+                </button>
               </div>
-            ) : (
-              <div className="glass-card overflow-hidden rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+            ) : enrichFilteredLeads.length === 0 ? (
+              <div className="card-glass p-16 text-center">
+                <Search size={32} className="mx-auto mb-3 opacity-40" style={{ color: 'var(--text-muted)' }} />
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No leads match your filters</p>
+              </div>
+            ) : enrichView === 'table' ? (
+              <div className="card-glass overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full">
                     <thead>
-                      <tr style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-subtle)' }}>
-                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Lead Name</th>
-                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Score</th>
-                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Status</th>
-                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Date Added</th>
-                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}></th>
+                      <tr style={{
+                        borderBottom: '1px solid rgba(168, 85, 247, 0.2)',
+                        background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                      }}>
+                        {['Lead', 'Found By', 'Subscribers', 'Score', 'Status', 'Date Added', 'Actions'].map((h) => (
+                          <th
+                            key={h}
+                            className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-widest"
+                            style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', letterSpacing: '0.05em' }}
+                          >
+                            {h}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {adminLeads.map((lead) => (
-                        <tr key={lead.id} className="border-b hover:bg-white/5 transition-colors" style={{ borderColor: 'var(--border-subtle)' }}>
-                          <td className="px-4 py-3">
-                            <p className="text-sm font-medium">{lead.lead_name}</p>
-                          </td>
-                          <td className="px-4 py-3">
-                            {lead.lead_score_total !== null ? (
-                              <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#d8b4fe' }}>
-                                {lead.lead_score_total.toFixed(1)}
+                      {enrichFilteredLeads.map((lead, idx) => (
+                        <tr
+                          key={lead.id}
+                          className="transition-all group hover:shadow-md cursor-pointer"
+                          style={{
+                            borderBottom: '1px solid rgba(168, 85, 247, 0.1)',
+                            background: idx % 2 === 0 ? 'transparent' : 'rgba(168, 85, 247, 0.04)',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.12)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(168, 85, 247, 0.04)')}
+                          onClick={() => router.push(`/admin/leads/${lead.id}/review`)}
+                        >
+                          {/* Lead name */}
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="transition-all group-hover:scale-110">
+                                <Avatar
+                                  thumbnailUrl={lead.channel_thumbnail_url}
+                                  initials={lead.lead_name.substring(0, 2).toUpperCase()}
+                                  name={lead.lead_name}
+                                  size="md"
+                                />
                               </div>
-                            ) : (
-                              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Not Scored</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium capitalize" style={{ background: 'rgba(236,72,153,0.1)', color: '#f472b6' }}>
-                              {lead.status === 'new' ? 'New' : lead.status}
+                              <div>
+                                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                  {lead.lead_name}
+                                </p>
+                                {lead.youtube_handle && (
+                                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{lead.youtube_handle}</p>
+                                )}
+                              </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+
+                          {/* Found by */}
+                          <td className="px-5 py-4">
+                            <span
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+                              style={{
+                                background: 'rgba(168, 85, 247, 0.12)',
+                                color: '#c084fc',
+                                border: '1px solid rgba(168, 85, 247, 0.25)',
+                              }}
+                            >
+                              {lead.found_by}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <Link href={`/admin/leads/${lead.id}/review`}>
-                              <button className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors" style={{ background: 'rgba(168,85,247,0.15)', color: '#d8b4fe' }}>
-                                Review
+
+                          {/* Subscribers */}
+                          <td className="px-5 py-4">
+                            <div className="flex items-center gap-2">
+                              <Users size={14} style={{ color: 'var(--text-muted)' }} />
+                              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                                {lead.subscriber_count !== null
+                                  ? lead.subscriber_count >= 1000000
+                                    ? `${(lead.subscriber_count / 1000000).toFixed(1)}M`
+                                    : lead.subscriber_count >= 1000
+                                    ? `${(lead.subscriber_count / 1000).toFixed(1)}K`
+                                    : lead.subscriber_count.toLocaleString()
+                                  : '—'}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Score */}
+                          <td className="px-5 py-4">
+                            <span
+                              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg"
+                              style={{
+                                background: lead.lead_score_total !== null
+                                  ? lead.lead_score_total >= 4.0
+                                    ? 'rgba(164, 244, 201, 0.15)'
+                                    : 'rgba(168, 85, 247, 0.15)'
+                                  : 'rgba(255, 255, 255, 0.08)',
+                                color: lead.lead_score_total !== null
+                                  ? lead.lead_score_total >= 4.0
+                                    ? '#A4F4C9'
+                                    : '#c084fc'
+                                  : 'var(--text-muted)',
+                              }}
+                            >
+                              {lead.lead_score_total !== null ? `${lead.lead_score_total.toFixed(1)} · ${lead.lead_score_total >= 4.0 ? 'Strong fit' : 'Solid fit'}` : '— Not Scored'}
+                            </span>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-5 py-4">
+                            <span
+                              className="badge capitalize text-xs font-semibold px-3 py-1.5 rounded-lg"
+                              style={{
+                                background: 'rgba(241, 91, 181, 0.12)',
+                                color: '#f15bb5',
+                                border: '1px solid rgba(241, 91, 181, 0.25)',
+                              }}
+                            >
+                              {lead.status}
+                            </span>
+                          </td>
+
+                          {/* Date */}
+                          <td className="px-5 py-4 text-sm font-medium" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            {new Date(lead.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/admin/leads/${lead.id}/review`)
+                                }}
+                                title="Review lead"
+                                className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
+                                style={{
+                                  background: 'rgba(168, 85, 247, 0.15)',
+                                  color: '#c084fc',
+                                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                                }}
+                              >
+                                <Pencil size={14} />
                               </button>
-                            </Link>
+                              <button
+                                title="Delete lead"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm('Delete this lead?')) {
+                                    setEnrichDeletingId(lead.id)
+                                    fetch(`/api/leads/${lead.id}`, { method: 'DELETE' }).then(() => fetchAdminLeads()).finally(() => setEnrichDeletingId(null))
+                                  }
+                                }}
+                                disabled={enrichDeletingId === lead.id}
+                                className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md disabled:opacity-40"
+                                style={{
+                                  background: 'rgba(255, 107, 107, 0.12)',
+                                  color: 'var(--error)',
+                                  border: '1px solid rgba(255, 107, 107, 0.25)',
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -813,9 +1116,141 @@ export default function AdminPage() {
                   </table>
                 </div>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {enrichFilteredLeads.map((lead) => (
+                  <div
+                    key={lead.id}
+                    onClick={() => router.push(`/admin/leads/${lead.id}/review`)}
+                    className="card-glass group overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
+                    }}
+                  >
+                    <div className="p-6 flex flex-col h-full">
+                      {/* Card header with avatar and score */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="transition-all group-hover:scale-110">
+                            <Avatar
+                              thumbnailUrl={lead.channel_thumbnail_url}
+                              initials={lead.lead_name.substring(0, 2).toUpperCase()}
+                              name={lead.lead_name}
+                              size="lg"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-base font-semibold leading-tight truncate" style={{ color: 'var(--text-primary)' }}>
+                              {lead.lead_name}
+                            </p>
+                            {lead.youtube_handle && (
+                              <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>@{lead.youtube_handle}</p>
+                            )}
+                          </div>
+                        </div>
+                        <span
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
+                          style={{
+                            background: lead.lead_score_total !== null
+                              ? lead.lead_score_total >= 4.0
+                                ? 'rgba(164, 244, 201, 0.15)'
+                                : 'rgba(168, 85, 247, 0.15)'
+                              : 'rgba(255, 255, 255, 0.08)',
+                            color: lead.lead_score_total !== null
+                              ? lead.lead_score_total >= 4.0
+                                ? '#A4F4C9'
+                                : '#c084fc'
+                              : 'var(--text-muted)',
+                          }}
+                        >
+                          {lead.lead_score_total !== null ? `${lead.lead_score_total.toFixed(1)} · ${lead.lead_score_total >= 4.0 ? 'Strong fit' : 'Solid fit'}` : '—'}
+                        </span>
+                      </div>
+
+                      {/* Divider */}
+                      <div style={{ borderTop: '1px solid rgba(168, 85, 247, 0.1)', marginBottom: '1rem' }} />
+
+                      {/* Stats row */}
+                      <div className="flex gap-3 mb-4">
+                        <div
+                          className="flex-1 rounded-xl px-3 py-3 text-center transition-all"
+                          style={{
+                            background: 'rgba(168, 85, 247, 0.1)',
+                            border: '1px solid rgba(168, 85, 247, 0.2)',
+                          }}
+                        >
+                          <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Subscribers</p>
+                          <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                            {lead.subscriber_count !== null
+                              ? lead.subscriber_count >= 1000000
+                                ? `${(lead.subscriber_count / 1000000).toFixed(1)}M`
+                                : lead.subscriber_count >= 1000
+                                ? `${(lead.subscriber_count / 1000).toFixed(1)}K`
+                                : lead.subscriber_count
+                              : '—'}
+                          </p>
+                        </div>
+                        <div
+                          className="flex-1 rounded-xl px-3 py-3 text-center transition-all"
+                          style={{
+                            background: 'rgba(241, 91, 181, 0.08)',
+                            border: '1px solid rgba(241, 91, 181, 0.15)',
+                          }}
+                        >
+                          <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Found By</p>
+                          <p className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>{lead.found_by}</p>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4 mt-auto" style={{ borderTop: '1px solid rgba(168, 85, 247, 0.1)' }}>
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                          {new Date(lead.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/admin/leads/${lead.id}/review`)
+                            }}
+                            title="Review lead"
+                            className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md"
+                            style={{
+                              background: 'rgba(168, 85, 247, 0.15)',
+                              color: '#c084fc',
+                              border: '1px solid rgba(168, 85, 247, 0.3)',
+                            }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            title="Delete lead"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm('Delete this lead?')) {
+                                setEnrichDeletingId(lead.id)
+                                fetch(`/api/leads/${lead.id}`, { method: 'DELETE' }).then(() => fetchAdminLeads()).finally(() => setEnrichDeletingId(null))
+                              }
+                            }}
+                            disabled={enrichDeletingId === lead.id}
+                            className="p-2 rounded-lg transition-all hover:scale-110 hover:shadow-md disabled:opacity-40"
+                            style={{
+                              background: 'rgba(255, 107, 107, 0.12)',
+                              color: 'var(--error)',
+                              border: '1px solid rgba(255, 107, 107, 0.25)',
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
+        )
       )}
 
       {/* Dashboard Section — Premium Balanced Grid Layout */}
