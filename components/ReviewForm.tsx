@@ -768,6 +768,113 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
           )}
         </div>
       </div>
+
+      {!lead.draft && (
+        <>
+          {/* Contact Details - Read-only for saved leads */}
+          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
+            <div className="glass-card p-5 mt-6">
+              <SectionTitle>Contact Details</SectionTitle>
+              <div className="space-y-2">
+                {lead.email && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Email</span>
+                    <a href={`mailto:${lead.email}`} className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>{lead.email}</a>
+                  </div>
+                )}
+                {lead.website && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Website</span>
+                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity truncate ml-2" style={{ color: '#A4F4C9' }}>{lead.website}</a>
+                  </div>
+                )}
+                {lead.instagram && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Instagram</span>
+                    <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>@username</a>
+                  </div>
+                )}
+                {lead.twitter && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Twitter / X</span>
+                    <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>@handle</a>
+                  </div>
+                )}
+                {lead.tiktok && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>TikTok</span>
+                    <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
+                  </div>
+                )}
+                {lead.linkedin && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>LinkedIn</span>
+                    <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
+                  </div>
+                )}
+                {lead.facebook && (
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Facebook</span>
+                    <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
+                  </div>
+                )}
+                {lead.merch && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Merch / Store</span>
+                    <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Store</a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Status Notes */}
+          {lead.status_notes && (
+            <div className="glass-card p-5 mt-6">
+              <SectionTitle>Status Update</SectionTitle>
+              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{lead.status_notes}</p>
+            </div>
+          )}
+
+          {/* Final Notes - Read-only */}
+          {(lead.remarks_final || lead.remarks_ai_draft) && (
+            <div className="glass-card p-5 mt-6">
+              <SectionTitle>Final Notes & Recommendations</SectionTitle>
+              {lead.remarks_final && (
+                <div className="mb-4 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)' }}>
+                  <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>{lead.remarks_final}</p>
+                </div>
+              )}
+              {lead.remarks_ai_draft && (
+                <div>
+                  <button onClick={() => setShowAIDraft(v => !v)} className="flex items-center gap-1.5 text-xs"
+                    style={{ color: 'var(--text-muted)' }}>
+                    {showAIDraft ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {showAIDraft ? 'Hide' : 'Show'} AI Summary
+                  </button>
+                  {showAIDraft && (
+                    <div className="mt-2 text-sm p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                      {lead.remarks_ai_draft}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Outreach Email - Read-only */}
+          {lead.outreach_email_draft && (
+            <div className="glass-card p-5 mt-6">
+              <div className="flex items-center justify-between mb-3">
+                <SectionTitle>📧 Outreach Email</SectionTitle>
+              </div>
+              <pre className="text-xs p-3 rounded-lg whitespace-pre-wrap" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+                {lead.outreach_email_draft}
+              </pre>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
