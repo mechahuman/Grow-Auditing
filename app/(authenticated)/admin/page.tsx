@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '../../../lib/supabase/client'
 import { Avatar } from '../../../components/Avatar'
+import EnrichForm from '../../../components/EnrichForm'
 import { Mail, Plus, Trash2, AlertCircle, Trophy, Users, ShieldCheck, List, Activity, Zap, ChevronRight, Search, MoreVertical, Edit2, ExternalLink, Download, FileText } from 'lucide-react'
 
 interface TeamMember {
@@ -82,6 +83,14 @@ interface Lead {
   ai_confidence?: number
   raw_youtube_data?: Record<string, any>
   raw_ai_response?: Record<string, any>
+}
+
+interface AdminLead {
+  id: string
+  lead_name: string
+  created_at: string
+  lead_score_total: number | null
+  status: string
 }
 
 interface LeadManagementState {
@@ -287,6 +296,10 @@ export default function AdminPage() {
   const [deleteSelectedLead, setDeleteSelectedLead] = useState<{ id: string; memberName: string; channelName: string } | null>(null)
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null)
 
+  // Enrich Section State
+  const [adminLeads, setAdminLeads] = useState<AdminLead[]>([])
+  const [adminLeadsLoading, setAdminLeadsLoading] = useState(false)
+
   useEffect(() => {
     fetchAdminData()
     const closeDropdown = () => setOpenDropdown(null)
@@ -299,6 +312,35 @@ export default function AdminPage() {
       fetchLeads()
     }
   }, [teamMembers, section])
+
+  useEffect(() => {
+    if (section === 'enrich') {
+      fetchAdminLeads()
+    }
+  }, [section])
+
+  async function fetchAdminLeads() {
+    try {
+      setAdminLeadsLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('leads')
+        .select('id, lead_name, created_at, lead_score_total, status')
+        .eq('user_id', user.id)
+        .eq('draft', false)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setAdminLeads(data || [])
+    } catch (err: any) {
+      console.error('Error fetching admin leads:', err)
+      setAdminLeads([])
+    } finally {
+      setAdminLeadsLoading(false)
+    }
+  }
 
   async function fetchLeads() {
     try {
@@ -697,6 +739,82 @@ export default function AdminPage() {
       {success && (
         <div className="flex gap-3 px-4 py-3 rounded-lg border text-sm" style={{ background: 'rgba(76, 175, 80, 0.12)', borderColor: 'rgba(76, 175, 80, 0.3)', color: '#4caf50' }}>
           <span>{success}</span>
+        </div>
+      )}
+
+      {/* Enrich Section */}
+      {section === 'enrich' && (
+        <div className="space-y-8">
+          <EnrichForm progressPath="/admin/enrich/progress" />
+
+          {/* Admin's Enriched Leads */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-bold">My Leads</h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Leads you've enriched</p>
+            </div>
+
+            {adminLeadsLoading ? (
+              <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>
+              </div>
+            ) : adminLeads.length === 0 ? (
+              <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>You haven't enriched any leads yet. Start by filling out the form above!</p>
+              </div>
+            ) : (
+              <div className="glass-card overflow-hidden rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-subtle)' }}>
+                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Lead Name</th>
+                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Score</th>
+                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Status</th>
+                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Date Added</th>
+                        <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminLeads.map((lead) => (
+                        <tr key={lead.id} className="border-b hover:bg-white/5 transition-colors" style={{ borderColor: 'var(--border-subtle)' }}>
+                          <td className="px-4 py-3">
+                            <p className="text-sm font-medium">{lead.lead_name}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            {lead.lead_score_total !== null ? (
+                              <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(168,85,247,0.15)', color: '#d8b4fe' }}>
+                                {lead.lead_score_total.toFixed(1)}
+                              </div>
+                            ) : (
+                              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Not Scored</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium capitalize" style={{ background: 'rgba(236,72,153,0.1)', color: '#f472b6' }}>
+                              {lead.status === 'new' ? 'New' : lead.status}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                              {new Date(lead.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Link href={`/admin/leads/${lead.id}/review`}>
+                              <button className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors" style={{ background: 'rgba(168,85,247,0.15)', color: '#d8b4fe' }}>
+                                Review
+                              </button>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
