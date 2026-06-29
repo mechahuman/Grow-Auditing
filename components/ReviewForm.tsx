@@ -331,9 +331,9 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         <div className="flex gap-2 flex-wrap">
           {!lead.draft && (
             <>
-              <button onClick={() => router.push(window.location.pathname.includes('/admin/') ? `/admin/leads/${lead.id}/edit` : `/leads/${lead.id}/edit`)} className="btn-ghost flex items-center gap-1.5 text-sm"
-                style={{ color: '#c084fc', borderColor: 'rgba(168,85,247,0.3)' }}>
-                <EditIcon size={14} /> Edit
+              <button onClick={() => router.push(window.location.pathname.includes('/admin/') ? `/admin/leads/${lead.id}/edit` : `/leads/${lead.id}/edit`)} className="p-2 rounded-lg transition-all hover:opacity-75" title="Edit"
+                style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.3)' }}>
+                <EditIcon size={16} />
               </button>
               <button onClick={() => setShowReEnrichModal(true)} disabled={re_enriching} className="btn-ghost flex items-center gap-1.5 text-sm transition-all disabled:opacity-50"
                 style={{ color: '#A4F4C9', borderColor: 'rgba(164,244,201,0.3)' }}>
@@ -343,13 +343,13 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
                   <RefreshCw size={14} /> Re-Enrich
                 </>}
               </button>
-              <button onClick={handleDownload} className="btn-ghost flex items-center gap-1.5 text-sm"
-                style={{ color: '#6EB498', borderColor: 'rgba(110,180,152,0.3)' }}>
-                <Download size={14} /> Download
+              <button onClick={handleDownload} className="p-2 rounded-lg transition-all hover:opacity-75" title="Download"
+                style={{ background: 'rgba(110,180,152,0.12)', color: '#6EB498', border: '1px solid rgba(110,180,152,0.3)' }}>
+                <Download size={16} />
               </button>
-              <button onClick={handleDelete} className="btn-ghost flex items-center gap-1.5 text-sm"
-                style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
-                <Trash2 size={14} /> Delete
+              <button onClick={handleDelete} className="p-2 rounded-lg transition-all hover:opacity-75" title="Delete"
+                style={{ background: 'rgba(255,107,107,0.12)', color: '#FF6B6B', border: '1px solid rgba(255,107,107,0.3)' }}>
+                <Trash2 size={16} />
               </button>
             </>
           )}
@@ -671,6 +671,63 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             </div>
           </div>
 
+          {/* Get In Touch - Contact Details for saved leads */}
+          {!lead.draft && (lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
+            <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
+              <div className="space-y-3">
+                {lead.email && (
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.email}</span>
+                  </a>
+                )}
+                {lead.website && (
+                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lead.website}</span>
+                  </a>
+                )}
+                {lead.instagram && (
+                  <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.instagram}</span>
+                  </a>
+                )}
+                {lead.twitter && (
+                  <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
+                  </a>
+                )}
+                {lead.tiktok && (
+                  <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>TikTok</span>
+                  </a>
+                )}
+                {lead.linkedin && (
+                  <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>LinkedIn</span>
+                  </a>
+                )}
+                {lead.facebook && (
+                  <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facebook</span>
+                  </a>
+                )}
+                {lead.merch && (
+                  <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:opacity-80" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Merch / Store</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {lead.draft && (
             <>
               {/* G-Factor */}
@@ -899,63 +956,6 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
               </div>
             )}
           </div>
-
-          {/* Get In Touch - Contact Details for saved leads */}
-          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
-            <div className="glass-card p-8 mt-6" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
-              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
-              <div className="space-y-3">
-                {lead.email && (
-                  <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.email}</span>
-                  </a>
-                )}
-                {lead.website && (
-                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lead.website}</span>
-                  </a>
-                )}
-                {lead.instagram && (
-                  <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.instagram}</span>
-                  </a>
-                )}
-                {lead.twitter && (
-                  <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
-                  </a>
-                )}
-                {lead.tiktok && (
-                  <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>TikTok</span>
-                  </a>
-                )}
-                {lead.linkedin && (
-                  <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>LinkedIn</span>
-                  </a>
-                )}
-                {lead.facebook && (
-                  <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facebook</span>
-                  </a>
-                )}
-                {lead.merch && (
-                  <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
-                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
-                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Merch / Store</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Status Notes */}
           {lead.status_notes && (
