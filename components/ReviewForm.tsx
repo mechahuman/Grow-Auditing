@@ -203,7 +203,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   const labelCls = 'block text-xs font-semibold uppercase tracking-wider mb-1.5'
 
   return (
-    <div className="relative">
+    <div className="relative px-6 py-6">
       {/* Toast */}
       {toast && (
         <div className="fixed top-20 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all"
