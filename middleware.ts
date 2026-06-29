@@ -50,15 +50,15 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // User is authenticated — fetch role immediately
+  // User is authenticated — fetch role and active status
   const { data: teamMember, error } = await supabase
     .from('team_members')
-    .select('role')
+    .select('role, active')
     .eq('user_id', user.id)
     .single()
 
-  // If user not in whitelist, redirect to unauthorized
-  if (error || !teamMember) {
+  // If user not in whitelist or not active, redirect to unauthorized
+  if (error || !teamMember || !teamMember.active) {
     if (isUnauthorizedPage) return response
     return NextResponse.redirect(new URL('/unauthorized', request.url))
   }

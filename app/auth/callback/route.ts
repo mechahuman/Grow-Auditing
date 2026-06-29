@@ -34,13 +34,25 @@ export async function GET(request: NextRequest) {
 
     // Check user role to determine redirect destination
     if (user) {
+      // Self-heal: link user_id by email if not yet linked (handles case where user signed in before being whitelisted)
+      await supabase
+        .from('team_members')
+        .update({ user_id: user.id })
+        .eq('email', user.email.toLowerCase())
+        .is('user_id', null)
+
       const { data: teamMember } = await supabase
         .from('team_members')
-        .select('role')
+        .select('role, active')
         .eq('user_id', user.id)
+        .eq('active', true)
         .single()
 
-      const isAdmin = teamMember?.role === 'admin'
+      if (!teamMember) {
+        return NextResponse.redirect(new URL('/unauthorized', request.url))
+      }
+
+      const isAdmin = teamMember.role === 'admin'
       return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/leads', request.url))
     }
   }
