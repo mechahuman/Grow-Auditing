@@ -376,16 +376,39 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
           {/* Channel stats */}
           <div className="glass-card p-5">
             <SectionTitle>Channel Stats</SectionTitle>
-            <StatRow label="Subscribers" value={fmt(lead.subscriber_count)} />
-            <StatRow label="Total views" value={fmt(lead.total_views)} />
-            <StatRow label="Videos" value={fmt(lead.video_count)} />
-            <StatRow label="Channel age" value={monthsAgo(lead.channel_created_at)} />
-            <StatRow label="Last upload" value={daysAgo(lead.last_upload_at)} />
-            <StatRow label="Avg views (last 10)" value={fmt(lead.avg_views_last_10)} />
-            <StatRow label="S2V ratio" value={lead.s2v_ratio_pct != null ? `${lead.s2v_ratio_pct}%` : '—'} />
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Posts (30d)</span>
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.posting_frequency_30d ?? '—'}</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Subscribers</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(lead.subscriber_count)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Total Views</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(lead.total_views)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Videos</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(lead.video_count)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Channel Age</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{monthsAgo(lead.channel_created_at)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Last Upload</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{daysAgo(lead.last_upload_at)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Avg Views (10)</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(lead.avg_views_last_10)}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>S2V Ratio</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lead.s2v_ratio_pct != null ? `${lead.s2v_ratio_pct}%` : '—'}</p>
+              </div>
+              <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Posts (30d)</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{lead.posting_frequency_30d ?? '—'}</p>
+              </div>
             </div>
           </div>
 
@@ -463,15 +486,15 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             </div>
           )}
 
-          {/* Recent videos */}
+          {/* Latest Content */}
           {recentVideos.length > 0 && (
             <div className="glass-card p-5">
-              <SectionTitle>Recent Videos</SectionTitle>
+              <SectionTitle>Latest Content</SectionTitle>
               <ul className="space-y-2">
                 {recentVideos.map((v, i) => (
-                  <li key={i} className="flex items-start justify-between gap-3 py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-sm truncate" style={{ color: 'var(--text-primary)' }}>{v.title}</span>
-                    <span className="text-xs flex-shrink-0 font-medium" style={{ color: 'var(--text-secondary)' }}>{fmt(v.viewCount)}</span>
+                  <li key={i} className="flex items-start justify-between gap-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', borderBottom: i < recentVideos.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{v.title}</span>
+                    <span className="text-sm flex-shrink-0 font-semibold" style={{ color: '#a855f7' }}>{fmt(v.viewCount)}</span>
                   </li>
                 ))}
               </ul>
@@ -771,58 +794,164 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
 
       {!lead.draft && (
         <>
-          {/* Contact Details - Read-only for saved leads */}
-          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
-            <div className="glass-card p-5 mt-6">
-              <SectionTitle>Contact Details</SectionTitle>
-              <div className="space-y-2">
-                {lead.email && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Email</span>
-                    <a href={`mailto:${lead.email}`} className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>{lead.email}</a>
+          {/* AI Insights & Analysis - Full width for saved leads */}
+          <div className="glass-card p-8 mt-6" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(241, 91, 181, 0.08) 100%)', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-8 pb-4" style={{ color: '#a855f7', borderBottom: '1px solid rgba(168, 85, 247, 0.3)', letterSpacing: '1.5px' }}>AI Insights & Analysis</h3>
+
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {[
+                ['Category', lead.category],
+                ['Content Style', lead.content_style],
+                ['Monetization', lead.monetization],
+                ['Posting Pattern', lead.posting_pattern],
+              ].map(([label, val]) => (
+                <div key={label as string} className="rounded-xl p-4" style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
+                  <p className="text-xs mb-2" style={{ color: '#9b5de5', fontWeight: '600', letterSpacing: '0.5px' }}>{label}</p>
+                  <p className="text-sm font-semibold leading-relaxed" style={{ color: 'var(--text-primary)' }}>{val ?? '—'}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Strengths and Considerations in 2 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+              {/* Strengths */}
+              {(lead.strengths ?? []).length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-2 h-2 rounded-full" style={{ background: '#A4F4C9' }} />
+                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#A4F4C9' }}>Strengths</p>
                   </div>
+                  <ul className="space-y-3">
+                    {(lead.strengths ?? []).map((s: string, i: number) => (
+                      <li key={i} className="flex gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+                        <span style={{ color: '#A4F4C9', fontWeight: 'bold' }}>•</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Considerations */}
+              {(lead.concerns ?? []).length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-2 h-2 rounded-full" style={{ background: '#FF6B6B' }} />
+                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#FF6B6B' }}>Considerations</p>
+                  </div>
+                  <ul className="space-y-3">
+                    {(lead.concerns ?? []).map((c: string, i: number) => (
+                      <li key={i} className="flex gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+                        <span style={{ color: '#FF6B6B', fontWeight: 'bold' }}>•</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Red Flags */}
+            {(lead.ai_red_flags && lead.ai_red_flags.length > 0) ? (
+              <div className="rounded-xl p-4 mt-6 mb-6" style={{ background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.3)' }}>
+                <p className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#FF6B6B' }}>Red Flags</p>
+                <ul className="space-y-2">
+                  {lead.ai_red_flags.map((flag: string, i: number) => (
+                    <li key={i} className="text-sm flex gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <span style={{ color: '#FF6B6B' }}>•</span> {flag}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="rounded-xl p-4 mt-6 mb-6" style={{ background: 'rgba(164,244,201,0.08)', border: '1px solid rgba(164,244,201,0.3)' }}>
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#A4F4C9' }}>No red flags detected</p>
+              </div>
+            )}
+
+            {/* AI Confidence */}
+            {(lead.ai_confidence || lead.ai_confidence_reason || (lead.data_gaps ?? []).length > 0) && (
+              <div className="rounded-xl p-4" style={{ background: 'rgba(241, 91, 181, 0.08)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
+                <div className="flex items-start gap-3">
+                  <Info size={16} style={{ color: '#f15bb5', marginTop: '2px' }} className="flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: '#f15bb5' }}>
+                      AI Confidence: {lead.ai_confidence ?? 'Unknown'}
+                    </p>
+                    {lead.ai_confidence_reason && (
+                      <p className="text-xs mb-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)' }}>
+                        {lead.ai_confidence_reason}
+                      </p>
+                    )}
+                    {(lead.data_gaps ?? []).length > 0 && (
+                      <ul className="space-y-1.5">
+                        {(lead.data_gaps ?? []).map((d: string, i: number) => (
+                          <li key={i} className="text-xs flex gap-2" style={{ color: 'var(--text-secondary)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>○</span>
+                            <span>{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Get In Touch - Contact Details for saved leads */}
+          {(lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) && (
+            <div className="glass-card p-8 mt-6" style={{ background: 'linear-gradient(135deg, rgba(241, 91, 181, 0.12) 0%, rgba(168, 85, 247, 0.06) 100%)', border: '1px solid rgba(241, 91, 181, 0.2)' }}>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#f15bb5', borderBottom: '1px solid rgba(241, 91, 181, 0.3)', letterSpacing: '1.5px' }}>Get In Touch</h3>
+              <div className="space-y-3">
+                {lead.email && (
+                  <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.email}</span>
+                  </a>
                 )}
                 {lead.website && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Website</span>
-                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity truncate ml-2" style={{ color: '#A4F4C9' }}>{lead.website}</a>
-                  </div>
+                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{lead.website}</span>
+                  </a>
                 )}
                 {lead.instagram && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Instagram</span>
-                    <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>@username</a>
-                  </div>
+                  <a href={lead.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.instagram}</span>
+                  </a>
                 )}
                 {lead.twitter && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Twitter / X</span>
-                    <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>@handle</a>
-                  </div>
+                  <a href={lead.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{lead.twitter}</span>
+                  </a>
                 )}
                 {lead.tiktok && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>TikTok</span>
-                    <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
-                  </div>
+                  <a href={lead.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Camera size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>TikTok</span>
+                  </a>
                 )}
                 {lead.linkedin && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>LinkedIn</span>
-                    <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
-                  </div>
+                  <a href={lead.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>LinkedIn</span>
+                  </a>
                 )}
                 {lead.facebook && (
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Facebook</span>
-                    <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Profile</a>
-                  </div>
+                  <a href={lead.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <MessageSquare size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facebook</span>
+                  </a>
                 )}
                 {lead.merch && (
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Merch / Store</span>
-                    <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: '#A4F4C9' }}>Store</a>
-                  </div>
+                  <a href={lead.merch} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-105" style={{ background: 'rgba(241,91,181,0.08)', border: '1px solid rgba(241, 91, 181, 0.3)' }}>
+                    <Globe size={18} style={{ color: '#f15bb5', flexShrink: 0 }} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Merch / Store</span>
+                  </a>
                 )}
               </div>
             </div>
@@ -862,15 +991,24 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             </div>
           )}
 
-          {/* Outreach Email - Read-only */}
+          {/* Outreach Email Draft - Read-only */}
           {lead.outreach_email_draft && (
-            <div className="glass-card p-5 mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <SectionTitle>📧 Outreach Email</SectionTitle>
-              </div>
-              <pre className="text-xs p-3 rounded-lg whitespace-pre-wrap" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+            <div className="glass-card p-8 mt-6" style={{ background: 'linear-gradient(135deg, rgba(76,175,80,0.12) 0%, rgba(76,175,80,0.06) 100%)', border: '1px solid rgba(76,175,80,0.2)' }}>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#4CAF50', borderBottom: '1px solid rgba(76,175,80,0.3)', letterSpacing: '1.5px' }}>Outreach Email Draft</h3>
+              <div className="text-sm leading-relaxed p-6 rounded-xl whitespace-pre-wrap" style={{ background: 'rgba(76,175,80,0.08)', border: '1px solid rgba(76,175,80,0.3)', color: 'var(--text-primary)', fontFamily: 'inherit', lineHeight: '1.6' }}>
                 {lead.outreach_email_draft}
-              </pre>
+              </div>
+              <button
+                onClick={() => {
+                  if (lead.outreach_email_draft) {
+                    navigator.clipboard.writeText(lead.outreach_email_draft)
+                    showToast('Email copied to clipboard!')
+                  }
+                }}
+                className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.3)', color: '#4CAF50' }}>
+                Copy Email
+              </button>
             </div>
           )}
         </>
