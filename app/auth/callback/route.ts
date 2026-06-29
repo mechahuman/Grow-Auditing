@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.exchangeCodeForSession(code)
 
     // Check user role to determine redirect destination
-    if (user) {
+    if (user && user.email) {
       // Self-heal: link user_id by email if not yet linked (handles case where user signed in before being whitelisted)
       await supabase
         .from('team_members')
