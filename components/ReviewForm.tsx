@@ -648,120 +648,124 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
             </div>
           </div>
 
-          {/* G-Factor */}
-          <div className="glass-card p-5">
-            <SectionTitle>G-Factor <span className="normal-case font-normal" style={{ color: 'var(--text-muted)' }}>(gut feeling 1–5)</span></SectionTitle>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} onClick={() => setGFactor(n)} className="flex-1 py-3 rounded-xl border text-sm font-bold transition-all"
-                  style={gFactor === n ? { background: 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))', borderColor: '#A4F4C9', color: '#A4F4C9', boxShadow: '0 0 14px rgba(164,244,201,0.25)' } : { background: 'transparent', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Edit fields */}
-          <div className="glass-card p-5 space-y-4">
-            <SectionTitle>Edit Fields</SectionTitle>
-
-            <div>
-              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Lead Name</label>
-              <input value={fields.lead_name} onChange={set('lead_name')} className={inputCls} />
-            </div>
-            <div>
-              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Found By</label>
-              <select value={fields.found_by} onChange={set('found_by')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
-                {teamMembers.map(m => <option key={m.initials} value={m.initials} style={{ background: '#0D3B66' }}>{m.full_name} ({m.initials})</option>)}
-              </select>
-            </div>
-
-            {/* Contact Details */}
-            <div className="pt-3" style={{ borderTop: '1px solid var(--border)' }}>
-              <SectionTitle>Contact Details</SectionTitle>
-              {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Camera], ['twitter', 'Twitter / X', MessageSquare], ['tiktok', 'TikTok', Camera], ['linkedin', 'LinkedIn', Globe], ['facebook', 'Facebook', MessageSquare], ['merch', 'Merch / Store', Globe]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
-                <div key={key} className="mb-3">
-                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>
-                    <Icon size={11} className="inline mr-1" />{label}
-                  </label>
-                  <div className="flex gap-2">
-                    <input value={fields[key]} onChange={set(key)} className={`${inputCls} flex-1`} placeholder={`Enter ${label.toLowerCase()}…`} />
-                    {fields[key] && <CopyButton value={fields[key]} />}
-                  </div>
+          {lead.draft && (
+            <>
+              {/* G-Factor */}
+              <div className="glass-card p-5">
+                <SectionTitle>G-Factor <span className="normal-case font-normal" style={{ color: 'var(--text-muted)' }}>(gut feeling 1–5)</span></SectionTitle>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button key={n} onClick={() => setGFactor(n)} className="flex-1 py-3 rounded-xl border text-sm font-bold transition-all"
+                      style={gFactor === n ? { background: 'linear-gradient(135deg, rgba(164,244,201,0.2), rgba(110,180,152,0.2))', borderColor: '#A4F4C9', color: '#A4F4C9', boxShadow: '0 0 14px rgba(164,244,201,0.25)' } : { background: 'transparent', borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                      {n}
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {/* Metadata fields */}
-            {([['category', 'Category'], ['content_style', 'Content Style'], ['monetization', 'Monetization'], ['posting_pattern', 'Posting Pattern']] as [keyof typeof fields, string][]).map(([key, label]) => (
-              <div key={key}>
-                <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>{label}</label>
-                <input value={fields[key]} onChange={set(key)} className={inputCls} />
               </div>
-            ))}
 
-            {/* Status */}
-            <div>
-              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status</label>
-              <select value={fields.status} onChange={set('status')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
-                {statusOptions.map(s => <option key={s.value} value={s.value} style={{ background: '#0D3B66' }}>{s.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status Notes</label>
-              <input value={fields.status_notes} onChange={set('status_notes')} placeholder="Optional" className={inputCls} />
-            </div>
-          </div>
+              {/* Edit fields */}
+              <div className="glass-card p-5 space-y-4">
+                <SectionTitle>Edit Fields</SectionTitle>
 
-          {/* Remarks */}
-          <div className="glass-card p-5">
-            <SectionTitle>Remarks (Final)</SectionTitle>
-            <textarea value={fields.remarks_final} onChange={set('remarks_final')} rows={5}
-              className="input-field text-sm resize-y"
-              placeholder="Write final remarks for this lead…" />
-            {lead.remarks_ai_draft && (
-              <div className="mt-3">
-                <button onClick={() => setShowAIDraft(v => !v)} className="flex items-center gap-1.5 text-xs"
-                  style={{ color: 'var(--text-muted)' }}>
-                  {showAIDraft ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                  {showAIDraft ? 'Hide' : 'Show'} original AI draft
-                </button>
-                {showAIDraft && (
-                  <div className="mt-2 text-sm italic rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-                    {lead.remarks_ai_draft}
+                <div>
+                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Lead Name</label>
+                  <input value={fields.lead_name} onChange={set('lead_name')} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Found By</label>
+                  <select value={fields.found_by} onChange={set('found_by')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
+                    {teamMembers.map(m => <option key={m.initials} value={m.initials} style={{ background: '#0D3B66' }}>{m.full_name} ({m.initials})</option>)}
+                  </select>
+                </div>
+
+                {/* Contact Details */}
+                <div className="pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                  <SectionTitle>Contact Details</SectionTitle>
+                  {([['email', 'Email', Mail], ['website', 'Website', Globe], ['instagram', 'Instagram', Camera], ['twitter', 'Twitter / X', MessageSquare], ['tiktok', 'TikTok', Camera], ['linkedin', 'LinkedIn', Globe], ['facebook', 'Facebook', MessageSquare], ['merch', 'Merch / Store', Globe]] as [keyof typeof fields, string, any][]).map(([key, label, Icon]) => (
+                    <div key={key} className="mb-3">
+                      <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>
+                        <Icon size={11} className="inline mr-1" />{label}
+                      </label>
+                      <div className="flex gap-2">
+                        <input value={fields[key]} onChange={set(key)} className={`${inputCls} flex-1`} placeholder={`Enter ${label.toLowerCase()}…`} />
+                        {fields[key] && <CopyButton value={fields[key]} />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Metadata fields */}
+                {([['category', 'Category'], ['content_style', 'Content Style'], ['monetization', 'Monetization'], ['posting_pattern', 'Posting Pattern']] as [keyof typeof fields, string][]).map(([key, label]) => (
+                  <div key={key}>
+                    <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>{label}</label>
+                    <input value={fields[key]} onChange={set(key)} className={inputCls} />
+                  </div>
+                ))}
+
+                {/* Status */}
+                <div>
+                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status</label>
+                  <select value={fields.status} onChange={set('status')} className={inputCls} style={{ background: 'rgba(13,59,102,0.4)' }}>
+                    {statusOptions.map(s => <option key={s.value} value={s.value} style={{ background: '#0D3B66' }}>{s.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls} style={{ color: 'var(--text-secondary)' }}>Status Notes</label>
+                  <input value={fields.status_notes} onChange={set('status_notes')} placeholder="Optional" className={inputCls} />
+                </div>
+              </div>
+
+              {/* Remarks */}
+              <div className="glass-card p-5">
+                <SectionTitle>Remarks (Final)</SectionTitle>
+                <textarea value={fields.remarks_final} onChange={set('remarks_final')} rows={5}
+                  className="input-field text-sm resize-y"
+                  placeholder="Write final remarks for this lead…" />
+                {lead.remarks_ai_draft && (
+                  <div className="mt-3">
+                    <button onClick={() => setShowAIDraft(v => !v)} className="flex items-center gap-1.5 text-xs"
+                      style={{ color: 'var(--text-muted)' }}>
+                      {showAIDraft ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                      {showAIDraft ? 'Hide' : 'Show'} original AI draft
+                    </button>
+                    {showAIDraft && (
+                      <div className="mt-2 text-sm italic rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                        {lead.remarks_ai_draft}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Outreach Email Draft */}
-          <div className="glass-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <SectionTitle>📧 Outreach Email</SectionTitle>
-              {lead.outreach_email_draft && <CopyButton value={lead.outreach_email_draft} />}
-            </div>
-            {lead.outreach_email_draft ? (
-              <>
-                <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>AI-generated first draft — edit below before sending</p>
-                <pre className="text-xs p-3 rounded-lg whitespace-pre-wrap" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
-                  {lead.outreach_email_draft}
-                </pre>
-                <textarea value={fields.outreach_email_draft} onChange={set('outreach_email_draft')} rows={6}
-                  className="input-field text-sm resize-y mt-3"
-                  placeholder="Edit the email draft here…" />
-              </>
-            ) : (
-              <div className="text-xs p-3 rounded-lg" style={{ background: 'rgba(255,179,71,0.08)', border: '1px solid rgba(255,179,71,0.3)', color: 'var(--text-muted)' }}>
-                Not generated — re-enrich this lead to generate
+              {/* Outreach Email Draft */}
+              <div className="glass-card p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <SectionTitle>📧 Outreach Email</SectionTitle>
+                  {lead.outreach_email_draft && <CopyButton value={lead.outreach_email_draft} />}
+                </div>
+                {lead.outreach_email_draft ? (
+                  <>
+                    <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>AI-generated first draft — edit below before sending</p>
+                    <pre className="text-xs p-3 rounded-lg whitespace-pre-wrap" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+                      {lead.outreach_email_draft}
+                    </pre>
+                    <textarea value={fields.outreach_email_draft} onChange={set('outreach_email_draft')} rows={6}
+                      className="input-field text-sm resize-y mt-3"
+                      placeholder="Edit the email draft here…" />
+                  </>
+                ) : (
+                  <div className="text-xs p-3 rounded-lg" style={{ background: 'rgba(255,179,71,0.08)', border: '1px solid rgba(255,179,71,0.3)', color: 'var(--text-muted)' }}>
+                    Not generated — re-enrich this lead to generate
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Save button */}
-          <button onClick={handleSave} disabled={saving} className="btn-primary w-full py-3 text-sm">
-            {saving ? <><Loader2 size={15} className="animate-spin" />Saving…</> : <><Save size={15} />Save Lead →</>}
-          </button>
+              {/* Save button */}
+              <button onClick={handleSave} disabled={saving} className="btn-primary w-full py-3 text-sm">
+                {saving ? <><Loader2 size={15} className="animate-spin" />Saving…</> : <><Save size={15} />Save Lead →</>}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
