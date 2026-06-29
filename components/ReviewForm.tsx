@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw } from 'lucide-react'
+import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw, Download, Edit as EditIcon } from 'lucide-react'
 import { Avatar } from './Avatar'
 
 interface Lead {
@@ -198,6 +198,42 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
       setTimeout(() => window.location.reload(), 1000)
     }
   }
+  function handleDownload() {
+    const data = {
+      lead_name: lead.lead_name,
+      youtube_handle: lead.youtube_handle,
+      subscriber_count: lead.subscriber_count,
+      total_views: lead.total_views,
+      video_count: lead.video_count,
+      lead_score_total: lead.lead_score_total,
+      status: lead.status,
+      found_by: lead.found_by,
+      email: lead.email,
+      website: lead.website,
+      remarks_final: lead.remarks_final,
+    }
+    const jsonStr = JSON.stringify(data, null, 2)
+    const blob = new Blob([jsonStr], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${lead.lead_name.replace(/\s+/g, '-')}-${lead.id.substring(0, 8)}.json`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    showToast('Lead downloaded!')
+  }
+  async function handleDelete() {
+    if (!confirm('Delete this lead permanently?')) return
+    const res = await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      showToast('Lead deleted!')
+      setTimeout(() => router.back(), 800)
+    } else {
+      showToast('Failed to delete lead', false)
+    }
+  }
 
   const inputCls = 'input-field text-sm'
   const labelCls = 'block text-xs font-semibold uppercase tracking-wider mb-1.5'
@@ -294,24 +330,40 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         </div>
         <div className="flex gap-2 flex-wrap">
           {!lead.draft && (
-            <button onClick={() => setShowReEnrichModal(true)} disabled={re_enriching} className="btn-ghost flex items-center gap-1.5 text-sm transition-all disabled:opacity-50"
-              style={{ color: '#A4F4C9', borderColor: 'rgba(164,244,201,0.3)' }}>
-              {re_enriching ? <>
-                <Loader2 size={14} className="animate-spin" />Re-enriching…
-              </> : <>
-                <RefreshCw size={14} /> Re-Enrich
-              </>}
-            </button>
+            <>
+              <button onClick={() => router.push(window.location.pathname.includes('/admin/') ? `/admin/leads/${lead.id}/edit` : `/leads/${lead.id}/edit`)} className="btn-ghost flex items-center gap-1.5 text-sm"
+                style={{ color: '#c084fc', borderColor: 'rgba(168,85,247,0.3)' }}>
+                <EditIcon size={14} /> Edit
+              </button>
+              <button onClick={() => setShowReEnrichModal(true)} disabled={re_enriching} className="btn-ghost flex items-center gap-1.5 text-sm transition-all disabled:opacity-50"
+                style={{ color: '#A4F4C9', borderColor: 'rgba(164,244,201,0.3)' }}>
+                {re_enriching ? <>
+                  <Loader2 size={14} className="animate-spin" />Re-enriching…
+                </> : <>
+                  <RefreshCw size={14} /> Re-Enrich
+                </>}
+              </button>
+              <button onClick={handleDownload} className="btn-ghost flex items-center gap-1.5 text-sm"
+                style={{ color: '#6EB498', borderColor: 'rgba(110,180,152,0.3)' }}>
+                <Download size={14} /> Download
+              </button>
+              <button onClick={handleDelete} className="btn-ghost flex items-center gap-1.5 text-sm"
+                style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
+                <Trash2 size={14} /> Delete
+              </button>
+            </>
           )}
           {lead.draft && (
-            <button onClick={() => setShowDiscard(true)} className="btn-ghost flex items-center gap-1.5 text-sm"
-              style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
-              <Trash2 size={14} /> Discard
-            </button>
+            <>
+              <button onClick={() => setShowDiscard(true)} className="btn-ghost flex items-center gap-1.5 text-sm"
+                style={{ color: '#FF6B6B', borderColor: 'rgba(255,107,107,0.3)' }}>
+                <Trash2 size={14} /> Discard
+              </button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-1.5">
+                {saving ? <><Loader2 size={14} className="animate-spin" />Saving…</> : <><Save size={14} />Save Lead</>}
+              </button>
+            </>
           )}
-          <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-1.5">
-            {saving ? <><Loader2 size={14} className="animate-spin" />Saving…</> : <><Save size={14} />Save Lead</>}
-          </button>
         </div>
       </div>
 
