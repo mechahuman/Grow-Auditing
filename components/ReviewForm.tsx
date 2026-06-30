@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw, Download, Edit as EditIcon } from 'lucide-react'
 import { Avatar } from './Avatar'
-import { jsPDF } from 'jspdf'
+import jsPDF from 'jspdf'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
