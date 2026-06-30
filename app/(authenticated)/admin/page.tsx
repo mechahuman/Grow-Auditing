@@ -320,6 +320,20 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
+
+  useEffect(() => {
     if (teamMembers.length > 0 && section === 'leads') {
       fetchLeads()
     }
@@ -772,18 +786,47 @@ export default function AdminPage() {
 
   return (
     <div className="px-6 py-6 space-y-6">
-      {/* Alerts */}
+      {/* Toast Notifications */}
       {error && (
-        <div className="flex gap-3 px-4 py-3 rounded-lg border text-sm" style={{ background: 'rgba(255, 107, 107, 0.12)', borderColor: 'rgba(255, 107, 107, 0.3)', color: '#ff6b6b' }}>
-          <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
+        <div
+          className="fixed top-6 right-6 z-50 flex gap-3 px-5 py-4 rounded-xl border text-sm font-medium shadow-2xl backdrop-blur-sm transition-all duration-300"
+          style={{
+            background: 'rgba(255, 107, 107, 0.15)',
+            borderColor: 'rgba(255, 107, 107, 0.4)',
+            color: '#ff6b6b',
+            maxWidth: '420px',
+            animation: 'slideInFade 0.3s ease-out'
+          }}>
+          <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+          <span className="flex-1">{error}</span>
         </div>
       )}
       {success && (
-        <div className="flex gap-3 px-4 py-3 rounded-lg border text-sm" style={{ background: 'rgba(76, 175, 80, 0.12)', borderColor: 'rgba(76, 175, 80, 0.3)', color: '#4caf50' }}>
-          <span>{success}</span>
+        <div
+          className="fixed top-6 right-6 z-50 flex gap-3 px-5 py-4 rounded-xl border text-sm font-medium shadow-2xl backdrop-blur-sm transition-all duration-300"
+          style={{
+            background: 'rgba(76, 175, 80, 0.15)',
+            borderColor: 'rgba(76, 175, 80, 0.4)',
+            color: '#4caf50',
+            maxWidth: '420px',
+            animation: 'slideInFade 0.3s ease-out'
+          }}>
+          <span className="flex-1">{success}</span>
         </div>
       )}
+
+      <style>{`
+        @keyframes slideInFade {
+          from {
+            opacity: 0;
+            transform: translateY(-12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
 
       {/* Enrich Section */}
       {section === 'enrich' && (
