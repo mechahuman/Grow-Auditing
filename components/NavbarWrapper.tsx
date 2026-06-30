@@ -22,8 +22,8 @@ export function NavbarWrapper({ userEmail, isAdmin }: { userEmail: string; isAdm
           <img
             src="/favicon.png"
             alt="GROW Logo"
-            width={48}
-            height={48}
+            width={80}
+            height={80}
             className="transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
