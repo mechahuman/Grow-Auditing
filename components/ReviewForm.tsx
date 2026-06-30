@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw, Download, Edit as EditIcon } from 'lucide-react'
 import { Avatar } from './Avatar'
+import { jsPDF } from 'jspdf'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
@@ -141,6 +142,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   const [re_enriching, setReEnriching] = useState(false)
   const [showReEnrichModal, setShowReEnrichModal] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
   const [gFactor, setGFactor] = useState(lead.g_factor)
   const [fields, setFields] = useState({
     lead_name: lead.lead_name, found_by: lead.found_by,
@@ -198,31 +200,291 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
       setTimeout(() => window.location.reload(), 1000)
     }
   }
-  function handleDownload() {
-    const data = {
-      lead_name: lead.lead_name,
-      youtube_handle: lead.youtube_handle,
-      subscriber_count: lead.subscriber_count,
-      total_views: lead.total_views,
-      video_count: lead.video_count,
-      lead_score_total: lead.lead_score_total,
-      status: lead.status,
-      found_by: lead.found_by,
-      email: lead.email,
-      website: lead.website,
-      remarks_final: lead.remarks_final,
+  async function handleDownloadPDF() {
+    setIsDownloadingPdf(true)
+    try {
+      const loadLogo = (): Promise<string | null> => {
+        return new Promise((resolve) => {
+          const logo = new Image()
+          logo.crossOrigin = 'anonymous'
+          logo.onload = () => {
+            const canvas = document.createElement('canvas')
+            canvas.width = logo.width
+            canvas.height = logo.height
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(logo, 0, 0)
+              resolve(canvas.toDataURL('image/png'))
+            } else {
+              resolve(null)
+            }
+          }
+          logo.onerror = () => resolve(null)
+          logo.src = '/apple-touch-icon.png'
+        })
+      }
+
+      const logoData = await loadLogo()
+
+      const pdf: any = new jsPDF('p', 'mm', 'a4')
+      let yPosition = 15
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const margin = 15
+      const maxWidth = pageWidth - 2 * margin
+
+      if (logoData) {
+        try {
+          pdf.addImage(logoData, 'PNG', margin, 8, 12, 12)
+        } catch (e) {
+          // Logo failed to add, continue without it
+        }
+      }
+
+      const today = new Date()
+      const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      pdf.setFontSize(9)
+      pdf.setFont('Helvetica', 'normal')
+      pdf.setTextColor(100, 100, 100)
+      const dateWidth = pdf.getTextWidth(dateStr)
+      pdf.text(dateStr, pageWidth - margin - dateWidth, 12)
+      pdf.setTextColor(0, 0, 0)
+
+      yPosition = 25
+
+      const addSection = (title: string) => {
+        if (yPosition > pageHeight - 30) {
+          pdf.addPage()
+          yPosition = 15
+        }
+        pdf.setFontSize(12)
+        pdf.setFont('Helvetica', 'bold')
+        pdf.text(title, margin, yPosition)
+        yPosition += 8
+        pdf.setFont('Helvetica', 'normal')
+      }
+
+      const addText = (text: string, fontSize = 10) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage()
+          yPosition = 15
+        }
+        pdf.setFontSize(fontSize)
+        pdf.setFont('Helvetica', 'normal')
+        const lines = pdf.splitTextToSize(text, maxWidth)
+        pdf.text(lines, margin, yPosition)
+        yPosition += lines.length * 5 + 2
+      }
+
+      const addKeyValue = (key: string, value: string) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage()
+          yPosition = 15
+        }
+        pdf.setFontSize(10)
+        pdf.setFont('Helvetica', 'bold')
+        pdf.text(`${key}:`, margin, yPosition)
+        pdf.setFont('Helvetica', 'normal')
+        const lines = pdf.splitTextToSize(value, maxWidth - 50)
+        pdf.text(lines, margin + 45, yPosition)
+        yPosition += Math.max(lines.length * 5, 5) + 2
+      }
+
+      const statusLabel = statusOptions.find(o => o.value === lead.status)?.label ?? lead.status
+      const scoreLabel = getLabel(lead.lead_score_total ?? 0).label
+      const recentVideos = lead.raw_youtube_data?.recentVideos?.slice(0, 5) ?? []
+
+      pdf.setFontSize(16)
+      pdf.setFont('Helvetica', 'bold')
+      pdf.text(lead.lead_name, margin, yPosition)
+      yPosition += 8
+
+      pdf.setFontSize(10)
+      pdf.setFont('Helvetica', 'normal')
+      pdf.setTextColor(150, 150, 150)
+      pdf.text(`@${lead.youtube_handle || 'YouTube Channel'}`, margin, yPosition)
+      yPosition += 8
+
+      pdf.setTextColor(0, 0, 0)
+      pdf.setFontSize(9)
+      pdf.setFont('Helvetica', 'bold')
+      pdf.text(`Found by: ${lead.found_by}`, margin, yPosition)
+      yPosition += 1
+      pdf.text(`Status: ${statusLabel}`, margin + 60, yPosition)
+      yPosition += 10
+
+      addSection('CHANNEL STATS')
+      const stats = [
+        ['Subscribers', fmt(lead.subscriber_count)],
+        ['Total Views', fmt(lead.total_views)],
+        ['Videos', fmt(lead.video_count)],
+        ['Channel Age', monthsAgo(lead.channel_created_at)],
+        ['Last Upload', daysAgo(lead.last_upload_at)],
+        ['Avg Views (Last 10)', fmt(lead.avg_views_last_10)],
+        ['S2V Ratio', lead.s2v_ratio_pct != null ? `${lead.s2v_ratio_pct}%` : '—'],
+        ['Posts (30d)', lead.posting_frequency_30d ?? '—'],
+      ]
+      stats.forEach(([label, val]) => {
+        addKeyValue(label as string, val as string)
+      })
+
+      if (lead.avg_like_rate_pct !== null || lead.avg_comment_rate_pct !== null || lead.shorts_pct !== null || lead.avg_duration_sec !== null) {
+        yPosition += 3
+        addSection('ENGAGEMENT BREAKDOWN')
+        if (lead.avg_like_rate_pct !== null) addKeyValue('Avg Like Rate', `${lead.avg_like_rate_pct.toFixed(2)}%`)
+        if (lead.avg_comment_rate_pct !== null) addKeyValue('Avg Comment Rate', `${lead.avg_comment_rate_pct.toFixed(2)}%`)
+        if (lead.shorts_pct !== null) addKeyValue('Shorts Content', `${lead.shorts_pct.toFixed(1)}%`)
+        if (lead.avg_duration_sec !== null) addKeyValue('Avg Video Duration', formatDuration(lead.avg_duration_sec))
+      }
+
+      if (lead.top_video_title && lead.top_video_url) {
+        yPosition += 3
+        addSection('TOP RECENT VIDEO')
+        addKeyValue('Title', lead.top_video_title)
+        addKeyValue('Views', fmt(lead.top_video_views))
+        addText('Best performing video from last 15 uploads', 9)
+      }
+
+      if (recentVideos.length > 0) {
+        yPosition += 3
+        addSection('LATEST CONTENT')
+        recentVideos.forEach((v: any) => {
+          addKeyValue(v.title, `${fmt(v.viewCount)} views`)
+        })
+      }
+
+      if (lead.channel_country !== null || lead.is_verified !== null || lead.has_community_posts !== null || (lead.channel_keywords && lead.channel_keywords.length > 0)) {
+        yPosition += 3
+        addSection('CHANNEL PROFILE')
+        if (lead.channel_country) addKeyValue('Country', lead.channel_country)
+        if (lead.is_verified !== null) addKeyValue('Verification', lead.is_verified ? 'Verified' : 'Not verified')
+        if (lead.has_community_posts !== null) addKeyValue('Community Posts', lead.has_community_posts ? 'Active' : 'Not detected')
+        if (lead.channel_keywords && lead.channel_keywords.length > 0) {
+          addKeyValue('Keywords', lead.channel_keywords.slice(0, 10).join(', '))
+        }
+      }
+
+      yPosition += 3
+      addSection('LEAD SCORE')
+      addKeyValue('Total Score', lead.lead_score_total?.toFixed(2) || '—')
+      addKeyValue('Score Level', scoreLabel)
+      const scoreFactors = [
+        ['YT Factor', lead.yt_score_factor?.toFixed(1) ?? '—'],
+        ['Sub Range Factor', lead.sub_range_factor?.toFixed(1) ?? '—'],
+        ['S2V Factor', lead.s2v_factor?.toFixed(1) ?? '—'],
+        ['G-Factor', lead.g_factor ? ((lead.g_factor - 1) / 4).toFixed(2) : '—'],
+      ]
+      scoreFactors.forEach(([k, v]) => {
+        addKeyValue(k as string, v as string)
+      })
+
+      if (lead.email || lead.website || lead.instagram || lead.twitter || lead.tiktok || lead.linkedin || lead.facebook || lead.merch) {
+        yPosition += 3
+        addSection('CONTACT DETAILS')
+        if (lead.email) addKeyValue('Email', lead.email)
+        if (lead.website) addKeyValue('Website', lead.website)
+        if (lead.instagram) addKeyValue('Instagram', lead.instagram)
+        if (lead.twitter) addKeyValue('Twitter', lead.twitter)
+        if (lead.tiktok) addKeyValue('TikTok', lead.tiktok)
+        if (lead.linkedin) addKeyValue('LinkedIn', lead.linkedin)
+        if (lead.facebook) addKeyValue('Facebook', lead.facebook)
+        if (lead.merch) addKeyValue('Merch/Store', lead.merch)
+      }
+
+      if (lead.status_notes) {
+        yPosition += 3
+        addSection('STATUS UPDATE')
+        addText(lead.status_notes)
+      }
+
+      yPosition += 3
+      addSection('AI INSIGHTS & ANALYSIS')
+      const insights = [
+        ['Category', lead.category],
+        ['Content Style', lead.content_style],
+        ['Monetization', lead.monetization],
+        ['Posting Pattern', lead.posting_pattern],
+      ]
+      insights.forEach(([label, val]) => {
+        if (val) addKeyValue(label as string, val as string)
+      })
+
+      if ((lead.strengths ?? []).length > 0) {
+        yPosition += 2
+        pdf.setFontSize(11)
+        pdf.setFont('Helvetica', 'bold')
+        pdf.text('Strengths:', margin, yPosition)
+        yPosition += 5
+        pdf.setFont('Helvetica', 'normal')
+        (lead.strengths ?? []).forEach((s: string) => {
+          addText(`• ${s}`)
+        })
+      }
+
+      if ((lead.concerns ?? []).length > 0) {
+        yPosition += 2
+        pdf.setFontSize(11)
+        pdf.setFont('Helvetica', 'bold')
+        pdf.text('Considerations:', margin, yPosition)
+        yPosition += 5
+        pdf.setFont('Helvetica', 'normal')
+        (lead.concerns ?? []).forEach((c: string) => {
+          addText(`• ${c}`)
+        })
+      }
+
+      if (lead.ai_red_flags && lead.ai_red_flags.length > 0) {
+        yPosition += 3
+        addSection('RED FLAGS')
+        lead.ai_red_flags.forEach((flag: string) => {
+          addText(`${flag}`)
+        })
+      } else {
+        yPosition += 3
+        addSection('RED FLAGS')
+        addText('No red flags detected')
+      }
+
+      if (lead.ai_confidence || lead.ai_confidence_reason || (lead.data_gaps ?? []).length > 0) {
+        yPosition += 3
+        addSection('AI CONFIDENCE')
+        if (lead.ai_confidence) addKeyValue('Confidence Level', lead.ai_confidence)
+        if (lead.ai_confidence_reason) addText(lead.ai_confidence_reason)
+        if ((lead.data_gaps ?? []).length > 0) {
+          pdf.setFont('Helvetica', 'bold')
+          pdf.text('Data Gaps:', margin, yPosition)
+          yPosition += 5
+          pdf.setFont('Helvetica', 'normal')
+          (lead.data_gaps ?? []).forEach((d: string) => {
+            addText(`○ ${d}`)
+          })
+        }
+      }
+
+      if (lead.remarks_final || lead.remarks_ai_draft) {
+        yPosition += 3
+        addSection('FINAL NOTES & RECOMMENDATIONS')
+        if (lead.remarks_final) {
+          addText(lead.remarks_final)
+        }
+        if (lead.remarks_ai_draft) {
+          yPosition += 2
+          pdf.setFont('Helvetica', 'bold')
+          pdf.text('AI Summary:', margin, yPosition)
+          yPosition += 5
+          pdf.setFont('Helvetica', 'normal')
+          addText(lead.remarks_ai_draft)
+        }
+      }
+
+      pdf.save(`${lead.lead_name}-Audit.pdf`)
+      showToast('PDF downloaded successfully!')
+      setIsDownloadingPdf(false)
+    } catch (error) {
+      console.error('PDF download failed:', error)
+      showToast('Failed to download PDF', false)
+      setIsDownloadingPdf(false)
     }
-    const jsonStr = JSON.stringify(data, null, 2)
-    const blob = new Blob([jsonStr], { type: 'application/json' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${lead.lead_name.replace(/\s+/g, '-')}-${lead.id.substring(0, 8)}.json`
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-    showToast('Lead downloaded!')
   }
   async function handleDelete() {
     if (!confirm('Delete this lead permanently?')) return
@@ -343,9 +605,9 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
                   <RefreshCw size={14} /> Re-Enrich
                 </>}
               </button>
-              <button onClick={handleDownload} className="p-2 rounded-lg transition-all hover:opacity-75" title="Download"
+              <button onClick={handleDownloadPDF} disabled={isDownloadingPdf} className="p-2 rounded-lg transition-all hover:opacity-75" title="Download"
                 style={{ background: 'rgba(110,180,152,0.12)', color: '#6EB498', border: '1px solid rgba(110,180,152,0.3)' }}>
-                <Download size={16} />
+                {isDownloadingPdf ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
               </button>
               <button onClick={handleDelete} className="p-2 rounded-lg transition-all hover:opacity-75" title="Delete"
                 style={{ background: 'rgba(255,107,107,0.12)', color: '#FF6B6B', border: '1px solid rgba(255,107,107,0.3)' }}>
