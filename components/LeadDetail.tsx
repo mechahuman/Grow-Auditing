@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Play, Mail, Globe, Camera, MessageSquare, Info, ChevronDown, ChevronUp, RefreshCw, Loader2, Check, Download } from 'lucide-react'
 import { Avatar } from './Avatar'
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 
 export default function LeadDetail({ lead, statusLabel }: any) {
   const router = useRouter()

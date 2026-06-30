@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Copy, Check, Users, Eye, Video, Clock, BarChart2, Mail, Globe, Info, ChevronDown, ChevronUp, Trash2, Save, Loader2, Star, Play, Camera, MessageSquare, RefreshCw, Download, Edit as EditIcon } from 'lucide-react'
 import { Avatar } from './Avatar'
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 
 interface Lead {
   id: string; lead_name: string; found_by: string; youtube_url: string; youtube_handle: string | null
@@ -226,7 +226,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
 
       const logoData = await loadLogo()
 
-      const pdf: any = new jsPDF('p', 'mm', 'a4')
+      const pdf = new jsPDF('p', 'mm', 'a4')
       let yPosition = 15
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
@@ -415,7 +415,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         pdf.setFont('Helvetica', 'bold')
         pdf.text('Strengths:', margin, yPosition)
         yPosition += 5
-        pdf.setFont('Helvetica', 'normal')
+        pdf.setFont('Helvetica', 'normal');
         (lead.strengths ?? []).forEach((s: string) => {
           addText(`• ${s}`)
         })
@@ -427,7 +427,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
         pdf.setFont('Helvetica', 'bold')
         pdf.text('Considerations:', margin, yPosition)
         yPosition += 5
-        pdf.setFont('Helvetica', 'normal')
+        pdf.setFont('Helvetica', 'normal');
         (lead.concerns ?? []).forEach((c: string) => {
           addText(`• ${c}`)
         })
@@ -454,7 +454,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
           pdf.setFont('Helvetica', 'bold')
           pdf.text('Data Gaps:', margin, yPosition)
           yPosition += 5
-          pdf.setFont('Helvetica', 'normal')
+          pdf.setFont('Helvetica', 'normal');
           (lead.data_gaps ?? []).forEach((d: string) => {
             addText(`○ ${d}`)
           })
