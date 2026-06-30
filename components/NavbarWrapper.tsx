@@ -20,7 +20,7 @@ export function NavbarWrapper({ userEmail, isAdmin }: { userEmail: string; isAdm
         {/* Logo & Brand */}
         <Link href="/leads" className="flex items-center gap-3 group">
           <img
-            src="/favicon.png"
+            src="/logo-light.png"
             alt="GROW Logo"
             width={80}
             height={80}
