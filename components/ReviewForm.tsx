@@ -203,7 +203,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   async function handleDownloadPDF() {
     setIsDownloadingPdf(true)
     try {
-      const { jsPDF: jsPDFConstructor } = await import('jspdf')
+      const { default: jsPDF } = await import('jspdf')
 
       const loadLogo = (): Promise<string | null> => {
         return new Promise((resolve) => {
@@ -228,7 +228,7 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
 
       const logoData = await loadLogo()
 
-      const pdf: any = new jsPDFConstructor('p', 'mm', 'a4')
+      const pdf: any = new jsPDF('p', 'mm', 'a4')
       let yPosition = 15
       const pageWidth = pdf.internal.pageSize.getWidth()
       const pageHeight = pdf.internal.pageSize.getHeight()
