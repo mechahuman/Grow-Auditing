@@ -991,9 +991,9 @@ export default function AdminPage() {
               </div>
             ) : enrichView === 'table' ? (
               <div className="card-glass overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-auto max-h-[350px] scroll-smooth">
                   <table className="w-full">
-                    <thead>
+                    <thead className="sticky top-0 z-10">
                       <tr style={{
                         borderBottom: '1px solid rgba(168, 85, 247, 0.2)',
                         background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
