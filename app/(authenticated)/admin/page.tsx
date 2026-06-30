@@ -991,9 +991,9 @@ export default function AdminPage() {
               </div>
             ) : enrichView === 'table' ? (
               <div className="card-glass overflow-hidden">
-                <div className="overflow-x-auto overflow-y-auto max-h-[350px] scroll-smooth">
+                <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="sticky top-0 z-10">
+                    <thead>
                       <tr style={{
                         borderBottom: '1px solid rgba(168, 85, 247, 0.2)',
                         background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, rgba(241, 91, 181, 0.05) 100%)',
@@ -1741,10 +1741,10 @@ export default function AdminPage() {
                   )}
 
                   {/* Leads List */}
-                  <div className="w-full overflow-x-auto">
+                  <div className="w-full overflow-x-auto overflow-y-auto max-h-[350px] scroll-smooth">
                     <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <thead className="sticky top-0 z-10">
+                        <tr className="border-b" style={{ borderColor: 'var(--border-subtle)', background: '#0f0f1a' }}>
                           <th className="py-3 px-4 w-8">
                             <label className="relative inline-flex items-center cursor-pointer">
                               <input
