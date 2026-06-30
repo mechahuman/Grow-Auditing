@@ -33,10 +33,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         {/* Logo */}
         <div
-          className="flex-shrink-0 border-b flex items-center justify-center"
+          className="flex-shrink-0 border-b flex items-center justify-center overflow-hidden"
           style={{
             borderColor: 'var(--border-subtle)',
-            padding: sidebarExpanded ? '24px' : '20px',
+            padding: sidebarExpanded ? '24px' : '8px',
             minHeight: '80px',
           }}
         >
@@ -51,9 +51,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <img
               src="/apple-touch-icon.png"
               alt="GROW Logo"
-              width={40}
-              height={40}
-              className="flex-shrink-0"
+              width={64}
+              height={64}
+              className="flex-shrink-0 transition-transform duration-300 hover:scale-105"
             />
           )}
         </div>
