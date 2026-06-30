@@ -203,8 +203,6 @@ export function ReviewForm({ lead, teamMembers, statusOptions }: Props) {
   async function handleDownloadPDF() {
     setIsDownloadingPdf(true)
     try {
-      const { default: jsPDF } = await import('jspdf')
-
       const loadLogo = (): Promise<string | null> => {
         return new Promise((resolve) => {
           const logo = new Image()
