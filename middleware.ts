@@ -30,6 +30,7 @@ export async function middleware(request: NextRequest) {
   // Skip middleware for API routes and static assets
   if (pathname.startsWith('/api/')) return response
   if (pathname.startsWith('/auth/')) return response
+  if (pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/i)) return response
 
   // Fallback: If Supabase Redirect URLs are misconfigured and it falls back to the Site URL
   // with an OAuth code, catch it and forward it to the callback handler.
