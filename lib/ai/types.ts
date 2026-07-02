@@ -11,6 +11,8 @@ export interface ChannelAnalysis {
   ai_red_flags: string[]
   ai_confidence_reason: string
   outreach_email_draft: string
+  niche: string
+  niche_custom: string | null
 }
 
 export interface AnalysisResult {

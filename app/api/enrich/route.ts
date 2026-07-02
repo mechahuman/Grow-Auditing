@@ -223,6 +223,8 @@ export async function POST(request: NextRequest) {
       ai_red_flags: analysis.ai_red_flags,
       ai_confidence_reason: analysis.ai_confidence_reason,
       outreach_email_draft: analysis.outreach_email_draft,
+      niche: analysis.niche,
+      niche_custom: analysis.niche_custom,
       draft: true,
       status: 'new',
       enriched_by: user.email,

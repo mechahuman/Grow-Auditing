@@ -765,6 +765,19 @@ export default function LeadDetail({ lead, statusLabel }: any) {
             </div>
           )}
 
+          {/* Channel Niche - Read-only */}
+          {lead.niche && (
+            <div className="glass-card p-8" style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 100%)', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <h3 className="text-sm font-bold uppercase tracking-widest mb-6 pb-4" style={{ color: '#818cf8', borderBottom: '1px solid rgba(99,102,241,0.3)', letterSpacing: '1.5px' }}>Channel Niche</h3>
+              <span className="inline-block px-4 py-2 rounded-full text-sm font-semibold" style={{ background: 'rgba(99,102,241,0.18)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.35)' }}>
+                {lead.niche}
+              </span>
+              {lead.niche === 'Others' && lead.niche_custom && (
+                <p className="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>AI suggests: <span style={{ color: 'var(--text-secondary)' }}>{lead.niche_custom}</span></p>
+              )}
+            </div>
+          )}
+
           {/* Status Notes */}
           {lead.status_notes && (
             <div className="glass-card p-5" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.06) 0%, rgba(241, 91, 181, 0.03) 100%)', border: '1px solid rgba(168, 85, 247, 0.12)' }}>

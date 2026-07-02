@@ -29,6 +29,8 @@ function validateAnalysis(raw: unknown): ChannelAnalysis {
     ai_red_flags:          toStringArray(r.ai_red_flags),
     ai_confidence_reason:  typeof r.ai_confidence_reason === 'string'  ? r.ai_confidence_reason  : '',
     outreach_email_draft:  typeof r.outreach_email_draft === 'string'  ? r.outreach_email_draft  : '',
+    niche:                 typeof r.niche === 'string'                 ? r.niche                 : 'Others',
+    niche_custom:          typeof r.niche_custom === 'string'          ? r.niche_custom          : null,
   }
 }
 

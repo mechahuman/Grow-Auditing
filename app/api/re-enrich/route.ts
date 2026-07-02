@@ -133,6 +133,8 @@ export async function POST(request: NextRequest) {
       ai_red_flags: aiAnalysis.analysis.ai_red_flags,
       ai_confidence_reason: aiAnalysis.analysis.ai_confidence_reason,
       outreach_email_draft: aiAnalysis.analysis.outreach_email_draft,
+      niche: aiAnalysis.analysis.niche,
+      niche_custom: aiAnalysis.analysis.niche_custom,
       remarks_ai_draft: aiAnalysis.analysis.remarks_draft,
 
       // Always overwrite with recomputed scores
