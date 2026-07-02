@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { SignOutButton } from '../../../components/SignOutButton'
-import { Home, Users, List, ArrowLeft, Copy, Download, Zap, Sparkles } from 'lucide-react'
+import { Home, Users, List, ArrowLeft, Download, Zap, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 const navItems = [
@@ -10,7 +10,6 @@ const navItems = [
   { id: 'members', label: 'Team Members', icon: Users },
   { id: 'enrich', label: 'Enrich', icon: Sparkles },
   { id: 'leads', label: 'Lead Management', icon: List },
-  { id: 'duplicates', label: 'Duplicates', icon: Copy },
   { id: 'export', label: 'Export', icon: Download },
   { id: 'api', label: 'API Status', icon: Zap },
 ]

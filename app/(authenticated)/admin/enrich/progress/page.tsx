@@ -17,6 +17,13 @@ export default function AdminProgressPage() {
   const router = useRouter()
   const [stepIndex, setStepIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [duplicateInfo, setDuplicateInfo] = useState<{
+    leadName: string
+    foundBy: string
+    assignedTo: string
+    addedAt: string
+    existingLeadId: string
+  } | null>(null)
   const started = useRef(false)
 
   useEffect(() => {
@@ -41,15 +48,26 @@ export default function AdminProgressPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(async (res) => {
+        const data = await res.json()
         clearInterval(interval)
-        sessionStorage.removeItem('enrich_form')
-        if (data.error) {
-          setError(data.error)
-        } else {
-          router.push(`/admin/leads/${data.leadId}/review`)
+
+        if (res.status === 409) {
+          // Duplicate detected
+          sessionStorage.removeItem('enrich_form')
+          setDuplicateInfo(data)
+          return
         }
+
+        if (!res.ok) {
+          sessionStorage.removeItem('enrich_form')
+          setError(data.error || 'Something went wrong. Please try again.')
+          return
+        }
+
+        // Success
+        sessionStorage.removeItem('enrich_form')
+        router.push(`/admin/leads/${data.leadId}/review`)
       })
       .catch(() => {
         clearInterval(interval)
@@ -58,6 +76,55 @@ export default function AdminProgressPage() {
 
     return () => clearInterval(interval)
   }, [router])
+
+  // ── Duplicate detected state ──
+  if (duplicateInfo) {
+    const dateAdded = new Date(duplicateInfo.addedAt).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+
+    return (
+      <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4">
+        <div className="glass-card p-10 max-w-sm w-full text-center">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
+            style={{ background: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168,85,247,0.3)' }}
+          >
+            <AlertCircle size={26} style={{ color: '#a855f7' }} />
+          </div>
+          <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+            Already in the System
+          </h2>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+            <span className="font-semibold">{duplicateInfo.leadName}</span> has already been added.
+          </p>
+          <div
+            className="p-4 rounded-lg mb-6 text-sm space-y-2"
+            style={{ background: 'rgba(168, 85, 247, 0.08)', border: '1px solid rgba(168,85,247,0.2)' }}
+          >
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold">Found by:</span> {duplicateInfo.foundBy}
+            </div>
+            <div style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-semibold">Currently assigned to:</span> {duplicateInfo.assignedTo}
+            </div>
+            <div style={{ color: 'var(--text-muted)' }}>
+              <span className="font-semibold">Added on:</span> {dateAdded}
+            </div>
+          </div>
+          <button
+            onClick={() => router.push('/admin?section=enrich')}
+            className="btn-primary w-full"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   // ── Error state ──
   if (error) {

@@ -27,19 +27,6 @@ interface DashboardMetrics {
 }
 
 
-interface DuplicateGroup {
-  youtube_channel_id: string
-  lead_name: string
-  count: number
-  leads: Array<{
-    id: string
-    created_at: string
-    user_id: string
-    memberName: string
-  }>
-}
-
-
 
 // Lead Management Interfaces
 interface Lead {
@@ -270,7 +257,6 @@ export default function AdminPage() {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
-  const [duplicates, setDuplicates] = useState<DuplicateGroup[]>([])
   const [newFullName, setNewFullName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newRole, setNewRole] = useState<'member' | 'admin'>('member')
@@ -294,10 +280,6 @@ export default function AdminPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const leadsPerPage = 25
 
-  // Duplicates State
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [deleteSelectedLead, setDeleteSelectedLead] = useState<{ id: string; memberName: string; channelName: string } | null>(null)
   const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null)
 
   // Enrich Section State
@@ -542,82 +524,10 @@ export default function AdminPage() {
         totalLeads: leads.length,
       })
 
-
-      // Calculate duplicate detection
-      const allLeadsRes = await supabase
-        .from('leads')
-        .select('id, lead_name, youtube_channel_id, user_id, created_at, lead_score_total, category')
-
-      if (allLeadsRes.error) throw allLeadsRes.error
-
-      const allLeads = allLeadsRes.data || []
-      const duplicateMap: Record<string, DuplicateGroup> = {}
-
-      allLeads.forEach((lead) => {
-        if (lead.youtube_channel_id) {
-          if (!duplicateMap[lead.youtube_channel_id]) {
-            duplicateMap[lead.youtube_channel_id] = {
-              youtube_channel_id: lead.youtube_channel_id,
-              lead_name: lead.lead_name,
-              count: 0,
-              leads: [],
-            }
-          }
-          duplicateMap[lead.youtube_channel_id].count++
-          const member = membersRes.data?.find((m) => (m.user_id || m.id) === lead.user_id)
-          duplicateMap[lead.youtube_channel_id].leads.push({
-            id: lead.id,
-            created_at: lead.created_at,
-            user_id: lead.user_id,
-            memberName: member?.full_name || 'Unknown',
-          })
-        }
-      })
-
-      // Filter only groups with more than 1 entry (actual duplicates)
-      const duplicatesList = Object.values(duplicateMap)
-        .filter((group) => group.count > 1)
-        .sort((a, b) => b.count - a.count)
-
-      setDuplicates(duplicatesList)
-
-
       setLoading(false)
     } catch (err: any) {
       setError(err.message || 'Failed to fetch admin data')
       setLoading(false)
-    }
-  }
-
-  async function handleDeleteLead(leadId: string) {
-    try {
-      setDeletingLeadId(leadId)
-      const response = await fetch(`/api/admin/leads/${leadId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete lead')
-      }
-
-      // Remove lead from duplicates state
-      const updatedDuplicates = duplicates
-        .map((group) => ({
-          ...group,
-          leads: group.leads.filter((l) => l.id !== leadId),
-          count: group.leads.filter((l) => l.id !== leadId).length,
-        }))
-        .filter((group) => group.count > 1)
-
-      setDuplicates(updatedDuplicates)
-
-      setSuccess('Lead deleted successfully')
-      setShowDeleteDialog(false)
-      setDeleteSelectedLead(null)
-      setDeletingLeadId(null)
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete lead')
-      setDeletingLeadId(null)
     }
   }
 
@@ -2334,229 +2244,6 @@ export default function AdminPage() {
         </div>
       )}
 
-
-      {/* Duplicate Detection Section */}
-      {section === 'duplicates' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Duplicate Detection</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Identify and manage duplicate YouTube channels</p>
-          </div>
-
-          {duplicates.length === 0 ? (
-            <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No duplicates found. All channels are unique!</p>
-            </div>
-          ) : (
-            <div className="glass-card overflow-hidden rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)' }}>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid var(--border-subtle)' }}>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Channel Name</th>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Channel ID</th>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Count</th>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Members</th>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}>Added</th>
-                      <th className="px-4 py-3 text-left font-semibold text-xs uppercase" style={{ color: 'var(--text-muted)' }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {duplicates.map((group) => {
-                      const isExpanded = expandedGroups.has(group.youtube_channel_id)
-                      const uniqueMembers = Array.from(new Set(group.leads.map((l) => l.memberName))).join(', ')
-                      const oldestDate = new Date(Math.min(...group.leads.map((l) => new Date(l.created_at).getTime())))
-                      const daysAgo = Math.floor((Date.now() - oldestDate.getTime()) / (1000 * 60 * 60 * 24))
-
-                      return (
-                        <tbody key={group.youtube_channel_id}>
-                          {/* Parent Row - Channel Group */}
-                          <tr
-                            onClick={() => {
-                              const newExpanded = new Set(expandedGroups)
-                              if (isExpanded) {
-                                newExpanded.delete(group.youtube_channel_id)
-                              } else {
-                                newExpanded.add(group.youtube_channel_id)
-                              }
-                              setExpandedGroups(newExpanded)
-                            }}
-                            className="cursor-pointer hover:bg-opacity-5 transition-colors"
-                            style={{ background: 'rgba(168, 85, 247, 0.04)', borderBottom: '1px solid var(--border-subtle)' }}
-                          >
-                            <td className="px-4 py-3 flex items-center gap-2">
-                              <span style={{ color: '#a855f7' }}>{isExpanded ? '▼' : '▶'}</span>
-                              <span className="font-medium">{group.lead_name}</span>
-                            </td>
-                            <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {group.youtube_channel_id}
-                            </td>
-                            <td className="px-4 py-3">
-                              <span
-                                className="px-2 py-1 rounded text-xs font-bold"
-                                style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
-                              >
-                                {group.count}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs">{uniqueMembers || 'Unknown'}</td>
-                            <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                              {daysAgo}d ago
-                            </td>
-                            <td></td>
-                          </tr>
-
-                          {/* Child Rows - Individual Leads */}
-                          {isExpanded &&
-                            group.leads.map((lead, idx) => {
-                              const leadDate = new Date(lead.created_at)
-                              const leadDaysAgo = Math.floor((Date.now() - leadDate.getTime()) / (1000 * 60 * 60 * 24))
-
-                              return (
-                                <tr
-                                  key={lead.id}
-                                  style={{ background: 'rgba(255, 255, 255, 0.01)', borderBottom: '1px solid var(--border-subtle)' }}
-                                >
-                                  <td className="px-4 py-3 pl-12 text-xs">
-                                    <span style={{ color: 'var(--text-muted)' }}>Lead {idx + 1}</span>
-                                  </td>
-                                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                                    {lead.id.substring(0, 8)}...
-                                  </td>
-                                  <td></td>
-                                  <td className="px-4 py-3 text-xs">{lead.memberName}</td>
-                                  <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                                    {leadDaysAgo}d ago
-                                  </td>
-                                  <td className="px-4 py-3 flex items-center gap-2">
-                                    <Link href={`/admin?section=leads`}>
-                                      <button
-                                        className="px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity"
-                                        style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        View
-                                      </button>
-                                    </Link>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setDeleteSelectedLead({
-                                          id: lead.id,
-                                          memberName: lead.memberName,
-                                          channelName: group.lead_name,
-                                        })
-                                        setShowDeleteDialog(true)
-                                      }}
-                                      disabled={deletingLeadId === lead.id}
-                                      className="px-2 py-1 rounded text-xs hover:opacity-80 transition-opacity disabled:opacity-50"
-                                      style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}
-                                    >
-                                      {deletingLeadId === lead.id ? 'Deleting...' : 'Delete'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              )
-                            })}
-                        </tbody>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && deleteSelectedLead && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div
-            className="rounded-xl w-full max-w-md p-6"
-            style={{ background: '#0f0f1a', border: '1px solid rgba(255, 107, 107, 0.3)' }}
-          >
-            <h2 className="text-xl font-bold mb-2">Delete Lead Permanently?</h2>
-            <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              This action cannot be undone. The lead "<span className="font-semibold">{deleteSelectedLead.channelName}</span>" assigned to{' '}
-              <span className="font-semibold">{deleteSelectedLead.memberName}</span> will be permanently removed from the database.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowDeleteDialog(false)
-                  setDeleteSelectedLead(null)
-                }}
-                disabled={deletingLeadId !== null}
-                className="flex-1 px-4 py-2 rounded text-sm font-medium transition-colors hover:opacity-80 disabled:opacity-50"
-                style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-primary)' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeleteLead(deleteSelectedLead.id)}
-                disabled={deletingLeadId !== null}
-                className="flex-1 px-4 py-2 rounded text-sm font-medium text-white transition-colors hover:opacity-80 disabled:opacity-50"
-                style={{ background: '#ff6b6b' }}
-              >
-                {deletingLeadId ? 'Deleting...' : 'Delete Permanently'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Placeholder — kept for future */}
-      {false && section === 'duplicates' && (
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold">Duplicate Detection</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Identify and manage duplicate YouTube channels</p>
-          </div>
-
-          {duplicates.length === 0 ? (
-            <div className="glass-card p-8 rounded-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No duplicates found. All channels are unique!</p>
-            </div>
-          ) : (
-            <div className="glass-card p-5 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-subtle)' }}>
-              <h3 className="text-sm font-bold mb-4">Found {duplicates.length} duplicate {duplicates.length === 1 ? 'channel' : 'channels'}</h3>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {duplicates.map((dup) => (
-                  <div key={dup.youtube_channel_id} className="p-4 rounded-lg border" style={{ background: 'rgba(255, 107, 107, 0.08)', borderColor: 'rgba(255, 107, 107, 0.3)' }}>
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold text-sm">{dup.lead_name}</p>
-                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>ID: {dup.youtube_channel_id}</p>
-                      </div>
-                      <span className="px-2 py-1 rounded text-xs font-bold" style={{ background: 'rgba(255, 107, 107, 0.2)', color: '#ff6b6b' }}>
-                        {dup.count} entries
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {dup.leads.map((lead, idx) => (
-                        <div key={lead.id} className="flex items-center justify-between text-xs p-2 rounded" style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                          <div>
-                            <p className="font-medium">#{idx + 1} - {lead.memberName}</p>
-                            <p style={{ color: 'var(--text-muted)' }}>Added: {new Date(lead.created_at).toLocaleDateString()}</p>
-                          </div>
-                          <button
-                            className="px-2 py-1 rounded text-xs hover:opacity-80"
-                            style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7' }}
-                          >
-                            View
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
 
       {/* Internal Notes Section */}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
+import { createServiceClient } from '../../../lib/supabase/service'
 import { fetchAllYouTubeData, YouTubeApiError } from '../../../lib/youtube'
 import { analyzeChannel } from '../../../lib/ai'
 import { computeLeadScore } from '../../../lib/scoring'
@@ -66,6 +67,48 @@ export async function POST(request: NextRequest) {
     }
     console.error('[Enrich] Non-YouTubeApiError caught:', err)
     return NextResponse.json({ error: 'Failed to fetch YouTube data' }, { status: 500 })
+  }
+
+  // Check for duplicate lead with same YouTube channel
+  if (ytData.channelId) {
+    const serviceClient = createServiceClient()
+
+    // Query for existing lead with this channel ID
+    const { data: existingLead } = await serviceClient
+      .from('leads')
+      .select('id, lead_name, found_by, created_at')
+      .eq('youtube_channel_id', ytData.channelId)
+      .maybeSingle()
+
+    if (existingLead) {
+      // Look up finder's full name from initials
+      const { data: finder } = await serviceClient
+        .from('team_members')
+        .select('name')
+        .eq('initials', existingLead.found_by)
+        .maybeSingle()
+
+      // Determine current assignee from reassignment audit log
+      const { data: lastReassignment } = await serviceClient
+        .from('lead_reassignment_audit')
+        .select('new_member_name')
+        .eq('lead_id', existingLead.id)
+        .order('reassigned_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      return NextResponse.json(
+        {
+          error: 'duplicate',
+          leadName: existingLead.lead_name,
+          foundBy: finder?.name ?? existingLead.found_by,
+          assignedTo: lastReassignment?.new_member_name ?? finder?.name ?? existingLead.found_by,
+          addedAt: existingLead.created_at,
+          existingLeadId: existingLead.id,
+        },
+        { status: 409 }
+      )
+    }
   }
 
   const aiTimer = createAPITimer()
