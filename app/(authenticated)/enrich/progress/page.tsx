@@ -117,7 +117,7 @@ export default function ProgressPage() {
           </div>
           <button
             onClick={() => router.push('/enrich')}
-            className="btn-primary w-full"
+            className="btn-primary w-full justify-center"
           >
             OK
           </button>

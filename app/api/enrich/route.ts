@@ -88,21 +88,34 @@ export async function POST(request: NextRequest) {
         .eq('initials', existingLead.found_by)
         .maybeSingle()
 
-      // Determine current assignee from reassignment audit log
+      // Get current assignee from reassignment audit log (most recent)
       const { data: lastReassignment } = await serviceClient
         .from('lead_reassignment_audit')
-        .select('new_member_name')
+        .select('new_assignee_id')
         .eq('lead_id', existingLead.id)
-        .order('reassigned_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
+
+      // Look up full name of current assignee
+      let assignedToName = finder?.name ?? existingLead.found_by
+      if (lastReassignment?.new_assignee_id) {
+        const { data: currentAssignee } = await serviceClient
+          .from('team_members')
+          .select('name')
+          .eq('user_id', lastReassignment.new_assignee_id)
+          .maybeSingle()
+        if (currentAssignee?.name) {
+          assignedToName = currentAssignee.name
+        }
+      }
 
       return NextResponse.json(
         {
           error: 'duplicate',
           leadName: existingLead.lead_name,
           foundBy: finder?.name ?? existingLead.found_by,
-          assignedTo: lastReassignment?.new_member_name ?? finder?.name ?? existingLead.found_by,
+          assignedTo: assignedToName,
           addedAt: existingLead.created_at,
           existingLeadId: existingLead.id,
         },
