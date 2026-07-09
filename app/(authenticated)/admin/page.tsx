@@ -1434,7 +1434,7 @@ export default function AdminPage() {
           {/* Header row */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h1 className="text-2xl font-bold">Team Members</h1>
+              <h1 className="text-4xl font-bold">Team Members</h1>
               <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>Manage access and roles</p>
             </div>
           </div>
@@ -1453,7 +1453,7 @@ export default function AdminPage() {
               </div>
               <div className="min-w-[110px]">
                 <label className="block text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Role</label>
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full text-xs h-8">
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value as any)} className="input-field w-full text-xs h-8 !py-0">
                   <option value="member">Member</option>
                   <option value="admin">Admin</option>
                 </select>
