@@ -16,7 +16,7 @@ async function testOpenAI() {
 
   const res = await openai.chat.completions.create({
     model: MODEL,
-    max_tokens: 100,
+    max_completion_tokens: 100,
     response_format: { type: 'json_object' },
     messages: [
       {

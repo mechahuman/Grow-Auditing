@@ -18,7 +18,7 @@ export async function callAI(systemPrompt: string, userPrompt: string): Promise<
 
     const completion = await openai.chat.completions.create({
       model,
-      max_tokens: 1500,
+      max_completion_tokens: 1500,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
