@@ -14,7 +14,7 @@ export async function callAI(systemPrompt: string, userPrompt: string): Promise<
 
   if (provider === 'openai') {
     const openai = getOpenAIClient()
-    const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
+    const model = process.env.OPENAI_MODEL ?? 'gpt-5.6-luna'
 
     const completion = await openai.chat.completions.create({
       model,
