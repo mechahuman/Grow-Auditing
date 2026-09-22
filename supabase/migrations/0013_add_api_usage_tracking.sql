@@ -4,9 +4,9 @@
 -- Create api_keys table to store API metadata and limits
 CREATE TABLE api_keys (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  api_name text NOT NULL UNIQUE, -- 'youtube', 'groq', 'google_sheets', 'supabase'
+  api_name text NOT NULL UNIQUE, -- 'youtube', 'openai', 'google_sheets', 'supabase'
   service_type text NOT NULL, -- 'enrichment', 'ai_analysis', 'data_export', 'database'
-  display_name text, -- 'YouTube Data API', 'Groq AI API', etc.
+  display_name text, -- 'YouTube Data API', 'OpenAI API', etc.
   max_quota_daily int, -- Daily quota limit (e.g., 10000 for YouTube)
   max_quota_monthly int, -- Monthly quota limit
   quota_reset_type text, -- 'daily' or 'monthly'
@@ -40,7 +40,7 @@ CREATE INDEX idx_api_usage_logs_user_id ON api_usage_logs(user_id);
 -- Pre-populate api_keys with all 4 APIs
 INSERT INTO api_keys (api_name, service_type, display_name, max_quota_daily, max_quota_monthly, quota_reset_type, quota_reset_date, status, cost_per_unit) VALUES
   ('youtube', 'enrichment', 'YouTube Data API', 10000, 300000, 'daily', now()::date + INTERVAL '1 day', 'active', 0.000015),
-  ('groq', 'ai_analysis', 'Groq AI API', 100000, 1000000, 'monthly', now()::date + INTERVAL '1 month', 'active', 0.0001),
+  ('openai', 'ai_analysis', 'OpenAI API', 100000, 1000000, 'monthly', now()::date + INTERVAL '1 month', 'active', 0.0001),
   ('google_sheets', 'data_export', 'Google Sheets API', 500, 500000, 'daily', now()::date + INTERVAL '1 day', 'active', 0),
   ('supabase', 'database', 'Supabase PostgreSQL', NULL, NULL, 'monthly', now()::date + INTERVAL '1 month', 'active', 0);
 

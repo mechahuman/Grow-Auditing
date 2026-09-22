@@ -1,22 +1,22 @@
-import Groq from 'groq-sdk'
+import OpenAI from 'openai'
 
-let _groq: Groq | null = null
+let _openai: OpenAI | null = null
 
-function getGroqClient(): Groq {
-  if (!_groq) {
-    _groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+function getOpenAIClient(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   }
-  return _groq
+  return _openai
 }
 
 export async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
-  const provider = process.env.AI_PROVIDER ?? 'groq'
+  const provider = process.env.AI_PROVIDER ?? 'openai'
 
-  if (provider === 'groq') {
-    const groq = getGroqClient()
-    const model = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
+  if (provider === 'openai') {
+    const openai = getOpenAIClient()
+    const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
 
-    const completion = await groq.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model,
       max_tokens: 1500,
       response_format: { type: 'json_object' },
@@ -30,8 +30,8 @@ export async function callAI(systemPrompt: string, userPrompt: string): Promise<
   }
 
   if (provider === 'anthropic') {
-    throw new Error('Anthropic provider not yet implemented. Set AI_PROVIDER=groq in .env.local')
+    throw new Error('Anthropic provider not yet implemented. Set AI_PROVIDER=openai in .env.local')
   }
 
-  throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: groq, anthropic`)
+  throw new Error(`Unknown AI_PROVIDER: "${provider}". Valid values: openai, anthropic`)
 }

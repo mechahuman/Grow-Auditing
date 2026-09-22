@@ -3,7 +3,7 @@
  */
 
 export interface APIUsageLog {
-  apiName: 'youtube' | 'groq' | 'google_sheets' | 'supabase'
+  apiName: 'youtube' | 'openai' | 'google_sheets' | 'supabase'
   userId: string
   endpoint?: string
   status: 'success' | 'error'
