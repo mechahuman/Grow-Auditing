@@ -128,9 +128,9 @@ export async function POST(request: NextRequest) {
   let aiResult
   try {
     aiResult = await analyzeChannel(ytData)
-    // Log successful Groq AI API call
+    // Log successful OpenAI API call
     logAPIUsage({
-      apiName: 'groq',
+      apiName: 'openai',
       userId: user.id,
       endpoint: 'chat.completions',
       status: 'success',
@@ -138,9 +138,9 @@ export async function POST(request: NextRequest) {
       responseTimeMs: aiTimer(),
     }).catch(() => {})
   } catch (err) {
-    // Log failed Groq AI API call
+    // Log failed OpenAI API call
     logAPIUsage({
-      apiName: 'groq',
+      apiName: 'openai',
       userId: user.id,
       endpoint: 'chat.completions',
       status: 'error',

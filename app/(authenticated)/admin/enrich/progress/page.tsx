@@ -9,7 +9,7 @@ const STATUS_STEPS = [
   { label: 'Fetching channel data', detail: 'Pulling subscribers, views, and metadata…' },
   { label: 'Analysing recent videos', detail: 'Reviewing engagement and content patterns…' },
   { label: 'Looking up contact info', detail: 'Scanning about page and descriptions…' },
-  { label: 'Running AI analysis', detail: 'Generating intelligence report with GROQ…' },
+  { label: 'Running AI analysis', detail: 'Generating intelligence report with OpenAI…' },
   { label: 'Finalising report', detail: 'Almost there, wrapping up…' },
 ]
 
