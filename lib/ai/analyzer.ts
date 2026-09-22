@@ -45,11 +45,13 @@ export async function analyzeChannel(
   try {
     rawResponse = await callAI(SYSTEM_PROMPT, userPrompt)
   } catch (err) {
+    console.error('[AI] First attempt failed:', err instanceof Error ? err.message : err)
     // Retry once on network/timeout errors
     try {
       rawResponse = await callAI(SYSTEM_PROMPT, userPrompt)
-    } catch {
-      console.error('AI call failed after retry:', err)
+    } catch (retryErr) {
+      console.error('[AI] Second attempt also failed:', retryErr instanceof Error ? retryErr.message : retryErr)
+      console.error('[AI] Full error details:', JSON.stringify(retryErr, Object.getOwnPropertyNames(retryErr)))
       return {
         analysis: validateAnalysis({}),
         raw_response: '',
